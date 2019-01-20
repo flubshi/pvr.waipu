@@ -1,0 +1,27 @@
+# Kodi Media Center language file
+# Addon Name: PVR waipu.tv Client
+# Addon id: pvr.waipu
+# Addon Provider: flubshi
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en_GB\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgctxt "#37201"
+msgid "General"
+msgstr ""
+
+msgctxt "#37202"
+msgid "Username"
+msgstr ""
+
+msgctxt "#37203"
+msgid "Password"
+msgstr ""
+
+msgctxt "#37230"
+msgid "Error: Login not possible. Check credentials!"
+msgstr "Test"
