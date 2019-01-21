@@ -89,9 +89,11 @@ bool WaipuData::ApiLogin()
 
   time_t currTime;
   time(&currTime);
-  if(!m_apiToken.accessToken.empty() && (m_apiToken.expires + 60 * 60 ) < currTime)
+  XBMC->Log(LOG_DEBUG, "[token] current time %i", currTime);
+  XBMC->Log(LOG_DEBUG, "[token] expire  time %i", m_apiToken.expires);
+  if(!m_apiToken.accessToken.empty() && (m_apiToken.expires - 10 * 60 ) > currTime)
   {
-    // API token exists and is valid, more than one hour in future
+    // API token exists and is valid, more than x in future
     XBMC->Log(LOG_DEBUG, "[login check] old token still valid");
     return true;
   }
@@ -182,6 +184,10 @@ bool WaipuData::LoadChannelData(void)
   XBMC->Log(LOG_DEBUG, "[load data] Login valid -> GET CHANNELS");
 
   string jsonChannels = HttpGet("https://epg.waipu.tv/api/channels");
+  if(jsonChannels.size() == 0){
+	  XBMC->Log(LOG_ERROR, "[channels] ERROR - empty response");
+	  return PVR_ERROR_SERVER_ERROR;
+  }
   jsonChannels = "{\"result\": "+jsonChannels+"}";
   XBMC->Log(LOG_DEBUG, "[channels] length: %i;",jsonChannels.length());
   XBMC->Log(LOG_DEBUG, "[channels] %s;",jsonChannels.c_str());
@@ -259,25 +265,27 @@ int WaipuData::GetChannelsAmount(void)
 
 PVR_ERROR WaipuData::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
-  for (const auto& channel : m_channels)
-  {
-    if (!bRadio)
-    {
-      PVR_CHANNEL xbmcChannel;
-      memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
+	if (!ApiLogin()){
+		return PVR_ERROR_SERVER_ERROR;
+	}
+	for (const auto& channel : m_channels) {
+		if (!bRadio) {
+			PVR_CHANNEL xbmcChannel;
+			memset(&xbmcChannel, 0, sizeof(PVR_CHANNEL));
 
-      xbmcChannel.iUniqueId         = channel.iUniqueId;
-      xbmcChannel.bIsRadio          = false;
-      xbmcChannel.iChannelNumber    = channel.iChannelNumber;
-      strncpy(xbmcChannel.strChannelName, channel.strChannelName.c_str(), sizeof(xbmcChannel.strChannelName) - 1);
-      strncpy(xbmcChannel.strIconPath, channel.strIconPath.c_str(), sizeof(xbmcChannel.strIconPath) - 1);
-      xbmcChannel.bIsHidden         = false;
+			xbmcChannel.iUniqueId = channel.iUniqueId;
+			xbmcChannel.bIsRadio = false;
+			xbmcChannel.iChannelNumber = channel.iChannelNumber;
+			strncpy(xbmcChannel.strChannelName, channel.strChannelName.c_str(),
+					sizeof(xbmcChannel.strChannelName) - 1);
+			strncpy(xbmcChannel.strIconPath, channel.strIconPath.c_str(),
+					sizeof(xbmcChannel.strIconPath) - 1);
+			xbmcChannel.bIsHidden = false;
 
-      PVR->TransferChannelEntry(handle, &xbmcChannel);
-    }
-  }
-
-  return PVR_ERROR_NO_ERROR;
+			PVR->TransferChannelEntry(handle, &xbmcChannel);
+		}
+	}
+	return PVR_ERROR_NO_ERROR;
 }
 
 string WaipuData::GetChannelStreamUrl(int uniqueId)
@@ -341,7 +349,9 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANN
 
 PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
 {
-
+  if (!ApiLogin()){
+	return PVR_ERROR_SERVER_ERROR;
+  }
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
   {
     WaipuChannel &myChannel = m_channels.at(iChannelPtr);
@@ -360,6 +370,10 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
     string jsonEpg = HttpGet("https://epg.waipu.tv/api/channels/"+myChannel.waipuID+"/programs?startTime="+string(startTime)+"&stopTime="+string(endTime));
     XBMC->Log(LOG_DEBUG, "[epg-all] %s",jsonEpg.c_str());
+    if(jsonEpg.size() == 0){
+    	XBMC->Log(LOG_ERROR, "[epg] empty server response");
+    	return PVR_ERROR_SERVER_ERROR;
+    }
     jsonEpg = "{\"result\": "+jsonEpg+"}";
 
     Document epgDoc;
@@ -376,7 +390,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
         EPG_TAG tag;
         memset(&tag, 0, sizeof(EPG_TAG));
-        XBMC->Log(LOG_DEBUG, "[epg] Test");
 
         // generate a unique boadcast id
         string epg_bid = epgArray[i]["id"].GetString();
