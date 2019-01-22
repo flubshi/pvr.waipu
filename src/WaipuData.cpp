@@ -448,6 +448,11 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         	tag.strEpisodeName            = epgArray[i]["episodeTitle"].GetString();
         }
 
+        // year
+        if(epgArray[i].HasMember("year") && !epgArray[i]["year"].IsNull()){
+        	tag.iYear            = stoi(epgArray[i]["year"].GetString());
+        }
+
         PVR->TransferEpgEntry(handle, &tag);
       }
   }
