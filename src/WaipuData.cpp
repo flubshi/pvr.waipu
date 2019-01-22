@@ -466,12 +466,135 @@ int WaipuData::GetRecordingsAmount(bool bDeleted)
 
 PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+	if (!ApiLogin()) {
+		return PVR_ERROR_SERVER_ERROR;
+	}
+
+    string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings");
+    XBMC->Log(LOG_DEBUG, "[recordings] %s",jsonRecordings.c_str());
+
+    jsonRecordings = "{\"result\": "+jsonRecordings+"}";
+
+    Document recordingsDoc;
+    recordingsDoc.Parse(jsonRecordings.c_str());
+    XBMC->Log(LOG_DEBUG, "[recordings] iterate entries");
+
+    const Value& recordingsArray = recordingsDoc["result"];
+    XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsArray.Size());
+
+	for (SizeType i = 0; i < recordingsArray.Size(); i++) {
+
+		XBMC->Log(LOG_DEBUG, "[recording] get entry: %i;", i);
+
+		// skip not FINISHED entries
+		string status = recordingsArray[i]["status"].GetString();
+		if(status != "FINISHED") continue;
+
+		// new tag
+		PVR_RECORDING tag;
+		memset(&tag, 0, sizeof(PVR_RECORDING));
+		tag.bIsDeleted = false;
+
+		// set recording id
+		string rec_id = recordingsArray[i]["id"].GetString();
+		strncpy(tag.strRecordingId,rec_id.c_str(),sizeof(tag.strRecordingId)-1);
+
+		const Value& epgData = recordingsArray[i]["epgData"];
+
+		// set recording title
+		string rec_title = epgData["title"].GetString();
+		strncpy(tag.strTitle,rec_title.c_str(),sizeof(tag.strTitle)-1);
+
+		// set image
+		if(epgData.HasMember("previewImages") && epgData["previewImages"].IsArray()){
+			string rec_img = epgData["previewImages"][0].GetString();
+			rec_img = rec_img + "?width=300&height=200";
+			strncpy(tag.strIconPath,rec_img.c_str(),sizeof(tag.strIconPath)-1);
+			strncpy(tag.strThumbnailPath,rec_img.c_str(),sizeof(tag.strThumbnailPath)-1);
+		}
+
+		// duration
+		if(epgData.HasMember("duration") && !epgData["duration"].IsNull()){
+			string rec_dur = epgData["duration"].GetString();
+			tag.iDuration = stoi(rec_dur) * 60;
+		}
+
+        // iSeriesNumber
+        if(epgData.HasMember("season") && !epgData["season"].IsNull()){
+        	tag.iSeriesNumber            = stoi(epgData["season"].GetString());
+        }
+
+        // episodeNumber
+        if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
+        	tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
+        }
+
+        // episodeName
+        if(epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull()){
+        	string rec_episodename =  epgData["episodeTitle"].GetString();
+        	strncpy(tag.strEpisodeName,rec_episodename.c_str(),sizeof(tag.strEpisodeName)-1);
+        }
+
+		// year
+		if(epgData.HasMember("year") && !epgData["year"].IsNull()){
+			string rec_year = epgData["year"].GetString();
+			tag.iYear = stoi(rec_year);
+		}
+
+		// get recording time
+		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
+			// set startTime -- "2019-01-20T15:40:00+0100"
+			string e_startTime = recordingsArray[i]["startTime"].GetString();
+			struct tm stm;
+			strptime(e_startTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &stm);
+			time_t rec_t = mktime(&stm);  // t is now your desired time_t
+			tag.recordingTime = rec_t;
+		}
+
+		// get plot
+		if (epgData.HasMember("description") && !epgData["description"].IsNull()) {
+			string rec_plot = epgData["description"].GetString();
+			strncpy(tag.strPlot,rec_plot.c_str(),sizeof(tag.strPlot)-1);
+		}
+
+		PVR->TransferRecordingEntry(handle, &tag);
+	}
+	return PVR_ERROR_NO_ERROR;
 }
 
 std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 {
-  return "";
+	ApiLogin();
+
+	string recording_id = recording.strRecordingId;
+	XBMC->Log(LOG_DEBUG, "play recording -> %s", recording_id.c_str());
+
+	string rec_resp = HttpGet(
+			"https://recording.waipu.tv/api/recordings/" + recording_id);
+	XBMC->Log(LOG_DEBUG, "recording resp -> %s", rec_resp.c_str());
+
+	Document recordingDoc;
+	recordingDoc.Parse(rec_resp.c_str());
+	XBMC->Log(LOG_DEBUG, "[recording] streams");
+	// check if streams there
+	if(!recordingDoc.HasMember("streamingDetails") || !recordingDoc["streamingDetails"].HasMember("streams")){
+		return "";
+	}
+
+	const Value& streamsArray = recordingDoc["streamingDetails"]["streams"];
+	XBMC->Log(LOG_DEBUG, "[recordings] size: %i;", streamsArray.Size());
+
+	for (SizeType i = 0; i < streamsArray.Size(); i++) {
+		XBMC->Log(LOG_DEBUG, "[stream] get entry: %i;", i);
+		string protocol = streamsArray[i]["protocol"].GetString();
+		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", i);
+		if(protocol == "MPEG_DASH"){
+			string href = streamsArray[i]["href"].GetString();
+			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href);
+			return href;
+		}
+	}
+	return "";
 }
 
 int WaipuData::GetTimersAmount(void)

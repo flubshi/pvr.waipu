@@ -171,7 +171,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsTV              = true;
   pCapabilities->bSupportsRadio           = false;
   pCapabilities->bSupportsChannelGroups   = false;
-  pCapabilities->bSupportsRecordings      = false;
+  pCapabilities->bSupportsRecordings      = true;
   pCapabilities->bSupportsRecordingsUndelete = false;
   pCapabilities->bSupportsTimers          = false;
   pCapabilities->bSupportsRecordingsRename = false;
@@ -297,7 +297,7 @@ void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCo
 
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel, PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount)
 {
-	string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId);
+  string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId);
   XBMC->Log(LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
@@ -337,12 +337,25 @@ int GetRecordingsAmount(bool deleted)
 
 PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  if (m_data)
+	  return m_data->GetRecordings(handle, deleted);
+
+  return PVR_ERROR_SERVER_ERROR;
 }
 
 PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording, PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+	XBMC->Log(LOG_DEBUG, "[recordings] play it...");
+
+	string strUrl = m_data->GetRecordingURL(*recording);
+	if (strUrl.empty()){
+		return PVR_ERROR_FAILED;
+	}
+	*iPropertiesCount = 0;
+	setStreamProperties(properties, iPropertiesCount, strUrl);
+	setStreamProperty(properties, iPropertiesCount, PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
+
+	return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
