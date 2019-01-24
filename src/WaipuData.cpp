@@ -587,7 +587,7 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 	for (SizeType i = 0; i < streamsArray.Size(); i++) {
 		XBMC->Log(LOG_DEBUG, "[stream] get entry: %i;", i);
 		string protocol = streamsArray[i]["protocol"].GetString();
-		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", i);
+		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", protocol);
 		if(protocol == "MPEG_DASH"){
 			string href = streamsArray[i]["href"].GetString();
 			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href);
