@@ -13,7 +13,8 @@ find_package(RapidJSON 1.0.2 REQUIRED)
 
 include_directories(${kodiplatform_INCLUDE_DIRS}
                     ${p8-platform_INCLUDE_DIRS}
-                    ${KODI_INCLUDE_DIR})
+                    ${KODI_INCLUDE_DIR}
+                    ${RAPIDJSON_INCLUDE_DIRS})
 
 set(DEPLIBS ${kodiplatform_LIBRARIES}
             ${p8-platform_LIBRARIES})
