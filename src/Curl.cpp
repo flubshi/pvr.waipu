@@ -39,9 +39,9 @@ void Curl::ResetHeaders()
   headers.clear();
 }
 
-string Curl::Delete(const string& url, int &statusCode)
+string Curl::Delete(const string& url, const string& postData, int &statusCode)
 {
-  return Request("DELETE", url, "", statusCode);
+  return Request("DELETE", url, postData, statusCode);
 }
 
 string Curl::Get(const string& url, int &statusCode)

@@ -9,7 +9,7 @@ class Curl
 public:
   Curl();
   virtual ~Curl();
-  virtual std::string Delete(const std::string& url, int &statusCode);
+  virtual std::string Delete(const std::string& url, const std::string& postData, int &statusCode);
   virtual std::string Get(const std::string& url, int &statusCode);
   virtual std::string Post(const std::string& url, const std::string& postData,
       int &statusCode);

@@ -221,8 +221,6 @@ PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time
     return m_data->GetEPGForChannel(handle, channel, iStart, iEnd);
 
   return PVR_ERROR_SERVER_ERROR;
-
-  //return PVR_ERROR_NOT_IMPLEMENTED;
 }
 
 PVR_ERROR IsEPGTagPlayable(const EPG_TAG*, bool* bIsPlayable)
@@ -358,6 +356,12 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording, PVR_NAMED
 	return PVR_ERROR_NO_ERROR;
 }
 
+PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) {
+	if(m_data)
+		return m_data->DeleteRecording(recording);
+	return PVR_ERROR_FAILED;
+}
+
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
   /* TODO: Implement this to get support for the timer features introduced with PVR API 1.9.7 */
@@ -397,7 +401,6 @@ void CloseLiveStream(void) {}
 int ReadLiveStream(unsigned char *pBuffer, unsigned int iBufferSize) { return 0; }
 long long SeekLiveStream(long long iPosition, int iWhence /* = SEEK_SET */) { return -1; }
 long long LengthLiveStream(void) { return -1; }
-PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR RenameRecording(const PVR_RECORDING &recording) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingPlayCount(const PVR_RECORDING &recording, int count) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int lastplayedposition) { return PVR_ERROR_NOT_IMPLEMENTED; }

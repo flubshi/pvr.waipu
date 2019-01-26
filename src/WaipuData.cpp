@@ -37,9 +37,9 @@ string WaipuData::HttpGet(const string& url)
   return HttpRequest("GET", url, "");
 }
 
-string WaipuData::HttpDelete(const string& url)
+string WaipuData::HttpDelete(const string& url, const string& postData)
 {
-  return HttpRequest("DELETE", url, "");
+  return HttpRequest("DELETE", url, postData);
 }
 
 string WaipuData::HttpPost(const string& url, const string& postData)
@@ -54,6 +54,10 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
 
   curl.AddHeader("User-Agent","waipu-2.29.2-c0f220b-9446 (Android 8.1.0)");
   curl.AddHeader("Authorization","Bearer "+m_apiToken.accessToken);
+
+  if (action == "DELETE"){
+	  curl.AddHeader("Content-Type","application/vnd.waipu.pvr-recording-ids-v2+json");
+  }
 
   string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
 
@@ -71,7 +75,7 @@ string WaipuData::HttpRequestToCurl(Curl &curl, const string& action, const stri
   }
   else if (action == "DELETE")
   {
-    content = curl.Delete(url, statusCode);
+    content = curl.Delete(url, postData, statusCode);
   }
   else
   {
@@ -569,8 +573,7 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 	string recording_id = recording.strRecordingId;
 	XBMC->Log(LOG_DEBUG, "play recording -> %s", recording_id.c_str());
 
-	string rec_resp = HttpGet(
-			"https://recording.waipu.tv/api/recordings/" + recording_id);
+	string rec_resp = HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id);
 	XBMC->Log(LOG_DEBUG, "recording resp -> %s", rec_resp.c_str());
 
 	Document recordingDoc;
@@ -595,6 +598,20 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 		}
 	}
 	return "";
+}
+
+PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING &recording){
+
+	if(recording.strRecordingId && ApiLogin()){
+		string recording_id = recording.strRecordingId;
+		string request_data = "{\"ids\":[\""+recording_id+"\"]}";
+		XBMC->Log(LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
+		//string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data);
+		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data);
+		XBMC->Log(LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
+		return PVR_ERROR_NO_ERROR;
+	}
+	return PVR_ERROR_FAILED;
 }
 
 int WaipuData::GetTimersAmount(void)

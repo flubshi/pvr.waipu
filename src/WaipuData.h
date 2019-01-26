@@ -71,6 +71,7 @@ public:
   int GetRecordingsAmount(bool bDeleted);
   PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool bDeleted);
   std::string GetRecordingURL(const PVR_RECORDING &recording);
+  PVR_ERROR DeleteRecording(const PVR_RECORDING &recording);
 
   int GetTimersAmount(void);
   PVR_ERROR GetTimers(ADDON_HANDLE handle);
@@ -79,7 +80,7 @@ public:
 
 protected:
   string HttpGet(const string& url);
-  string HttpDelete(const string& url);
+  string HttpDelete(const string& url, const string& postData);
   string HttpPost(const string& url, const string& postData);
   string HttpRequest(const string& action, const string& url, const string& postData);
   string HttpRequestToCurl(Curl &curl, const string& action, const string& url, const string& postData, int &statusCode);
