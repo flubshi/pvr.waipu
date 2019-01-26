@@ -398,7 +398,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         // generate a unique boadcast id
         string epg_bid = epgArray[i]["id"].GetString();
 		WaipuEPGMappingEntry map;
-		map.iBroadcastId = i;
+		map.iBroadcastId = i+1;
 		map.iUniqueChannelId = myChannel.iUniqueId;
 		map.waipuId =epg_bid;
 		m_epgIdMapping.push_back(map);
@@ -512,7 +512,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// set image
 		if(epgData.HasMember("previewImages") && epgData["previewImages"].IsArray()){
 			string rec_img = epgData["previewImages"][0].GetString();
-			rec_img = rec_img + "?width=300&height=200";
+			rec_img = rec_img + "?width=300&height=300";
 			strncpy(tag.strIconPath,rec_img.c_str(),sizeof(tag.strIconPath)-1);
 			strncpy(tag.strThumbnailPath,rec_img.c_str(),sizeof(tag.strThumbnailPath)-1);
 		}
@@ -606,7 +606,6 @@ PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING &recording){
 		string recording_id = recording.strRecordingId;
 		string request_data = "{\"ids\":[\""+recording_id+"\"]}";
 		XBMC->Log(LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
-		//string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data);
 		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data);
 		XBMC->Log(LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
 		return PVR_ERROR_NO_ERROR;
