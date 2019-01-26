@@ -590,10 +590,10 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 	for (SizeType i = 0; i < streamsArray.Size(); i++) {
 		XBMC->Log(LOG_DEBUG, "[stream] get entry: %i;", i);
 		string protocol = streamsArray[i]["protocol"].GetString();
-		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", protocol);
+		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", protocol.c_str());
 		if(protocol == "MPEG_DASH"){
 			string href = streamsArray[i]["href"].GetString();
-			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href);
+			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
 			return href;
 		}
 	}
@@ -602,11 +602,11 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 
 PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING &recording){
 
-	if(recording.strRecordingId && ApiLogin()){
+	if(ApiLogin()){
 		string recording_id = recording.strRecordingId;
 		string request_data = "{\"ids\":[\""+recording_id+"\"]}";
 		XBMC->Log(LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
-		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data);
+		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data.c_str());
 		XBMC->Log(LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
 		return PVR_ERROR_NO_ERROR;
 	}
