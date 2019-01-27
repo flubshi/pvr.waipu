@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.0.4"
+  version="0.0.5"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@</requires>
@@ -26,6 +26,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.0.5 Implement Timers (list and delete)
 - 0.0.4 Implement deletion of recordings
 - 0.0.3 Implement recordings
 - 0.0.2 First release: EPG and Live TV

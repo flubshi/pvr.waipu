@@ -640,7 +640,104 @@ int WaipuData::GetTimersAmount(void)
 
 PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+	if (!ApiLogin()) {
+		return PVR_ERROR_SERVER_ERROR;
+	}
+
+    string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings");
+    XBMC->Log(LOG_DEBUG, "[Timers] %s",jsonRecordings.c_str());
+
+    jsonRecordings = "{\"result\": "+jsonRecordings+"}";
+
+    Document recordingsDoc;
+    recordingsDoc.Parse(jsonRecordings.c_str());
+    XBMC->Log(LOG_DEBUG, "[recordings] iterate entries");
+
+    const Value& recordingsArray = recordingsDoc["result"];
+    XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsArray.Size());
+
+	for (SizeType i = 0; i < recordingsArray.Size(); i++) {
+
+		XBMC->Log(LOG_DEBUG, "[timers] get entry: %i;", i);
+
+		// skip not FINISHED entries
+		string status = recordingsArray[i]["status"].GetString();
+		if(status != "SCHEDULED") continue;
+
+		// new tag
+		PVR_TIMER tag;
+		memset(&tag, 0, sizeof(PVR_TIMER));
+
+		tag.state = PVR_TIMER_STATE_SCHEDULED;
+		tag.iLifetime = 0;
+		tag.iTimerType = 0;
+
+		// set recording id
+		string rec_id = recordingsArray[i]["id"].GetString();
+		tag.iClientIndex = stoi(rec_id);
+		tag.iEpgUid = stoi(rec_id);
+
+		// channelid
+		if(recordingsArray[i].HasMember("channelId") && !recordingsArray[i]["channelId"].IsNull()){
+			string channel_name = recordingsArray[i]["channelId"].GetString();
+			  for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
+			  {
+			    WaipuChannel &myChannel = m_channels.at(iChannelPtr);
+			    if (myChannel.waipuID != channel_name)
+			      continue;
+			    tag.iClientChannelUid = myChannel.iUniqueId;
+			    break;
+			  }
+		}
+
+		const Value& epgData = recordingsArray[i]["epgData"];
+
+		// set recording title
+		string rec_title = epgData["title"].GetString();
+		XBMC->Log(LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
+		strncpy(tag.strTitle,rec_title.c_str(),sizeof(tag.strTitle)-1);
+
+		// get recording time
+		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
+			// set startTime -- "2019-01-20T15:40:00+0100"
+			string e_startTime = recordingsArray[i]["startTime"].GetString();
+			struct tm stm;
+			strptime(e_startTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &stm);
+			time_t rec_t = mktime(&stm);  // t is now your desired time_t
+			tag.startTime = rec_t;
+		}
+		if (recordingsArray[i].HasMember("stopTime") && !recordingsArray[i]["stopTime"].IsNull()) {
+			// set startTime -- "2019-01-20T15:40:00+0100"
+			string e_endTime = recordingsArray[i]["stopTime"].GetString();
+			struct tm etm;
+			strptime(e_endTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
+			time_t rec_et = mktime(&etm);  // t is now your desired time_t
+			tag.endTime = rec_et;
+		}
+
+		// get plot
+		if (epgData.HasMember("description") && !epgData["description"].IsNull()) {
+			string rec_plot = epgData["description"].GetString();
+			strncpy(tag.strSummary,rec_plot.c_str(),sizeof(tag.strSummary)-1);
+		}
+
+		PVR->TransferTimerEntry(handle, &tag);
+	}
+	return PVR_ERROR_NO_ERROR;
+
+}
+
+PVR_ERROR WaipuData::DeleteTimer(const PVR_TIMER &timer){
+
+	if(ApiLogin()){
+		int timer_id = timer.iClientIndex;
+		string request_data = "{\"ids\":[\""+to_string(timer_id)+"\"]}";
+		XBMC->Log(LOG_DEBUG, "[delete timer] req: %s;", request_data.c_str());
+		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data.c_str());
+		XBMC->Log(LOG_DEBUG, "[delete timer] response: %s;", deleted.c_str());
+		return PVR_ERROR_NO_ERROR;
+	}
+	return PVR_ERROR_FAILED;
 }
 
 std::string WaipuData::GetLicense(void){

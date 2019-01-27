@@ -173,7 +173,7 @@ PVR_ERROR GetAddonCapabilities(PVR_ADDON_CAPABILITIES* pCapabilities)
   pCapabilities->bSupportsChannelGroups   = false;
   pCapabilities->bSupportsRecordings      = true;
   pCapabilities->bSupportsRecordingsUndelete = false;
-  pCapabilities->bSupportsTimers          = false;
+  pCapabilities->bSupportsTimers          = true;
   pCapabilities->bSupportsRecordingsRename = false;
   pCapabilities->bSupportsRecordingsLifetimeChange = false;
   pCapabilities->bSupportsDescrambleInfo = false;
@@ -362,10 +362,23 @@ PVR_ERROR DeleteRecording(const PVR_RECORDING &recording) {
 	return PVR_ERROR_FAILED;
 }
 
+void addTimerType(PVR_TIMER_TYPE types[], int idx, int attributes)
+{
+  types[idx].iId = static_cast<unsigned int>(idx + 1);
+  types[idx].iAttributes = static_cast<unsigned int>(attributes);
+  types[idx].iPrioritiesSize = 0;
+  types[idx].iLifetimesSize = 0;
+  types[idx].iPreventDuplicateEpisodesSize = 0;
+  types[idx].iRecordingGroupSize = 0;
+  types[idx].iMaxRecordingsSize = 0;
+}
+
 PVR_ERROR GetTimerTypes(PVR_TIMER_TYPE types[], int *size)
 {
-  /* TODO: Implement this to get support for the timer features introduced with PVR API 1.9.7 */
-  return PVR_ERROR_NOT_IMPLEMENTED;
+	  addTimerType(types, 0, PVR_TIMER_TYPE_SUPPORTS_READONLY_DELETE | PVR_TIMER_TYPE_SUPPORTS_CHANNELS);
+	  //addTimerType(types, 1, PVR_TIMER_TYPE_IS_MANUAL);
+	  *size = 1;
+	  return PVR_ERROR_NO_ERROR;
 }
 
 int GetTimersAmount(void)
@@ -375,7 +388,16 @@ int GetTimersAmount(void)
 
 PVR_ERROR GetTimers(ADDON_HANDLE handle)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+	  if (m_data)
+		  return m_data->GetTimers(handle);
+
+	  return PVR_ERROR_SERVER_ERROR;
+}
+
+PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) {
+	if(m_data)
+		return m_data->DeleteTimer(timer);
+	return PVR_ERROR_FAILED;
 }
 
 PVR_ERROR CallMenuHook(const PVR_MENUHOOK& menuhook, const PVR_MENUHOOK_DATA&)
@@ -407,7 +429,6 @@ PVR_ERROR SetRecordingLastPlayedPosition(const PVR_RECORDING &recording, int las
 int GetRecordingLastPlayedPosition(const PVR_RECORDING &recording) { return -1; }
 PVR_ERROR GetRecordingEdl(const PVR_RECORDING&, PVR_EDL_ENTRY[], int*) { return PVR_ERROR_NOT_IMPLEMENTED; };
 PVR_ERROR AddTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
-PVR_ERROR DeleteTimer(const PVR_TIMER &timer, bool bForceDelete) { return PVR_ERROR_NOT_IMPLEMENTED; }
 PVR_ERROR UpdateTimer(const PVR_TIMER &timer) { return PVR_ERROR_NOT_IMPLEMENTED; }
 void DemuxAbort(void) {}
 DemuxPacket* DemuxRead(void) { return NULL; }
