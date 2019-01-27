@@ -245,11 +245,11 @@ bool WaipuData::LoadChannelData(void)
         continue;
       }
       if(icon_sd.size() > 0){
-    	  channel.strIconPath =  icon_sd + "?width=300&height=300" ;
+    	  channel.strIconPath =  icon_sd + "?width=256&height=256" ;
       }else if(icon_hd.size() > 0){
-    	  channel.strIconPath =  icon_hd + "?width=300&height=300" ;
+    	  channel.strIconPath =  icon_hd + "?width=256&height=256" ;
       }else if(icon.size() > 0){
-    	  channel.strIconPath =  icon + "?width=300&height=300" ;
+    	  channel.strIconPath =  icon + "?width=256&height=256" ;
       }
       XBMC->Log(LOG_DEBUG, "[channel] link: %s -> %s;",rel.c_str(),href.c_str());
     }
@@ -512,7 +512,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// set image
 		if(epgData.HasMember("previewImages") && epgData["previewImages"].IsArray()){
 			string rec_img = epgData["previewImages"][0].GetString();
-			rec_img = rec_img + "?width=300&height=300";
+			rec_img = rec_img + "?width=256&height=256";
 			strncpy(tag.strIconPath,rec_img.c_str(),sizeof(tag.strIconPath)-1);
 			strncpy(tag.strThumbnailPath,rec_img.c_str(),sizeof(tag.strThumbnailPath)-1);
 		}
