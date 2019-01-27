@@ -457,6 +457,12 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         	tag.iYear            = stoi(epgArray[i]["year"].GetString());
         }
 
+        // genre
+        if(epgArray[i].HasMember("genreDisplayName") && !epgArray[i]["genreDisplayName"].IsNull()){
+        	tag.iGenreType = EPG_GENRE_USE_STRING;
+        	tag.strGenreDescription = epgArray[i]["genreDisplayName"].GetString();
+        }
+
         PVR->TransferEpgEntry(handle, &tag);
       }
   }
@@ -502,6 +508,13 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// set recording id
 		string rec_id = recordingsArray[i]["id"].GetString();
 		strncpy(tag.strRecordingId,rec_id.c_str(),sizeof(tag.strRecordingId)-1);
+
+        // playcount
+		if(recordingsArray[i].HasMember("watched") && recordingsArray[i]["watched"].GetBool()){
+			tag.iPlayCount = 1;
+		}else{
+			tag.iPlayCount = 0;
+		}
 
 		const Value& epgData = recordingsArray[i]["epgData"];
 
@@ -560,6 +573,13 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 			string rec_plot = epgData["description"].GetString();
 			strncpy(tag.strPlot,rec_plot.c_str(),sizeof(tag.strPlot)-1);
 		}
+
+        // genre
+        if(epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull()){
+        	tag.iGenreType = EPG_GENRE_USE_STRING;
+        	string genre = epgData["genreDisplayName"].GetString();
+        	strncpy(tag.strGenreDescription,genre.c_str(),sizeof(tag.strGenreDescription)-1);
+        }
 
 		PVR->TransferRecordingEntry(handle, &tag);
 	}
