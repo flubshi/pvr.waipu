@@ -112,24 +112,25 @@ std::string Utils::ReadFile(const std::string& path)
 
 time_t Utils::StringToTime(std::string timeString)
 {
-  struct tm tm{};
+  // expected timeString "2019-01-20T15:40:00+0100"
+  struct tm etm;
+  strptime(timeString.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
+  return mktime(&etm);
+}
 
-  int year, month, day, h, m, s, tzh, tzm;
-  if (sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%d%d", &year, &month, &day, &h,
-      &m, &s, &tzh) < 7)
-  {
-    tzh = 0;
-  }
-  tzm = tzh % 100;
-  tzh = tzh / 100;
+std::string Utils::ltrim(std::string str, const std::string chars)
+{
+    str.erase(0, str.find_first_not_of(chars));
+    return str;
+}
 
-  tm.tm_year = year - 1900;
-  tm.tm_mon = month - 1;
-  tm.tm_mday = day;
-  tm.tm_hour = h - tzh;
-  tm.tm_min = m - tzm;
-  tm.tm_sec = s;
-
-  time_t ret = timegm(&tm);
-  return ret;
+int Utils::GetIDDirty(std::string str)
+{
+	// str= "_1035245078" or = "misc-rand-int-whatever"
+	if (str.rfind("_", 0) == 0) {
+		// str starts with _
+		return stoi(ltrim(str));
+	}
+	// dirty shit begins here:
+	return rand() % 99999 + 1;
 }

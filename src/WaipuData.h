@@ -94,5 +94,5 @@ private:
   std::string                      password;
   WaipuApiToken                    m_apiToken;
   std::string					   m_license;
-  std::vector<WaipuEPGMappingEntry> m_epgIdMapping;
+  //std::vector<WaipuEPGMappingEntry> m_epgIdMapping;
 };

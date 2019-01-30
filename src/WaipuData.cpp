@@ -208,7 +208,7 @@ bool WaipuData::LoadChannelData(void)
 
   for (SizeType i = 0; i < channelArray.Size(); i++) {
     WaipuChannel channel;
-    channel.iUniqueId = i;//our id
+    channel.iUniqueId = i+1;//our id; defined here
     XBMC->Log(LOG_DEBUG, "[channel] id: %i;",channel.iUniqueId);
     
     string waipuid = channelArray[i]["id"].GetString();
@@ -269,9 +269,6 @@ int WaipuData::GetChannelsAmount(void)
 
 PVR_ERROR WaipuData::GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
-	if (!ApiLogin()){
-		return PVR_ERROR_SERVER_ERROR;
-	}
 	for (const auto& channel : m_channels) {
 		if (!bRadio) {
 			PVR_CHANNEL xbmcChannel;
@@ -388,7 +385,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
     XBMC->Log(LOG_DEBUG, "[epg] size: %i;",epgArray.Size());
 
     for (SizeType i = 0; i < epgArray.Size(); i++) {
-    	//epgArray[i]["id"].GetString();
 
     	XBMC->Log(LOG_DEBUG, "[epg] get entry: %i;",i);
 
@@ -397,12 +393,10 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
         // generate a unique boadcast id
         string epg_bid = epgArray[i]["id"].GetString();
-		WaipuEPGMappingEntry map;
-		map.iBroadcastId = i+1;
-		map.iUniqueChannelId = myChannel.iUniqueId;
-		map.waipuId =epg_bid;
-		m_epgIdMapping.push_back(map);
-        tag.iUniqueBroadcastId = map.iBroadcastId;
+        XBMC->Log(LOG_DEBUG, "[epg] epg_bid: %s;",epg_bid.c_str());
+        int dirtyID = Utils::GetIDDirty(epg_bid);
+        XBMC->Log(LOG_DEBUG, "[epg] epg_bid dirty: %i;",dirtyID);
+        tag.iUniqueBroadcastId = dirtyID;
 
         // channel ID
         tag.iUniqueChannelId   = myChannel.iUniqueId;
@@ -411,19 +405,13 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         tag.strTitle           = epgArray[i]["title"].GetString();
         XBMC->Log(LOG_DEBUG, "[epg] title: %s;",epgArray[i]["title"].GetString());
 
-        // set startTime -- "2019-01-20T15:40:00+0100"
-        string e_startTime = epgArray[i]["startTime"].GetString();
-        struct tm stm;
-        strptime(e_startTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &stm);
-        time_t start_t = mktime(&stm);  // t is now your desired time_t
-        tag.startTime          = start_t;
+        // set startTime
+        string startTime = epgArray[i]["startTime"].GetString();
+        tag.startTime          = Utils::StringToTime(startTime);
 
-        // set endTime -- "2019-01-20T15:40:00+0100"
-        string e_endTime = epgArray[i]["stopTime"].GetString();
-        struct tm etm;
-        strptime(e_endTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
-        time_t end_t = mktime(&etm);  // t is now your desired time_t
-        tag.endTime          = end_t;
+        // set endTime
+        string endTime = epgArray[i]["stopTime"].GetString();
+        tag.endTime          = Utils::StringToTime(endTime);
 
         //tag.strPlotOutline     = myTag.strPlotOutline.c_str();
 
@@ -560,12 +548,8 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 
 		// get recording time
 		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
-			// set startTime -- "2019-01-20T15:40:00+0100"
-			string e_startTime = recordingsArray[i]["startTime"].GetString();
-			struct tm stm;
-			strptime(e_startTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &stm);
-			time_t rec_t = mktime(&stm);  // t is now your desired time_t
-			tag.recordingTime = rec_t;
+	        string recordingTime = recordingsArray[i]["startTime"].GetString();
+	        tag.recordingTime          = Utils::StringToTime(recordingTime);
 		}
 
 		// get plot
@@ -580,6 +564,13 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
         	string genre = epgData["genreDisplayName"].GetString();
         	strncpy(tag.strGenreDescription,genre.c_str(),sizeof(tag.strGenreDescription)-1);
         }
+
+        // epg mapping
+		if (epgData.HasMember("id") && !epgData["id"].IsNull()) {
+			string epg_id = epgData["id"].GetString();
+			int dirtyID = Utils::GetIDDirty(epg_id);
+			tag.iEpgEventId = dirtyID;
+		}
 
 		PVR->TransferRecordingEntry(handle, &tag);
 	}
@@ -699,26 +690,25 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 		// get recording time
 		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
-			// set startTime -- "2019-01-20T15:40:00+0100"
-			string e_startTime = recordingsArray[i]["startTime"].GetString();
-			struct tm stm;
-			strptime(e_startTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &stm);
-			time_t rec_t = mktime(&stm);  // t is now your desired time_t
-			tag.startTime = rec_t;
+	        string startTime = recordingsArray[i]["startTime"].GetString();
+	        tag.startTime          = Utils::StringToTime(startTime);
 		}
 		if (recordingsArray[i].HasMember("stopTime") && !recordingsArray[i]["stopTime"].IsNull()) {
-			// set startTime -- "2019-01-20T15:40:00+0100"
-			string e_endTime = recordingsArray[i]["stopTime"].GetString();
-			struct tm etm;
-			strptime(e_endTime.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
-			time_t rec_et = mktime(&etm);  // t is now your desired time_t
-			tag.endTime = rec_et;
+	        string endTime = recordingsArray[i]["stopTime"].GetString();
+	        tag.endTime          = Utils::StringToTime(endTime);
 		}
 
 		// get plot
 		if (epgData.HasMember("description") && !epgData["description"].IsNull()) {
 			string rec_plot = epgData["description"].GetString();
 			strncpy(tag.strSummary,rec_plot.c_str(),sizeof(tag.strSummary)-1);
+		}
+
+        // epg mapping
+		if (epgData.HasMember("id") && !epgData["id"].IsNull()) {
+			string epg_id = epgData["id"].GetString();
+			int dirtyID = Utils::GetIDDirty(epg_id);
+			tag.iEpgUid = dirtyID;
 		}
 
 		PVR->TransferTimerEntry(handle, &tag);
