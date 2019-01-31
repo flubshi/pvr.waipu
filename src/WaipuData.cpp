@@ -202,35 +202,34 @@ bool WaipuData::LoadChannelData(void)
   Document channelsDoc;
   channelsDoc.Parse(jsonChannels.c_str());
   XBMC->Log(LOG_DEBUG, "[channels] iterate channels");
+  XBMC->Log(LOG_DEBUG, "[channels] size: %i;",channelsDoc["result"].Size());
 
-  const Value& channelArray = channelsDoc["result"];
-  XBMC->Log(LOG_DEBUG, "[channels] size: %i;",channelArray.Size());
-
-  for (SizeType i = 0; i < channelArray.Size(); i++) {
-    WaipuChannel channel;
-    channel.iUniqueId = i+1;//our id; defined here
-    XBMC->Log(LOG_DEBUG, "[channel] id: %i;",channel.iUniqueId);
+  int i = 0;
+  for (const auto& channel : channelsDoc["result"].GetArray()) {
+	++i;
+    WaipuChannel waipu_channel;
+    waipu_channel.iUniqueId = i;
+    XBMC->Log(LOG_DEBUG, "[channel] id: %i;",waipu_channel.iUniqueId);
     
-    string waipuid = channelArray[i]["id"].GetString();
-    channel.waipuID = waipuid; // waipu[id]
-    XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;",channel.waipuID.c_str());
+    string waipuid = channel["id"].GetString();
+    waipu_channel.waipuID = waipuid; // waipu[id]
+    XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;",waipu_channel.waipuID.c_str());
 
-    int orderindex = channelArray[i]["orderIndex"].GetUint();
-    channel.iChannelNumber = orderindex; //waipu[orderIndex]
-    XBMC->Log(LOG_DEBUG, "[channel] channelnr: %i;",channel.iChannelNumber);
+    int orderindex = channel["orderIndex"].GetUint();
+    waipu_channel.iChannelNumber = orderindex; //waipu[orderIndex]
+    XBMC->Log(LOG_DEBUG, "[channel] channelnr: %i;",waipu_channel.iChannelNumber);
 
-    string displayName = channelArray[i]["displayName"].GetString();
-    channel.strChannelName = displayName; //waipu[displayName]
-    XBMC->Log(LOG_DEBUG, "[channel] name: %s;",channel.strChannelName.c_str());
+    string displayName = channel["displayName"].GetString();
+    waipu_channel.strChannelName = displayName; //waipu[displayName]
+    XBMC->Log(LOG_DEBUG, "[channel] name: %s;",waipu_channel.strChannelName.c_str());
 
     //iterate links
-    const Value& linksArray = channelArray[i]["links"];
     string icon = "";
     string icon_sd = "";
     string icon_hd = "";
-    for (SizeType j = 0; j < linksArray.Size(); j++) {
-      string rel = linksArray[j]["rel"].GetString();
-      string href = linksArray[j]["href"].GetString();
+    for (const auto& link : channel["links"].GetArray()) {
+      string rel = link["rel"].GetString();
+      string href = link["href"].GetString();
       if(rel == "icon"){
     	 icon = href;
     	 continue;
@@ -241,19 +240,19 @@ bool WaipuData::LoadChannelData(void)
     	  icon_hd = href;
       	  continue;
       }else if(rel == "livePlayout"){
-        channel.strStreamURL = href; // waipu[links][rel=livePlayout]
+    	  waipu_channel.strStreamURL = href; // waipu[links][rel=livePlayout]
         continue;
       }
       if(icon_sd.size() > 0){
-    	  channel.strIconPath =  icon_sd + "?width=256&height=256" ;
+    	  waipu_channel.strIconPath =  icon_sd + "?width=256&height=256" ;
       }else if(icon_hd.size() > 0){
-    	  channel.strIconPath =  icon_hd + "?width=256&height=256" ;
+    	  waipu_channel.strIconPath =  icon_hd + "?width=256&height=256" ;
       }else if(icon.size() > 0){
-    	  channel.strIconPath =  icon + "?width=256&height=256" ;
+    	  waipu_channel.strIconPath =  icon + "?width=256&height=256" ;
       }
       XBMC->Log(LOG_DEBUG, "[channel] link: %s -> %s;",rel.c_str(),href.c_str());
     }
-    m_channels.push_back(channel);
+    m_channels.push_back(waipu_channel);
   }
 
   /* load EPG entries */
@@ -313,14 +312,12 @@ string WaipuData::GetChannelStreamUrl(int uniqueId)
       XBMC->Log(LOG_DEBUG, "Stream result: %s", jsonStreams.c_str()); 
       streamsDoc.Parse(jsonStreams.c_str());
 
-      const Value& streamsArray = streamsDoc["streams"];
-      for (SizeType i = 0; i < streamsArray.Size(); i++) {        
-        string protocol = streamsArray[i]["protocol"].GetString();
+      for (const auto& stream : streamsDoc["streams"].GetArray()) {
+        string protocol = stream["protocol"].GetString();
         XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;",protocol.c_str());
         if(protocol == "mpeg-dash"){
-          const Value& linksArray = streamsArray[i]["links"];
-          for (SizeType j = 0; j < linksArray.Size(); j++) {  
-            string href = linksArray[j]["href"].GetString();
+          for (const auto& link : stream["links"].GetArray()) {
+            string href = link["href"].GetString();
             XBMC->Log(LOG_DEBUG, "[stream] href: %s;",href.c_str());
             if(!href.empty()){
               return href;
@@ -381,18 +378,15 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
     epgDoc.Parse(jsonEpg.c_str());
     XBMC->Log(LOG_DEBUG, "[epg] iterate entries");
 
-    const Value& epgArray = epgDoc["result"];
-    XBMC->Log(LOG_DEBUG, "[epg] size: %i;",epgArray.Size());
+    XBMC->Log(LOG_DEBUG, "[epg] size: %i;",epgDoc["result"].Size());
 
-    for (SizeType i = 0; i < epgArray.Size(); i++) {
-
-    	XBMC->Log(LOG_DEBUG, "[epg] get entry: %i;",i);
+    for (const auto& epgData : epgDoc["result"].GetArray()) {
 
         EPG_TAG tag;
         memset(&tag, 0, sizeof(EPG_TAG));
 
         // generate a unique boadcast id
-        string epg_bid = epgArray[i]["id"].GetString();
+        string epg_bid = epgData["id"].GetString();
         XBMC->Log(LOG_DEBUG, "[epg] epg_bid: %s;",epg_bid.c_str());
         int dirtyID = Utils::GetIDDirty(epg_bid);
         XBMC->Log(LOG_DEBUG, "[epg] epg_bid dirty: %i;",dirtyID);
@@ -402,23 +396,23 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         tag.iUniqueChannelId   = myChannel.iUniqueId;
 
         // set title
-        tag.strTitle           = epgArray[i]["title"].GetString();
-        XBMC->Log(LOG_DEBUG, "[epg] title: %s;",epgArray[i]["title"].GetString());
+        tag.strTitle           = epgData["title"].GetString();
+        XBMC->Log(LOG_DEBUG, "[epg] title: %s;",epgData["title"].GetString());
 
         // set startTime
-        string startTime = epgArray[i]["startTime"].GetString();
+        string startTime = epgData["startTime"].GetString();
         tag.startTime          = Utils::StringToTime(startTime);
 
         // set endTime
-        string endTime = epgArray[i]["stopTime"].GetString();
+        string endTime = epgData["stopTime"].GetString();
         tag.endTime          = Utils::StringToTime(endTime);
 
         //tag.strPlotOutline     = myTag.strPlotOutline.c_str();
 
         // set description
-        if(epgArray[i].HasMember("description") && !epgArray[i]["description"].IsNull()){
-        	tag.strPlot            = epgArray[i]["description"].GetString();
-        	XBMC->Log(LOG_DEBUG, "[epg] description: %s;",epgArray[i]["description"].GetString());
+        if(epgData.HasMember("description") && !epgData["description"].IsNull()){
+        	tag.strPlot            = epgData["description"].GetString();
+        	XBMC->Log(LOG_DEBUG, "[epg] description: %s;",epgData["description"].GetString());
         }
 
         //tag.strIconPath        = myTag.strIconPath.c_str();
@@ -426,29 +420,29 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
         tag.iFlags             = EPG_TAG_FLAG_UNDEFINED;
 
         // iSeriesNumber
-        if(epgArray[i].HasMember("season") && !epgArray[i]["season"].IsNull()){
-        	tag.iSeriesNumber            = stoi(epgArray[i]["season"].GetString());
+        if(epgData.HasMember("season") && !epgData["season"].IsNull()){
+        	tag.iSeriesNumber            = stoi(epgData["season"].GetString());
         }
 
         // episodeNumber
-        if(epgArray[i].HasMember("episode") && !epgArray[i]["episode"].IsNull()){
-        	tag.iEpisodeNumber            = stoi(epgArray[i]["episode"].GetString());
+        if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
+        	tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
         }
 
         // episodeName
-        if(epgArray[i].HasMember("episodeTitle") && !epgArray[i]["episodeTitle"].IsNull()){
-        	tag.strEpisodeName            = epgArray[i]["episodeTitle"].GetString();
+        if(epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull()){
+        	tag.strEpisodeName            = epgData["episodeTitle"].GetString();
         }
 
         // year
-        if(epgArray[i].HasMember("year") && !epgArray[i]["year"].IsNull()){
-        	tag.iYear            = stoi(epgArray[i]["year"].GetString());
+        if(epgData.HasMember("year") && !epgData["year"].IsNull()){
+        	tag.iYear            = stoi(epgData["year"].GetString());
         }
 
         // genre
-        if(epgArray[i].HasMember("genreDisplayName") && !epgArray[i]["genreDisplayName"].IsNull()){
+        if(epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull()){
         	tag.iGenreType = EPG_GENRE_USE_STRING;
-        	tag.strGenreDescription = epgArray[i]["genreDisplayName"].GetString();
+        	tag.strGenreDescription = epgData["genreDisplayName"].GetString();
         }
 
         PVR->TransferEpgEntry(handle, &tag);
@@ -477,15 +471,12 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
     recordingsDoc.Parse(jsonRecordings.c_str());
     XBMC->Log(LOG_DEBUG, "[recordings] iterate entries");
 
-    const Value& recordingsArray = recordingsDoc["result"];
-    XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsArray.Size());
+    XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsDoc["result"].Size());
 
-	for (SizeType i = 0; i < recordingsArray.Size(); i++) {
-
-		XBMC->Log(LOG_DEBUG, "[recording] get entry: %i;", i);
+	for (const auto& recording : recordingsDoc["result"].GetArray()) {
 
 		// skip not FINISHED entries
-		string status = recordingsArray[i]["status"].GetString();
+		string status = recording["status"].GetString();
 		if(status != "FINISHED") continue;
 
 		// new tag
@@ -494,17 +485,17 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		tag.bIsDeleted = false;
 
 		// set recording id
-		string rec_id = recordingsArray[i]["id"].GetString();
+		string rec_id = recording["id"].GetString();
 		strncpy(tag.strRecordingId,rec_id.c_str(),sizeof(tag.strRecordingId)-1);
 
         // playcount
-		if(recordingsArray[i].HasMember("watched") && recordingsArray[i]["watched"].GetBool()){
+		if(recording.HasMember("watched") && recording["watched"].GetBool()){
 			tag.iPlayCount = 1;
 		}else{
 			tag.iPlayCount = 0;
 		}
 
-		const Value& epgData = recordingsArray[i]["epgData"];
+		const Value& epgData = recording["epgData"];
 
 		// set recording title
 		string rec_title = epgData["title"].GetString();
@@ -547,8 +538,8 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		}
 
 		// get recording time
-		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
-	        string recordingTime = recordingsArray[i]["startTime"].GetString();
+		if (recording.HasMember("startTime") && !recording["startTime"].IsNull()) {
+	        string recordingTime = recording["startTime"].GetString();
 	        tag.recordingTime          = Utils::StringToTime(recordingTime);
 		}
 
@@ -595,15 +586,13 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 		return "";
 	}
 
-	const Value& streamsArray = recordingDoc["streamingDetails"]["streams"];
-	XBMC->Log(LOG_DEBUG, "[recordings] size: %i;", streamsArray.Size());
+	XBMC->Log(LOG_DEBUG, "[recordings] size: %i;", recordingDoc["streamingDetails"]["streams"].Size());
 
-	for (SizeType i = 0; i < streamsArray.Size(); i++) {
-		XBMC->Log(LOG_DEBUG, "[stream] get entry: %i;", i);
-		string protocol = streamsArray[i]["protocol"].GetString();
+	for (const auto& stream : recordingDoc["streamingDetails"]["streams"].GetArray()) {
+		string protocol = stream["protocol"].GetString();
 		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", protocol.c_str());
 		if(protocol == "MPEG_DASH"){
-			string href = streamsArray[i]["href"].GetString();
+			string href = stream["href"].GetString();
 			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
 			return href;
 		}
@@ -640,19 +629,15 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
     jsonRecordings = "{\"result\": "+jsonRecordings+"}";
 
-    Document recordingsDoc;
-    recordingsDoc.Parse(jsonRecordings.c_str());
-    XBMC->Log(LOG_DEBUG, "[recordings] iterate entries");
+    Document timersDoc;
+    timersDoc.Parse(jsonRecordings.c_str());
+    XBMC->Log(LOG_DEBUG, "[timers] iterate entries");
+    XBMC->Log(LOG_DEBUG, "[timers] size: %i;",timersDoc["result"].Size());
 
-    const Value& recordingsArray = recordingsDoc["result"];
-    XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsArray.Size());
-
-	for (SizeType i = 0; i < recordingsArray.Size(); i++) {
-
-		XBMC->Log(LOG_DEBUG, "[timers] get entry: %i;", i);
+	for (const auto& timer : timersDoc["result"].GetArray()) {
 
 		// skip not FINISHED entries
-		string status = recordingsArray[i]["status"].GetString();
+		string status = timer["status"].GetString();
 		if(status != "SCHEDULED") continue;
 
 		// new tag
@@ -664,13 +649,13 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 		tag.iTimerType = 0;
 
 		// set recording id
-		string rec_id = recordingsArray[i]["id"].GetString();
+		string rec_id = timer["id"].GetString();
 		tag.iClientIndex = stoi(rec_id);
 		tag.iEpgUid = stoi(rec_id);
 
 		// channelid
-		if(recordingsArray[i].HasMember("channelId") && !recordingsArray[i]["channelId"].IsNull()){
-			string channel_name = recordingsArray[i]["channelId"].GetString();
+		if(timer.HasMember("channelId") && !timer["channelId"].IsNull()){
+			string channel_name = timer["channelId"].GetString();
 			  for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
 			  {
 			    WaipuChannel &myChannel = m_channels.at(iChannelPtr);
@@ -681,7 +666,7 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 			  }
 		}
 
-		const Value& epgData = recordingsArray[i]["epgData"];
+		const Value& epgData = timer["epgData"];
 
 		// set recording title
 		string rec_title = epgData["title"].GetString();
@@ -689,12 +674,12 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 		strncpy(tag.strTitle,rec_title.c_str(),sizeof(tag.strTitle)-1);
 
 		// get recording time
-		if (recordingsArray[i].HasMember("startTime") && !recordingsArray[i]["startTime"].IsNull()) {
-	        string startTime = recordingsArray[i]["startTime"].GetString();
+		if (timer.HasMember("startTime") && !timer["startTime"].IsNull()) {
+	        string startTime = timer["startTime"].GetString();
 	        tag.startTime          = Utils::StringToTime(startTime);
 		}
-		if (recordingsArray[i].HasMember("stopTime") && !recordingsArray[i]["stopTime"].IsNull()) {
-	        string endTime = recordingsArray[i]["stopTime"].GetString();
+		if (timer.HasMember("stopTime") && !timer["stopTime"].IsNull()) {
+	        string endTime = timer["stopTime"].GetString();
 	        tag.endTime          = Utils::StringToTime(endTime);
 		}
 
