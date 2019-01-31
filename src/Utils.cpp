@@ -115,7 +115,7 @@ time_t Utils::StringToTime(std::string timeString)
   // expected timeString "2019-01-20T15:40:00+0100"
   struct tm etm;
   strptime(timeString.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
-  return mktime(&etm);
+  return mktime(&etm)+3600; // +60*60 = dirty hack
 }
 
 std::string Utils::ltrim(std::string str, const std::string chars)
