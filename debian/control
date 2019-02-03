@@ -1,0 +1,22 @@
+Source: kodi-pvr-waipu
+Priority: extra
+Maintainer: Nobody <nobody@kodi.tv>
+Build-Depends: debhelper (>= 9.0.0), cmake,
+               libkodiplatform-dev (>= 18.0.0), kodi-addon-dev
+Standards-Version: 3.9.2
+Section: libs
+
+Package: kodi-pvr-waipu
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: waipu PVR for Kodi
+ waipu PVR for Kodi
+
+Package: kodi-pvr-waipu-dbg
+Section: debug
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: debug symbols for waipu PVR for Kodi
+ debug symbols for waipu PVR for Kodi
+
