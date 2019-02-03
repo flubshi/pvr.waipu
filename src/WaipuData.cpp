@@ -52,7 +52,7 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
   Curl curl;
   int statusCode;
 
-  curl.AddHeader("User-Agent","waipu-2.29.2-c0f220b-9446 (Android 8.1.0)");
+  curl.AddHeader("User-Agent",WAIPU_USER_AGENT);
   curl.AddHeader("Authorization","Bearer "+m_apiToken.accessToken);
 
   if (action == "DELETE"){
@@ -102,30 +102,26 @@ bool WaipuData::ApiLogin()
     return true;
   }
   
-  string jsonString;
+  ostringstream dataStream;
   if(m_apiToken.expires < currTime && false){
     // refresh API token
-    XBMC->Log(LOG_DEBUG, "[login check] refresh API token");
-    // NOT IMPLEMENTED YET
+    dataStream << "refresh_token=" << Utils::UrlEncode(m_apiToken.refreshToken) << "&grant_type=refresh_token";
+    XBMC->Log(LOG_DEBUG, "[login check] Login-Request (refresh): %s;", dataStream.str().c_str());
   }else{
     // get API by login user/pw
-    XBMC->Log(LOG_DEBUG, "[login check] get API by login user/pw");
-
-    ostringstream dataStream;
-    // {'username': username, 'password': password, 'grant_type': 'password'}
     dataStream << "username=" << Utils::UrlEncode(username) << "&password=" << Utils::UrlEncode(password) << "&grant_type=password";
-    XBMC->Log(LOG_DEBUG, "[login check] Login-Request: %s;", dataStream.str().c_str());
-
-    // curl request
-    Curl curl;
-    int statusCode;
-    curl.AddHeader("User-Agent","waipu-2.29.2-c0f220b-9446 (Android 8.1.0)");
-    curl.AddHeader("Authorization","Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
-    curl.AddHeader("Content-Type","application/x-www-form-urlencoded");
-    jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token", dataStream.str(), statusCode);
-
-    XBMC->Log(LOG_DEBUG, "[login check] Login-response: %s;", jsonString.c_str());
+    XBMC->Log(LOG_DEBUG, "[login check] Login-Request (user/pw): %s;", dataStream.str().c_str());
   }
+  string jsonString;
+  // curl request
+  Curl curl;
+  int statusCode;
+  curl.AddHeader("User-Agent",WAIPU_USER_AGENT);
+  curl.AddHeader("Authorization","Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
+  curl.AddHeader("Content-Type","application/x-www-form-urlencoded");
+  jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token", dataStream.str(), statusCode);
+
+  XBMC->Log(LOG_DEBUG, "[login check] Login-response: %s;", jsonString.c_str());
 
   if(!jsonString.empty()){
     Document doc;
@@ -173,6 +169,7 @@ WaipuData::WaipuData(const string& user, const string& pass)
 WaipuData::~WaipuData(void)
 {
   m_channels.clear();
+  m_apiToken = {};
 }
 
 bool WaipuData::LoadChannelData(void)
@@ -500,6 +497,8 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// set recording title
 		string rec_title = epgData["title"].GetString();
 		strncpy(tag.strTitle,rec_title.c_str(),sizeof(tag.strTitle)-1);
+		// set folder; test
+		strncpy(tag.strDirectory,rec_title.c_str(),sizeof(tag.strTitle)-1);
 
 		// set image
 		if(epgData.HasMember("previewImages") && epgData["previewImages"].IsArray()){
@@ -646,7 +645,7 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 		tag.state = PVR_TIMER_STATE_SCHEDULED;
 		tag.iLifetime = 0;
-		tag.iTimerType = 0;
+		tag.iTimerType = 1; // not the best way to do it...
 
 		// set recording id
 		string rec_id = timer["id"].GetString();
