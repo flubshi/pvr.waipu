@@ -57,6 +57,8 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
 
   if (action == "DELETE"){
 	  curl.AddHeader("Content-Type","application/vnd.waipu.pvr-recording-ids-v2+json");
+  }else{
+	  curl.AddHeader("Content-Type","application/vnd.waipu.start-recording-v2+json");
   }
 
   string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
@@ -607,6 +609,7 @@ PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING &recording){
 		XBMC->Log(LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
 		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data.c_str());
 		XBMC->Log(LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
+		PVR->TriggerRecordingUpdate();
 		return PVR_ERROR_NO_ERROR;
 	}
 	return PVR_ERROR_FAILED;
@@ -709,7 +712,25 @@ PVR_ERROR WaipuData::DeleteTimer(const PVR_TIMER &timer){
 		XBMC->Log(LOG_DEBUG, "[delete timer] req: %s;", request_data.c_str());
 		string deleted = HttpDelete("https://recording.waipu.tv/api/recordings",request_data.c_str());
 		XBMC->Log(LOG_DEBUG, "[delete timer] response: %s;", deleted.c_str());
+		PVR->TriggerTimerUpdate();
 		return PVR_ERROR_NO_ERROR;
+	}
+	return PVR_ERROR_FAILED;
+}
+
+PVR_ERROR WaipuData::AddTimer(const PVR_TIMER &timer){
+
+	if(ApiLogin()){
+		// {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
+		for(const auto& channel : m_channels){
+			if(channel.iUniqueId != timer.iClientChannelUid)
+				continue;
+			string postData = "{\"programId\":\"_"+to_string(timer.iEpgUid)+"\",\"channelId\":\""+channel.waipuID+"\""+"}";
+			string recordResp = HttpPost("https://recording.waipu.tv/api/recordings",postData);
+			XBMC->Log(LOG_DEBUG, "[add timer] response: %s;", recordResp.c_str());
+			PVR->TriggerTimerUpdate();
+			return PVR_ERROR_NO_ERROR;
+		}
 	}
 	return PVR_ERROR_FAILED;
 }

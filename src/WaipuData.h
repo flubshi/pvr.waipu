@@ -82,6 +82,7 @@ public:
   int GetTimersAmount(void);
   PVR_ERROR GetTimers(ADDON_HANDLE handle);
   PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
+  PVR_ERROR AddTimer(const PVR_TIMER &timer);
 
   std::string GetLicense(void);
 
