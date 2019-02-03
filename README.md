@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=master)](https://travis-ci.org/flubshi/pvr.waipu)
 
 # waipu PVR
-waipu PVR client addon for [Kodi] (http://kodi.tv)
+waipu PVR client addon for [Kodi](http://kodi.tv)
 
 ## Build instructions
 
@@ -15,5 +15,5 @@ waipu PVR client addon for [Kodi] (http://kodi.tv)
 
 ##### Useful links
 
-* [Kodi's PVR user support] (http://forum.kodi.tv/forumdisplay.php?fid=167)
-* [Kodi's PVR development support] (http://forum.kodi.tv/forumdisplay.php?fid=136)
+* [Kodi's PVR user support](http://forum.kodi.tv/forumdisplay.php?fid=167)
+* [Kodi's PVR development support](http://forum.kodi.tv/forumdisplay.php?fid=136)
