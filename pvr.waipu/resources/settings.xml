@@ -3,5 +3,7 @@
     <category label="37201">
 		<setting id="username" type="text" label="37202" default="" />
 		<setting id="password" type="text" option="hidden" label="37203" default="" />
+		<setting type="sep"/>
+		<setting label="37204" type="labelenum" id="protocol" values="MPEG_DASH|HLS"/>
 	</category>
 </settings>

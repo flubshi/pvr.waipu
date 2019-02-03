@@ -44,6 +44,7 @@ std::string g_strClientPath           = "";
 
 std::string waipuUsername;
 std::string waipuPassword;
+std::string protocol;
 
 CHelper_libXBMC_addon *XBMC           = NULL;
 CHelper_libXBMC_pvr   *PVR            = NULL;
@@ -63,6 +64,10 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("password", &buffer))
   {
     waipuPassword = buffer;
+  }
+  if (XBMC->GetSetting("protocol", &buffer))
+  {
+    protocol = buffer;
   }
   XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -246,28 +251,38 @@ void setStreamProperty(PVR_NAMED_VALUE* properties, unsigned int* propertiesCoun
 
 void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCount, const std::string& url)
 {
-  bool streamType = false;
+	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
+	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] url: %s",url.c_str());
+	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
 
-  // get widevine license
-  string license = m_data->GetLicense();
+  if(protocol == "MPEG_DASH"){
+	  // MPEG DASH
+	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] dash");
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", "mpd");
+	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
 
-  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
-  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
-  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", "mpd");
-  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, streamType ? "application/x-mpegURL" : "application/xml+dash");
+	  // get widevine license
+	  string license = m_data->GetLicense();
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.license_type", "com.widevine.alpha");
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.license_key", "https://drm.wpstr.tv/license-proxy-widevine/cenc/|Content-Type=text%2Fxml&x-dt-custom-data="+license+"|R{SSM}|JBlicense");
 
-  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.license_type", "com.widevine.alpha");
-  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.license_key", "https://drm.wpstr.tv/license-proxy-widevine/cenc/|Content-Type=text%2Fxml&x-dt-custom-data="+license+"|R{SSM}|JBlicense");
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
+  }else{
+	  // HLS
+	  protocol = "HLS";
+	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] hls");
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", "hls");
+	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
 
-  if (!streamType)
-  {
-    setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
+	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
   }
 }
 
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel, PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount)
 {
-  string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId);
+
+  string protocol_fix = protocol == "MPEG_DASH" ? "mpeg-dash" : "hls";
+  string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId, protocol_fix);
   XBMC->Log(LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
@@ -317,7 +332,7 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording, PVR_NAMED
 {
 	XBMC->Log(LOG_DEBUG, "[recordings] play it...");
 
-	string strUrl = m_data->GetRecordingURL(*recording);
+	string strUrl = m_data->GetRecordingURL(*recording, protocol);
 	if (strUrl.empty()){
 		return PVR_ERROR_FAILED;
 	}

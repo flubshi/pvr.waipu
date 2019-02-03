@@ -25,3 +25,7 @@ msgstr ""
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr ""
+
+msgctxt "#37204"
+msgid "Protocol"
+msgstr ""

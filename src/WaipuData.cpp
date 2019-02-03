@@ -285,7 +285,7 @@ PVR_ERROR WaipuData::GetChannels(ADDON_HANDLE handle, bool bRadio)
 	return PVR_ERROR_NO_ERROR;
 }
 
-string WaipuData::GetChannelStreamUrl(int uniqueId)
+string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
 {
 
   for (const auto& thisChannel : m_channels)
@@ -310,9 +310,9 @@ string WaipuData::GetChannelStreamUrl(int uniqueId)
       streamsDoc.Parse(jsonStreams.c_str());
 
       for (const auto& stream : streamsDoc["streams"].GetArray()) {
-        string protocol = stream["protocol"].GetString();
-        XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;",protocol.c_str());
-        if(protocol == "mpeg-dash"){
+        string c_protocol = stream["protocol"].GetString();
+        XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;",c_protocol.c_str());
+        if(c_protocol == protocol){
           for (const auto& link : stream["links"].GetArray()) {
             string href = link["href"].GetString();
             XBMC->Log(LOG_DEBUG, "[stream] href: %s;",href.c_str());
@@ -567,7 +567,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 	return PVR_ERROR_NO_ERROR;
 }
 
-std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
+std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording, const string& protocol)
 {
 	ApiLogin();
 
@@ -588,9 +588,9 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording)
 	XBMC->Log(LOG_DEBUG, "[recordings] size: %i;", recordingDoc["streamingDetails"]["streams"].Size());
 
 	for (const auto& stream : recordingDoc["streamingDetails"]["streams"].GetArray()) {
-		string protocol = stream["protocol"].GetString();
-		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", protocol.c_str());
-		if(protocol == "MPEG_DASH"){
+		string current_protocol = stream["protocol"].GetString();
+		XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", current_protocol.c_str());
+		if(current_protocol == protocol){
 			string href = stream["href"].GetString();
 			XBMC->Log(LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
 			return href;

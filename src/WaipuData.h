@@ -70,13 +70,13 @@ public:
   PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
   PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
 
-  virtual string GetChannelStreamUrl(int uniqueId);
+  virtual string GetChannelStreamUrl(int uniqueId, const string& protocol);
 
   PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
 
   int GetRecordingsAmount(bool bDeleted);
   PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool bDeleted);
-  std::string GetRecordingURL(const PVR_RECORDING &recording);
+  std::string GetRecordingURL(const PVR_RECORDING &recording, const string& protocol);
   PVR_ERROR DeleteRecording(const PVR_RECORDING &recording);
 
   int GetTimersAmount(void);
