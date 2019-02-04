@@ -128,6 +128,10 @@ bool WaipuData::ApiLogin()
   if(!jsonString.empty()){
     Document doc;
     doc.Parse(jsonString.c_str());
+    if(doc.GetParseError()){
+    	XBMC->Log(LOG_ERROR, "[Login] ERROR: error while parsing json");
+    	return false;
+    }
     
     m_apiToken.accessToken = doc["access_token"].GetString();
     XBMC->Log(LOG_DEBUG, "[login check] accessToken: %s;", m_apiToken.accessToken.c_str());
@@ -200,6 +204,10 @@ bool WaipuData::LoadChannelData(void)
   XBMC->Log(LOG_DEBUG, "[channels] parse channels");
   Document channelsDoc;
   channelsDoc.Parse(jsonChannels.c_str());
+  if(channelsDoc.GetParseError()){
+  	XBMC->Log(LOG_ERROR, "[LoadChannelData] ERROR: error while parsing json");
+  	return PVR_ERROR_SERVER_ERROR;
+  }
   XBMC->Log(LOG_DEBUG, "[channels] iterate channels");
   XBMC->Log(LOG_DEBUG, "[channels] size: %i;",channelsDoc["result"].Size());
 
@@ -310,6 +318,10 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
       Document streamsDoc;
       XBMC->Log(LOG_DEBUG, "Stream result: %s", jsonStreams.c_str()); 
       streamsDoc.Parse(jsonStreams.c_str());
+      if(streamsDoc.GetParseError()){
+      	XBMC->Log(LOG_ERROR, "[GetChannelStreamURL] ERROR: error while parsing json");
+      	return "";
+      }
 
       for (const auto& stream : streamsDoc["streams"].GetArray()) {
         string c_protocol = stream["protocol"].GetString();
@@ -375,6 +387,10 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
     Document epgDoc;
     epgDoc.Parse(jsonEpg.c_str());
+    if(epgDoc.GetParseError()){
+    	XBMC->Log(LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
+    	return PVR_ERROR_SERVER_ERROR;
+    }
     XBMC->Log(LOG_DEBUG, "[epg] iterate entries");
 
     XBMC->Log(LOG_DEBUG, "[epg] size: %i;",epgDoc["result"].Size());
@@ -468,6 +484,10 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 
     Document recordingsDoc;
     recordingsDoc.Parse(jsonRecordings.c_str());
+    if(recordingsDoc.GetParseError()){
+    	XBMC->Log(LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
+    	return PVR_ERROR_SERVER_ERROR;
+    }
     XBMC->Log(LOG_DEBUG, "[recordings] iterate entries");
 
     XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsDoc["result"].Size());
@@ -581,6 +601,10 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording, const str
 
 	Document recordingDoc;
 	recordingDoc.Parse(rec_resp.c_str());
+    if(recordingDoc.GetParseError()){
+    	XBMC->Log(LOG_ERROR, "[getRecordingURL] ERROR: error while parsing json");
+    	return "";
+    }
 	XBMC->Log(LOG_DEBUG, "[recording] streams");
 	// check if streams there
 	if(!recordingDoc.HasMember("streamingDetails") || !recordingDoc["streamingDetails"].HasMember("streams")){
@@ -633,6 +657,10 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
     Document timersDoc;
     timersDoc.Parse(jsonRecordings.c_str());
+    if(timersDoc.GetParseError()){
+    	XBMC->Log(LOG_ERROR, "[timers] ERROR: error while parsing json");
+    	return PVR_ERROR_SERVER_ERROR;
+    }
     XBMC->Log(LOG_DEBUG, "[timers] iterate entries");
     XBMC->Log(LOG_DEBUG, "[timers] size: %i;",timersDoc["result"].Size());
 
