@@ -166,8 +166,6 @@ WaipuData::WaipuData(const string& user, const string& pass)
 
   username = user;
   password = pass;
-  //XBMC->Log(LOG_DEBUG, "[start] user: %s..", user.c_str());
-  //XBMC->Log(LOG_DEBUG, "[start] pass %s..", pass.c_str());
 
   LoadChannelData();
 }
@@ -261,9 +259,6 @@ bool WaipuData::LoadChannelData(void)
     }
     m_channels.push_back(waipu_channel);
   }
-
-  /* load EPG entries */
-
 
   return true;
 }
@@ -536,21 +531,21 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 			tag.iDuration = stoi(rec_dur) * 60;
 		}
 
-        // iSeriesNumber
-        if(epgData.HasMember("season") && !epgData["season"].IsNull()){
-        	tag.iSeriesNumber            = stoi(epgData["season"].GetString());
-        }
+		// iSeriesNumber
+		if(epgData.HasMember("season") && !epgData["season"].IsNull()){
+		  tag.iSeriesNumber            = stoi(epgData["season"].GetString());
+		}
 
-        // episodeNumber
-        if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
-        	tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
-        }
+		// episodeNumber
+		if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
+		  tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
+		}
 
-        // episodeName
-        if(epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull()){
-        	string rec_episodename =  epgData["episodeTitle"].GetString();
-        	strncpy(tag.strEpisodeName,rec_episodename.c_str(),sizeof(tag.strEpisodeName)-1);
-        }
+		// episodeName
+		if(epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull()){
+		  string rec_episodename =  epgData["episodeTitle"].GetString();
+		  strncpy(tag.strEpisodeName,rec_episodename.c_str(),sizeof(tag.strEpisodeName)-1);
+		}
 
 		// year
 		if(epgData.HasMember("year") && !epgData["year"].IsNull()){
@@ -570,12 +565,12 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 			strncpy(tag.strPlot,rec_plot.c_str(),sizeof(tag.strPlot)-1);
 		}
 
-        // genre
-        if(epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull()){
-        	tag.iGenreType = EPG_GENRE_USE_STRING;
-        	string genre = epgData["genreDisplayName"].GetString();
-        	strncpy(tag.strGenreDescription,genre.c_str(),sizeof(tag.strGenreDescription)-1);
-        }
+		// genre
+		if(epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull()){
+		  tag.iGenreType = EPG_GENRE_USE_STRING;
+		  string genre = epgData["genreDisplayName"].GetString();
+		  strncpy(tag.strGenreDescription,genre.c_str(),sizeof(tag.strGenreDescription)-1);
+		}
 
         // epg mapping
 		if (epgData.HasMember("id") && !epgData["id"].IsNull()) {
@@ -668,13 +663,16 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 		// skip not FINISHED entries
 		string status = timer["status"].GetString();
-		if(status != "SCHEDULED") continue;
+		if(status != "SCHEDULED" && status != "RECORDING") continue;
 
 		// new tag
 		PVR_TIMER tag;
 		memset(&tag, 0, sizeof(PVR_TIMER));
-
-		tag.state = PVR_TIMER_STATE_SCHEDULED;
+		if(status == "SCHEDULED"){
+			tag.state = PVR_TIMER_STATE_SCHEDULED;
+		}else if(status == "RECORDING"){
+			tag.state = PVR_TIMER_STATE_RECORDING;
+		}
 		tag.iLifetime = 0;
 		tag.iTimerType = 1; // not the best way to do it...
 
