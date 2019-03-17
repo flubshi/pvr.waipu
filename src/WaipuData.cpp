@@ -166,6 +166,7 @@ WaipuData::WaipuData(const string& user, const string& pass)
 
   username = user;
   password = pass;
+  m_recordings_count = 0;
 
   LoadChannelData();
 }
@@ -487,6 +488,8 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 
     XBMC->Log(LOG_DEBUG, "[recordings] size: %i;",recordingsDoc["result"].Size());
 
+    int recordings_count = 0;
+
 	for (const auto& recording : recordingsDoc["result"].GetArray()) {
 
 		// skip not FINISHED entries
@@ -579,8 +582,11 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 			tag.iEpgEventId = dirtyID;
 		}
 
+		++recordings_count;
 		PVR->TransferRecordingEntry(handle, &tag);
 	}
+	m_recordings_count = recordings_count;
+
 	return PVR_ERROR_NO_ERROR;
 }
 
@@ -659,11 +665,16 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
     XBMC->Log(LOG_DEBUG, "[timers] iterate entries");
     XBMC->Log(LOG_DEBUG, "[timers] size: %i;",timersDoc["result"].Size());
 
+    int recordings_count = 0;
+
 	for (const auto& timer : timersDoc["result"].GetArray()) {
 
 		// skip not FINISHED entries
 		string status = timer["status"].GetString();
-		if(status != "SCHEDULED" && status != "RECORDING") continue;
+		if(status != "SCHEDULED" && status != "RECORDING"){
+			++recordings_count;
+			continue;
+		}
 
 		// new tag
 		PVR_TIMER tag;
@@ -726,6 +737,13 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 		PVR->TransferTimerEntry(handle, &tag);
 	}
+
+	if(recordings_count != m_recordings_count){
+		// we detected another amount of recordings.
+		// tell kodi about it
+		PVR->TriggerRecordingUpdate();
+	}
+
 	return PVR_ERROR_NO_ERROR;
 
 }

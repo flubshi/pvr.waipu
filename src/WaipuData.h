@@ -101,4 +101,5 @@ private:
   std::string                      password;
   WaipuApiToken                    m_apiToken;
   std::string					   m_license;
+  int							   m_recordings_count;
 };
