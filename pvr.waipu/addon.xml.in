@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.0.8"
+  version="0.0.9"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@</requires>
@@ -11,8 +11,8 @@
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">waipu.tv PVR Client</summary>
     <summary lang="en_US">waipu.tv PVR Client</summary>
-    <description lang="de_DE">waipu.tv PVR Client</description>
-    <description lang="en_US">waipu.tv PVR Client</description>
+    <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
+    <description lang="en_US">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
     <platform>@PLATFORM@</platform>
       <license>GNU General Public License. Version 2, June 1991</license>
   <forum></forum>
@@ -26,6 +26,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.0.9 Improve handling of recordings, update user-agent, readme and description  
 - 0.0.8 Check for JSON parse errors
 - 0.0.7 Prepare for kodi binary repo
 - 0.0.6 Add timers, fixes
