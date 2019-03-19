@@ -31,7 +31,7 @@ using namespace std;
  * User Agent for HTTP Requests
  * Let's try to be honest, otherwise we have to fallback to "waipu-2.29.2-c0f220b-9446 (Android 8.1.0)"
  */
-static const std::string WAIPU_USER_AGENT = "kodi_pvr.waipu_plugin__see_github (Kodi 18.0)";
+static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 
 struct WaipuApiToken
 {
