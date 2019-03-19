@@ -167,6 +167,7 @@ WaipuData::WaipuData(const string& user, const string& pass)
   username = user;
   password = pass;
   m_recordings_count = 0;
+  m_active_recordings_update = false;
 
   LoadChannelData();
 }
@@ -472,6 +473,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 	if (!ApiLogin()) {
 		return PVR_ERROR_SERVER_ERROR;
 	}
+	m_active_recordings_update = true;
 
     string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings");
     XBMC->Log(LOG_DEBUG, "[recordings] %s",jsonRecordings.c_str());
@@ -586,6 +588,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		PVR->TransferRecordingEntry(handle, &tag);
 	}
 	m_recordings_count = recordings_count;
+	m_active_recordings_update = false;
 
 	return PVR_ERROR_NO_ERROR;
 }
@@ -738,9 +741,10 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 		PVR->TransferTimerEntry(handle, &tag);
 	}
 
-	if(recordings_count != m_recordings_count){
+	if(recordings_count != m_recordings_count && !m_active_recordings_update){
 		// we detected another amount of recordings.
 		// tell kodi about it
+		m_active_recordings_update = true;
 		PVR->TriggerRecordingUpdate();
 	}
 

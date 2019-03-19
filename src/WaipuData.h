@@ -102,4 +102,5 @@ private:
   WaipuApiToken                    m_apiToken;
   std::string					   m_license;
   int							   m_recordings_count;
+  bool							   m_active_recordings_update;
 };
