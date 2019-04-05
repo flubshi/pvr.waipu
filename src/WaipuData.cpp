@@ -215,16 +215,17 @@ bool WaipuData::LoadChannelData(void)
   for (const auto& channel : channelsDoc["result"].GetArray()) {
 	++i;
     WaipuChannel waipu_channel;
-    waipu_channel.iUniqueId = i;
-    XBMC->Log(LOG_DEBUG, "[channel] id: %i;",waipu_channel.iUniqueId);
     
+    int orderindex = channel["orderIndex"].GetUint();
+    waipu_channel.iUniqueId = orderindex+1; // this orderIndex is stable while the order in array depends on the sort order
+    XBMC->Log(LOG_DEBUG, "[channel] orderIndex/iUniqueId: %i;",waipu_channel.iUniqueId);
+
     string waipuid = channel["id"].GetString();
     waipu_channel.waipuID = waipuid; // waipu[id]
     XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;",waipu_channel.waipuID.c_str());
 
-    int orderindex = channel["orderIndex"].GetUint();
-    waipu_channel.iChannelNumber = orderindex; //waipu[orderIndex]
-    XBMC->Log(LOG_DEBUG, "[channel] channelnr: %i;",waipu_channel.iChannelNumber);
+    waipu_channel.iChannelNumber = i; // position
+    XBMC->Log(LOG_DEBUG, "[channel] position: %i;",waipu_channel.iChannelNumber);
 
     string displayName = channel["displayName"].GetString();
     waipu_channel.strChannelName = displayName; //waipu[displayName]
