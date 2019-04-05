@@ -19,4 +19,5 @@ public:
   static time_t StringToTime(std::string timeString);
   static std::string ltrim(std::string str, const std::string chars = "\t\n\v\f\r _");
   static int GetIDDirty(std::string str);
+  static int stoiDefault(std::string str, int i);
 };

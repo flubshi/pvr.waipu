@@ -433,12 +433,12 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
         // iSeriesNumber
         if(epgData.HasMember("season") && !epgData["season"].IsNull()){
-        	tag.iSeriesNumber            = stoi(epgData["season"].GetString());
+        	tag.iSeriesNumber            = Utils::stoiDefault(epgData["season"].GetString(), 0);
         }
 
         // episodeNumber
-        if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
-        	tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
+        if(epgData.HasMember("episode") && epgData["episode"].IsString()){
+        	tag.iEpisodeNumber            = Utils::stoiDefault(epgData["episode"].GetString(), 0);
         }
 
         // episodeName
@@ -448,7 +448,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
 
         // year
         if(epgData.HasMember("year") && !epgData["year"].IsNull()){
-        	tag.iYear            = stoi(epgData["year"].GetString());
+        	tag.iYear            = Utils::stoiDefault(epgData["year"].GetString(), 1970);
         }
 
         // genre
@@ -533,17 +533,17 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// duration
 		if(epgData.HasMember("duration") && !epgData["duration"].IsNull()){
 			string rec_dur = epgData["duration"].GetString();
-			tag.iDuration = stoi(rec_dur) * 60;
+			tag.iDuration = Utils::stoiDefault(rec_dur, 0) * 60;
 		}
 
 		// iSeriesNumber
 		if(epgData.HasMember("season") && !epgData["season"].IsNull()){
-		  tag.iSeriesNumber            = stoi(epgData["season"].GetString());
+		  tag.iSeriesNumber            = Utils::stoiDefault(epgData["season"].GetString(), 0);
 		}
 
 		// episodeNumber
 		if(epgData.HasMember("episode") && !epgData["episode"].IsNull()){
-		  tag.iEpisodeNumber            = stoi(epgData["episode"].GetString());
+		  tag.iEpisodeNumber            = Utils::stoiDefault(epgData["episode"].GetString(), 0);
 		}
 
 		// episodeName
@@ -555,7 +555,7 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 		// year
 		if(epgData.HasMember("year") && !epgData["year"].IsNull()){
 			string rec_year = epgData["year"].GetString();
-			tag.iYear = stoi(rec_year);
+			tag.iYear = Utils::stoiDefault(rec_year, 1970);
 		}
 
 		// get recording time
@@ -692,8 +692,8 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 		// set recording id
 		string rec_id = timer["id"].GetString();
-		tag.iClientIndex = stoi(rec_id);
-		tag.iEpgUid = stoi(rec_id);
+		tag.iClientIndex = Utils::stoiDefault(rec_id, 0);
+		tag.iEpgUid = Utils::stoiDefault(rec_id, 0);
 
 		// channelid
 		if(timer.HasMember("channelId") && !timer["channelId"].IsNull()){

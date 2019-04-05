@@ -134,3 +134,12 @@ int Utils::GetIDDirty(std::string str)
 	// dirty shit begins here:
 	return rand() % 99999 + 1;
 }
+
+int Utils::stoiDefault(std::string str, int i)
+{
+	try{
+		return stoi(str);
+	} catch (std::exception &e) {
+		return i;
+	}
+}
