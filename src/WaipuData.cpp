@@ -25,6 +25,8 @@
 #include "Base64.h"
 #include "rapidjson/document.h"
 #include <ctime>
+#include <algorithm>
+
 
 using namespace std;
 using namespace ADDON;
@@ -150,10 +152,23 @@ bool WaipuData::ApiLogin()
         jwt_doc.Parse(jwt_payload.c_str());
         string userHandle = jwt_doc["userHandle"].GetString();
         XBMC->Log(LOG_DEBUG, "[jwt] userHandle: %s", userHandle.c_str());
+        // generate the license
         string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", \"userId\" : \""+userHandle+"\"}";
         XBMC->Log(LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
         m_license = base64_encode(license_plain.c_str(),license_plain.length());
         XBMC->Log(LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
+        // get user channels
+        m_user_channels.clear();
+        for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["SD"].GetArray()) {
+        	string user_channel_s = user_channel.GetString();
+        	XBMC->Log(LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
+        	m_user_channels.push_back(user_channel_s);
+        }
+        for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["HD"].GetArray()) {
+        	string user_channel_s = user_channel.GetString();
+        	m_user_channels.push_back(user_channel_s);
+        	XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
+        }
     }
     return true;
   }
@@ -213,12 +228,16 @@ bool WaipuData::LoadChannelData(void)
 
   int i = 0;
   for (const auto& channel : channelsDoc["result"].GetArray()) {
+	string waipuid = channel["id"].GetString();
+	// check if channel is part of user channels:
+	if (find(m_user_channels.begin(), m_user_channels.end(), waipuid.c_str()) == m_user_channels.end())
+		continue;
+
 	++i;
     WaipuChannel waipu_channel;
     waipu_channel.iUniqueId = i;
     XBMC->Log(LOG_DEBUG, "[channel] id: %i;",waipu_channel.iUniqueId);
     
-    string waipuid = channel["id"].GetString();
     waipu_channel.waipuID = waipuid; // waipu[id]
     XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;",waipu_channel.waipuID.c_str());
 
