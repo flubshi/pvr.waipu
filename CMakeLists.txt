@@ -33,6 +33,9 @@ set(PVRWAIPU_HEADERS
                     src/client.h
                     src/WaipuData.h)
 
+addon_version(pvr.waipu IPTV)
+add_definitions(-DIPTV_VERSION=${IPTV_VERSION})
+
 build_addon(pvr.waipu PVRWAIPU DEPLIBS)
 
 include(CPack)
