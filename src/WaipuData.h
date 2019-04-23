@@ -42,9 +42,9 @@ struct WaipuApiToken
 
 struct WaipuChannel
 {
-  int                iUniqueId; //our id
+  int                iUniqueId; //waipu[orderIndex]
   string             waipuID; // waipu[id]
-  int                iChannelNumber; //waipu[orderIndex]
+  int                iChannelNumber; //position
   string             strChannelName; //waipu[displayName]
   string             strIconPath; // waipu[links][rel=iconlargehd]
   string             strStreamURL; // waipu[links][rel=livePlayout]
