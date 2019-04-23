@@ -241,7 +241,7 @@ bool WaipuData::LoadChannelData(void)
     waipu_channel.waipuID = waipuid; // waipu[id]
     XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;",waipu_channel.waipuID.c_str());
 
-    int orderindex = channel["orderIndex"].GetUint();
+    int orderindex = channel["orderIndex"].GetUint() + 1;
     waipu_channel.iUniqueId = orderindex; //waipu[orderIndex]
     XBMC->Log(LOG_DEBUG, "[channel] id: %i;",orderindex);
 
