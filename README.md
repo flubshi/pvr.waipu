@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=master)](https://travis-ci.org/flubshi/pvr.waipu)
+[![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=Leia)](https://travis-ci.org/flubshi/pvr.waipu)
 
 # waipu PVR
 waipu PVR client addon for [Kodi](http://kodi.tv)
