@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.1.0"
+  version="0.5.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@</requires>
@@ -26,6 +26,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.5.0 Update to PVR addon API v6.0.0
 - 0.1.0 adjust dst workaround; fix stoi
 - 0.0.9 Improve handling of recordings, update user-agent, readme and description  
 - 0.0.8 Check for JSON parse errors
