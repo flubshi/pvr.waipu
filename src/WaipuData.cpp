@@ -372,7 +372,7 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANN
   return PVR_ERROR_NOT_IMPLEMENTED;
 }
 
-PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd)
+PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd)
 {
   if (!ApiLogin()){
 	return PVR_ERROR_SERVER_ERROR;
@@ -380,7 +380,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &ch
   for (unsigned int iChannelPtr = 0; iChannelPtr < m_channels.size(); iChannelPtr++)
   {
     WaipuChannel &myChannel = m_channels.at(iChannelPtr);
-    if (myChannel.iUniqueId != (int) channel.iUniqueId)
+    if (myChannel.iUniqueId != iChannelUid)
       continue;
 
     char startTime[100];
