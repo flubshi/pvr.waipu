@@ -113,9 +113,25 @@ std::string Utils::ReadFile(const std::string& path)
 time_t Utils::StringToTime(std::string timeString)
 {
   // expected timeString "2019-01-20T15:40:00+0100"
-  struct tm etm;
-  strptime(timeString.c_str(), "%Y-%m-%dT%H:%M:%S%z", &etm);
-  return mktime(&etm)+0*3600; // +60*60 = dirty hack (0*=Summer, 1*=Winter)
+	struct tm tm { };
+
+	int year, month, day, h, m, s, tzh, tzm;
+	if (sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%d%d", &year, &month, &day,
+			&h, &m, &s, &tzh) < 7) {
+		tzh = 0;
+	}
+	tzm = tzh % 100;
+	tzh = tzh / 100;
+
+	tm.tm_year = year - 1900;
+	tm.tm_mon = month - 1;
+	tm.tm_mday = day;
+	tm.tm_hour = h - tzh;
+	tm.tm_min = m - tzm;
+	tm.tm_sec = s;
+
+	time_t ret = timegm(&tm);
+	return ret;
 }
 
 std::string Utils::ltrim(std::string str, const std::string chars)
