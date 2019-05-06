@@ -233,6 +233,15 @@ bool WaipuData::LoadChannelData(void)
 	if (find(m_user_channels.begin(), m_user_channels.end(), waipuid.c_str()) == m_user_channels.end())
 		continue;
 
+	// check if user has hidden this channel
+	if(channel.HasMember("properties") && channel["properties"].IsArray()){
+		bool skipChannel = false;
+		for(auto& prop : channel["properties"].GetArray())
+			skipChannel |= (prop.GetString() == string("UserSetHidden"));
+		if(skipChannel)
+			continue;
+	}
+
 	++i;
     WaipuChannel waipu_channel;
     waipu_channel.iChannelNumber = i; //position
