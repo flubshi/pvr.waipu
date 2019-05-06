@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.0.1"
+  version="1.0.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@</requires>
@@ -26,6 +26,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.0.2 Do not show hidden channels
 - 1.0.1 Code cleanup: remove usage of kodi-platform
 - 1.0.0 Fix windows build
 - 0.5.0 Update to PVR addon API v6.0.0
