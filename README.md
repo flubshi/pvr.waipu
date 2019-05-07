@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=Leia)](https://travis-ci.org/flubshi/pvr.waipu) [![Build status](https://ci.appveyor.com/api/projects/status/mak70bfs0bj78y53/branch/Matrix?svg=true)](https://ci.appveyor.com/project/flubshi/pvr-waipu/branch/Leia)
+[![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=Leia)](https://travis-ci.org/flubshi/pvr.waipu) [![Build status](https://ci.appveyor.com/api/projects/status/mak70bfs0bj78y53/branch/Matrix?svg=true)](https://ci.appveyor.com/project/flubshi/pvr-waipu/branch/Leia) [![Build Status](https://jenkins.kodi.tv/buildStatus/icon?job=flubshi%2Fpvr.waipu%2FLeia)](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/)
 
 # waipu PVR
 waipu PVR client addon for [Kodi](http://kodi.tv)
