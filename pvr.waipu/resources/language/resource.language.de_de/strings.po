@@ -26,6 +26,14 @@ msgctxt "#37204"
 msgid "Protocol"
 msgstr "Protokoll"
 
+msgctxt "#37205"
+msgid "Misc"
+msgstr "Sonstiges"
+
+msgctxt "#37206"
+msgid "Check requirements"
+msgstr "Überprüfe Anforderungen"
+
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr "Fehler: Login nicht möglich. Ungültiger Account!"
