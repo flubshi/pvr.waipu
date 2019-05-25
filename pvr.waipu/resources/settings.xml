@@ -4,6 +4,9 @@
 		<setting id="username" type="text" label="37202" default="" />
 		<setting id="password" type="text" option="hidden" label="37203" default="" />
 		<setting type="sep"/>
-		<setting label="37204" type="labelenum" id="protocol" values="MPEG_DASH|HLS" default="MPEG_DASH" />
+		<setting id="run_check" type="action" label="37206" action="RunScript(special://xbmc/addons/pvr.waipu/resources/check_requirements.py)" />
+		</category>
+	<category label="37205">
+		<setting id="protocol" type="labelenum" label="37204" values="MPEG_DASH|HLS" default="MPEG_DASH" />
 	</category>
 </settings>

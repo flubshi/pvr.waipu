@@ -26,6 +26,14 @@ msgctxt "#37204"
 msgid "Protocol"
 msgstr ""
 
+msgctxt "#37205"
+msgid "Misc"
+msgstr ""
+
+msgctxt "#37206"
+msgid "Check requirements"
+msgstr ""
+
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr ""
