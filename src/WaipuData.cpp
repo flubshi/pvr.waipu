@@ -278,15 +278,17 @@ bool WaipuData::LoadChannelData(void)
     	  waipu_channel.strStreamURL = href; // waipu[links][rel=livePlayout]
         continue;
       }
-      if(icon_sd.size() > 0){
-    	  waipu_channel.strIconPath =  icon_sd + "?width=256&height=256" ;
-      }else if(icon_hd.size() > 0){
-    	  waipu_channel.strIconPath =  icon_hd + "?width=256&height=256" ;
-      }else if(icon.size() > 0){
-    	  waipu_channel.strIconPath =  icon + "?width=256&height=256" ;
-      }
       XBMC->Log(LOG_DEBUG, "[channel] link: %s -> %s;",rel.c_str(),href.c_str());
     }
+    if(icon_sd.size() > 0){
+      waipu_channel.strIconPath =  icon_sd + "?width=256&height=256" ;
+    }else if(icon_hd.size() > 0){
+      waipu_channel.strIconPath =  icon_hd + "?width=256&height=256" ;
+    }else if(icon.size() > 0){
+      waipu_channel.strIconPath =  icon + "?width=256&height=256" ;
+    }
+    XBMC->Log(LOG_DEBUG, "[channel] selected channel logo: %s",waipu_channel.strIconPath.c_str());
+
     m_channels.push_back(waipu_channel);
   }
 
