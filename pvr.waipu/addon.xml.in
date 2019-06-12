@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.0.2"
+  version="1.0.3"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
-  <requires>@ADDON_DEPENDS@</requires>
+  <requires>@ADDON_DEPENDS@
+    <import addon="script.module.inputstreamhelper" version="0.3.0"/>
+    <import addon="script.module.requests" version="2.3.0"/>
+  </requires>
   <extension
     point="xbmc.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
@@ -26,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.0.3 Settings: Add check to verify requirements (widevine and network status)
 - 1.0.2 Do not show hidden channels
 - 1.0.1 Code cleanup: remove usage of kodi-platform
 - 1.0.0 Fix windows build
