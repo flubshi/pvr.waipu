@@ -96,7 +96,7 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
 
   XBMC->Log(LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
 
-  m_CurStatus     = ADDON_STATUS_UNKNOWN;
+  m_CurStatus     = ADDON_STATUS_NEED_SETTINGS;
   g_strUserPath   = pvrprops->strUserPath;
   g_strClientPath = pvrprops->strClientPath;
 
@@ -104,10 +104,12 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   waipuPassword = "";
   ADDON_ReadSettings();
 
-  m_data = new WaipuData(waipuUsername, waipuPassword);
+  if ( !waipuUsername.empty() && !waipuPassword.empty()){
+	  m_data = new WaipuData(waipuUsername, waipuPassword);
 
-  m_CurStatus = ADDON_STATUS_OK;
-  m_bCreated = true;
+	  m_CurStatus = ADDON_STATUS_OK;
+	  m_bCreated = true;
+  }
   return m_CurStatus;
 }
 
