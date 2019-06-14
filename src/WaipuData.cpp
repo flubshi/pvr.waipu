@@ -135,6 +135,12 @@ bool WaipuData::ApiLogin()
     	return false;
     }
     
+    if (doc.HasMember("error") && doc["error"] == "invalid_request")
+    {
+	XBMC->Log(LOG_ERROR, "[Login] ERROR: invalid credentials?");
+	return false;
+    }
+
     m_apiToken.accessToken = doc["access_token"].GetString();
     XBMC->Log(LOG_DEBUG, "[login check] accessToken: %s;", m_apiToken.accessToken.c_str());
     m_apiToken.refreshToken = doc["refresh_token"].GetString();
