@@ -89,11 +89,28 @@ string Curl::Request(const string& action, const string& url, const string& post
         entry.second.c_str());
   }
 
+  // we have to set "failonerror" to get error results
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "failonerror", "false");
+
   if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
   {
-    statusCode = 403; //Fake statusCode for now
+    statusCode = -1;
     return "";
   }
+
+  statusCode = 200;
+
+  // get the real statusCode
+  char *tmpCode = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  std::string tmpRespLine;
+  tmpRespLine = tmpCode != nullptr ? tmpCode : "";
+  vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
+  if (resp_protocol_parts.size() == 3){
+      statusCode = stoi(resp_protocol_parts[1].c_str());
+      XBMC->Log(LOG_DEBUG, "HTTP response code: %i.", statusCode);
+  }
+  XBMC->FreeString(tmpCode);
+
   int numValues;
   char **cookiesPtr = XBMC->GetFilePropertyValues(file,
       XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie", &numValues);
@@ -137,7 +154,6 @@ string Curl::Request(const string& action, const string& url, const string& post
   }
 
   XBMC->CloseFile(file);
-  statusCode = 200;
   return body;
 }
 
