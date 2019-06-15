@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.1.4"
+  version="0.1.5"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>
@@ -29,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.1.5 Improved error handling related to login problems (no network, invalid credentials)
 - 0.1.4 Internal: run channel icon selection only once per tv channel
 - 0.1.3 Settings: Add check to verify requirements (widevine and network status)
 - 0.1.2 Do not show hidden channels

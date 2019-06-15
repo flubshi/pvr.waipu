@@ -90,6 +90,11 @@ string WaipuData::HttpRequestToCurl(Curl &curl, const string& action, const stri
 }
 // END CURL helpers from zattoo addon
 
+WAIPU_LOGIN_STATUS WaipuData::GetLoginStatus()
+{
+	return m_login_status;
+}
+
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
@@ -103,6 +108,7 @@ bool WaipuData::ApiLogin()
   {
     // API token exists and is valid, more than x in future
     XBMC->Log(LOG_DEBUG, "[login check] old token still valid");
+    m_login_status = WAIPU_LOGIN_STATUS_OK;
     return true;
   }
   
@@ -119,19 +125,31 @@ bool WaipuData::ApiLogin()
   string jsonString;
   // curl request
   Curl curl;
-  int statusCode;
+  int statusCode = 0;
   curl.AddHeader("User-Agent",WAIPU_USER_AGENT);
   curl.AddHeader("Authorization","Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
   curl.AddHeader("Content-Type","application/x-www-form-urlencoded");
   jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token", dataStream.str(), statusCode);
 
-  XBMC->Log(LOG_DEBUG, "[login check] Login-response: %s;", jsonString.c_str());
+  XBMC->Log(LOG_DEBUG, "[login check] Login-response (HTTP %i): %s;", statusCode, jsonString.c_str());
+
+  if (jsonString.length() == 0 && statusCode == -1){
+	  // no network connection?!
+      m_login_status = WAIPU_LOGIN_STATUS_NO_NETWORK;
+      XBMC->Log(LOG_ERROR, "[Login] debug - no network");
+      return false;
+  }else if(statusCode == 401){
+      // invalid credentials
+      m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+      return false;
+  }
 
   if(!jsonString.empty()){
     Document doc;
     doc.Parse(jsonString.c_str());
     if(doc.GetParseError()){
     	XBMC->Log(LOG_ERROR, "[Login] ERROR: error while parsing json");
+    	m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
     	return false;
     }
 
@@ -176,9 +194,11 @@ bool WaipuData::ApiLogin()
         	XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
         }
     }
+    m_login_status = WAIPU_LOGIN_STATUS_OK;
     return true;
   }
-  // no valid session
+  // no valid session?
+  m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
   return false;
 }
 
@@ -202,10 +222,8 @@ WaipuData::~WaipuData(void)
 bool WaipuData::LoadChannelData(void)
 {
 
-  if(!ApiLogin()){
+  if (!ApiLogin()){
     // no valid accessToken
-    XBMC->Log(LOG_DEBUG, "[load data] ERROR - Login invalid");
-    XBMC->QueueNotification(QUEUE_ERROR, "Invalid login credentials?");
     return false;
   }
 
@@ -337,7 +355,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
     {
       XBMC->Log(LOG_DEBUG, "Get live url for channel %s", thisChannel.strChannelName.c_str());
 
-      if(!ApiLogin()){
+      if (!ApiLogin()){
         // invalid
         XBMC->Log(LOG_DEBUG, "No stream login");
         return "";
@@ -506,7 +524,7 @@ int WaipuData::GetRecordingsAmount(bool bDeleted)
 
 PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
 {
-	if (!ApiLogin()) {
+	if (!ApiLogin()){
 		return PVR_ERROR_SERVER_ERROR;
 	}
 	m_active_recordings_update = true;
@@ -667,7 +685,7 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING &recording, const str
 
 PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING &recording){
 
-	if(ApiLogin()){
+	if (ApiLogin()){
 		string recording_id = recording.strRecordingId;
 		string request_data = "{\"ids\":[\""+recording_id+"\"]}";
 		XBMC->Log(LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
@@ -686,7 +704,7 @@ int WaipuData::GetTimersAmount(void)
 
 PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 {
-	if (!ApiLogin()) {
+	if (!ApiLogin()){
 		return PVR_ERROR_SERVER_ERROR;
 	}
 
@@ -790,7 +808,7 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 
 PVR_ERROR WaipuData::DeleteTimer(const PVR_TIMER &timer){
 
-	if(ApiLogin()){
+	if (ApiLogin()){
 		int timer_id = timer.iClientIndex;
 		string request_data = "{\"ids\":[\""+to_string(timer_id)+"\"]}";
 		XBMC->Log(LOG_DEBUG, "[delete timer] req: %s;", request_data.c_str());
@@ -804,7 +822,7 @@ PVR_ERROR WaipuData::DeleteTimer(const PVR_TIMER &timer){
 
 PVR_ERROR WaipuData::AddTimer(const PVR_TIMER &timer){
 
-	if(ApiLogin()){
+	if (ApiLogin()){
 		// {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
 		for(const auto& channel : m_channels){
 			if(channel.iUniqueId != timer.iClientChannelUid)
