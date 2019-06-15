@@ -33,6 +33,13 @@ using namespace std;
  */
 static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 
+enum WAIPU_LOGIN_STATUS {
+	WAIPU_LOGIN_STATUS_OK,
+	WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS,
+	WAIPU_LOGIN_STATUS_NO_NETWORK,
+	WAIPU_LOGIN_STATUS_UNKNOWN
+};
+
 struct WaipuApiToken
 {
   string      accessToken;
@@ -85,6 +92,7 @@ public:
   PVR_ERROR AddTimer(const PVR_TIMER &timer);
 
   std::string GetLicense(void);
+  WAIPU_LOGIN_STATUS GetLoginStatus(void);
 
 protected:
   string HttpGet(const string& url);
@@ -104,4 +112,5 @@ private:
   int							   m_recordings_count;
   bool							   m_active_recordings_update;
   std::vector<string>			   m_user_channels;
+  WAIPU_LOGIN_STATUS               m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
 };

@@ -107,8 +107,18 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if (!waipuUsername.empty() && !waipuPassword.empty()){
     m_data = new WaipuData(waipuUsername, waipuPassword);
 
-    m_CurStatus = ADDON_STATUS_OK;
-    m_bCreated = true;
+    if (m_data->GetLoginStatus() == WAIPU_LOGIN_STATUS_OK){
+       m_CurStatus = ADDON_STATUS_OK;
+       m_bCreated = true;
+    }else if (m_data->GetLoginStatus() == WAIPU_LOGIN_STATUS_NO_NETWORK){
+       m_CurStatus = ADDON_STATUS_LOST_CONNECTION; // is this the right status?
+       XBMC->Log(LOG_DEBUG, "[load data] ERROR - Network Issue");
+       XBMC->QueueNotification(QUEUE_ERROR, "No network connection?");
+    }else if (m_data->GetLoginStatus() == WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS){
+    	m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
+        XBMC->Log(LOG_DEBUG, "[load data] ERROR - Login invalid");
+        XBMC->QueueNotification(QUEUE_ERROR, "Invalid login credentials!");
+    }
   }
   return m_CurStatus;
 }
