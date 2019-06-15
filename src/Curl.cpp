@@ -106,7 +106,7 @@ string Curl::Request(const string& action, const string& url, const string& post
   vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
   if (resp_protocol_parts.size() == 3)
   {
-      statusCode = stoi(resp_protocol_parts[1].c_str());
+      statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
       XBMC->Log(LOG_DEBUG, "HTTP response code: %i", statusCode);
   }
 
