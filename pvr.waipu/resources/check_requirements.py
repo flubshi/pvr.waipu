@@ -7,7 +7,10 @@ import json
 
 def getStatus():
 	url = "https://status.wpstr.tv/status?nw=wifi"
-	r = requests.get(url)
+	try:
+	  r = requests.get(url)
+	except requests.ConnectionError:
+	  return {"statusText" : "No internet connection!"}
 	return r.json()
 
 is_helper = inputstreamhelper.Helper('mpd', drm='com.widevine.alpha')
