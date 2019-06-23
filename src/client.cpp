@@ -31,7 +31,6 @@ using namespace ADDON;
 #define snprintf _snprintf
 #endif
 
-bool           m_bCreated       = false;
 ADDON_STATUS   m_CurStatus      = ADDON_STATUS_UNKNOWN;
 WaipuData     *m_data           = NULL;
 
@@ -53,10 +52,10 @@ extern "C" {
 
 void ADDON_ReadSettings(void)
 {
+  XBMC->Log(LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   char buffer[1024];
   bool boolBuffer;
   int intBuffer;
-  XBMC->Log(LOG_DEBUG, "Read settings");
   if (XBMC->GetSetting("username", &buffer))
   {
     waipuUsername = buffer;
@@ -107,21 +106,43 @@ ADDON_STATUS ADDON_Create(void* hdl, void* props)
   if ( !waipuUsername.empty() && !waipuPassword.empty()){
 	  m_data = new WaipuData(waipuUsername, waipuPassword);
 
-	  m_CurStatus = ADDON_STATUS_OK;
-	  m_bCreated = true;
+	  switch (m_data->GetLoginStatus()) {
+	    case WAIPU_LOGIN_STATUS_OK:
+	      m_CurStatus = ADDON_STATUS_OK;
+	      break;
+	    case WAIPU_LOGIN_STATUS_NO_NETWORK:
+	      m_CurStatus = ADDON_STATUS_NEED_RESTART;
+	      XBMC->Log (LOG_ERROR, "[load data] Network issue");
+	      XBMC->QueueNotification (QUEUE_ERROR, "No network connection");
+	      break;
+	    case  WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS:
+	      m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
+	      XBMC->Log(LOG_ERROR, "[load data] Login invalid");
+	      XBMC->QueueNotification(QUEUE_ERROR, "Invalid login credentials");
+	      break;
+	    case WAIPU_LOGIN_STATUS_UNKNOWN:
+	      XBMC->Log(LOG_ERROR, "[login status] unknown state");
+	      m_CurStatus = ADDON_STATUS_UNKNOWN;
+	      break;
+	    default:
+	      XBMC->Log(LOG_ERROR, "[login status] unhandled state");
+	      m_CurStatus = ADDON_STATUS_UNKNOWN;
+	      break;
+	  }
+
   }
   return m_CurStatus;
 }
 
 ADDON_STATUS ADDON_GetStatus()
 {
+  XBMC->Log(LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   return m_CurStatus;
 }
 
 void ADDON_Destroy()
 {
   delete m_data;
-  m_bCreated = false;
   m_CurStatus = ADDON_STATUS_UNKNOWN;
 }
 
@@ -230,6 +251,7 @@ PVR_ERROR IsEPGTagPlayable(const EPG_TAG*, bool* bIsPlayable)
 
 int GetChannelsAmount(void)
 {
+  XBMC->Log(LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   if (m_data)
     return m_data->GetChannelsAmount();
 
@@ -238,6 +260,7 @@ int GetChannelsAmount(void)
 
 PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio)
 {
+  XBMC->Log(LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   if (m_data)
     return m_data->GetChannels(handle, bRadio);
 
@@ -324,6 +347,7 @@ int GetRecordingsAmount(bool deleted)
 
 PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool deleted)
 {
+  XBMC->Log(LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   if (m_data)
 	  return m_data->GetRecordings(handle, deleted);
 
