@@ -90,6 +90,11 @@ string WaipuData::HttpRequestToCurl(Curl &curl, const string& action, const stri
 }
 // END CURL helpers from zattoo addon
 
+WAIPU_LOGIN_STATUS WaipuData::GetLoginStatus()
+{
+  return m_login_status;
+}
+
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
@@ -119,25 +124,38 @@ bool WaipuData::ApiLogin()
   string jsonString;
   // curl request
   Curl curl;
-  int statusCode;
+  int statusCode = 0;
   curl.AddHeader("User-Agent",WAIPU_USER_AGENT);
   curl.AddHeader("Authorization","Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
   curl.AddHeader("Content-Type","application/x-www-form-urlencoded");
   jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token", dataStream.str(), statusCode);
 
-  XBMC->Log(LOG_DEBUG, "[login check] Login-response: %s;", jsonString.c_str());
+  XBMC->Log(LOG_DEBUG, "[login check] Login-response: (HTTP %i) %s;", statusCode, jsonString.c_str());
+
+  if(jsonString.length() == 0 && statusCode == -1){
+      // no network connection?
+      m_login_status = WAIPU_LOGIN_STATUS_NO_NETWORK;
+      XBMC->Log(LOG_ERROR, "[Login] no network connection");
+      return false;
+  }else if(statusCode == 401){
+      // invalid credentials
+      m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+      return false;
+  }
 
   if(!jsonString.empty()){
     Document doc;
     doc.Parse(jsonString.c_str());
     if(doc.GetParseError()){
     	XBMC->Log(LOG_ERROR, "[Login] ERROR: error while parsing json");
+    	m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
     	return false;
     }
     
     if (doc.HasMember("error") && doc["error"] == "invalid_request")
     {
 	XBMC->Log(LOG_ERROR, "[Login] ERROR: invalid credentials?");
+	m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
 	return false;
     }
 
@@ -176,9 +194,11 @@ bool WaipuData::ApiLogin()
         	XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
         }
     }
+    m_login_status = WAIPU_LOGIN_STATUS_OK;
     return true;
   }
-  // no valid session
+  // no valid session?
+  m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
   return false;
 }
 
@@ -203,9 +223,7 @@ bool WaipuData::LoadChannelData(void)
 {
 
   if(!ApiLogin()){
-    // no valid accessToken
-    XBMC->Log(LOG_DEBUG, "[load data] ERROR - Login invalid");
-    XBMC->QueueNotification(QUEUE_ERROR, "Invalid login credentials?");
+    // no valid session
     return false;
   }
 
