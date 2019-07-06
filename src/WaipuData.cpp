@@ -156,7 +156,14 @@ bool WaipuData::ApiLogin()
     if (doc.HasMember("error") && doc["error"] == "invalid_request")
     {
         XBMC->Log(LOG_ERROR, "[Login] ERROR: invalid credentials?");
+        m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
         return false;
+    }else if (doc.HasMember("error")){
+	// unhandled error -> handle if known
+	string err = doc["error"].GetString();
+	XBMC->Log(LOG_ERROR, "[Login] ERROR: (%s)", err.c_str());
+	m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+	return false;
     }
 
     m_apiToken.accessToken = doc["access_token"].GetString();
@@ -172,8 +179,21 @@ bool WaipuData::ApiLogin()
     	XBMC->Log(LOG_DEBUG, "[jwt] middle: %s", jwt_arr.at(1).c_str());
     	string jwt_payload = base64_decode(jwt_arr.at(1));
     	XBMC->Log(LOG_DEBUG, "[jwt] payload: %s", jwt_payload.c_str());
+
+        if (!Utils::ends_with(jwt_payload, "}}}") && jwt_payload.size() > 0 && Utils::ends_with(jwt_payload, "subscription\":\"")){
+            // this is a dirty hack. It seems that for some accounts the subscription is cutted
+            jwt_payload = jwt_payload + "O2\"}}}";
+        }
+
         Document jwt_doc;
         jwt_doc.Parse(jwt_payload.c_str());
+
+        if(jwt_doc.HasParseError()){
+            m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+            XBMC->Log(LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
+            return false;
+        }
+
         string userHandle = jwt_doc["userHandle"].GetString();
         XBMC->Log(LOG_DEBUG, "[jwt] userHandle: %s", userHandle.c_str());
         // generate the license
