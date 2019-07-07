@@ -159,3 +159,11 @@ int Utils::stoiDefault(std::string str, int i)
 		return i;
 	}
 }
+
+bool Utils::ends_with(std::string const &haystack, std::string const &end) {
+    if (haystack.length() >= end.length()) {
+        return (0 == haystack.compare (haystack.length() - end.length(), end.length(), end));
+    } else {
+        return false;
+    }
+}

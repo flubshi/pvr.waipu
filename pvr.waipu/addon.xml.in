@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.0.6"
+  version="1.0.7"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -29,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.0.7 Add workaround for O2 Accounts
 - 1.0.6 Improved error handling related to login problems (no network, invalid credentials)
 - 1.0.5 Settings check requirements: handle network issues
 - 1.0.4 Improvements and preparation for error handling
