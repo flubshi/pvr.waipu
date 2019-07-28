@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.1.7"
+  version="0.1.8"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>
@@ -29,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.1.8 Drop HLS support
 - 0.1.7 Add workaround for O2 Accounts
 - 0.1.6 Settings check requirements: handle network issue
 - 0.1.5 Improved error handling related to login problems (no network, invalid credentials)
