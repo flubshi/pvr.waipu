@@ -44,7 +44,6 @@ std::string g_strClientPath           = "";
 
 std::string waipuUsername;
 std::string waipuPassword;
-std::string protocol;
 
 CHelper_libXBMC_addon *XBMC           = NULL;
 CHelper_libXBMC_pvr   *PVR            = NULL;
@@ -64,10 +63,6 @@ void ADDON_ReadSettings(void)
   if (XBMC->GetSetting("password", &buffer))
   {
     waipuPassword = buffer;
-  }
-  if (XBMC->GetSetting("protocol", &buffer))
-  {
-    protocol = buffer;
   }
   XBMC->Log(LOG_DEBUG, "End Readsettings");
 }
@@ -267,7 +262,6 @@ void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCo
 	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] url: %s",url.c_str());
 	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON, "inputstream.adaptive");
 
-  if(protocol == "MPEG_DASH"){
 	  // MPEG DASH
 	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] dash");
 	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", "mpd");
@@ -279,22 +273,12 @@ void setStreamProperties(PVR_NAMED_VALUE* properties, unsigned int* propertiesCo
 	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.license_key", "https://drm.wpstr.tv/license-proxy-widevine/cenc/|Content-Type=text%2Fxml&x-dt-custom-data="+license+"|R{SSM}|JBlicense");
 
 	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
-  }else{
-	  // HLS
-	  protocol = "HLS";
-	  XBMC->Log(LOG_DEBUG, "[PLAY STREAM] hls");
-	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_type", "hls");
-	  setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
-
-	  setStreamProperty(properties, propertiesCount, "inputstream.adaptive.manifest_update_parameter", "full");
-  }
 }
 
 PVR_ERROR GetChannelStreamProperties(const PVR_CHANNEL* channel, PVR_NAMED_VALUE* properties, unsigned int* iPropertiesCount)
 {
 
-  string protocol_fix = protocol == "MPEG_DASH" ? "mpeg-dash" : "hls";
-  string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId, protocol_fix);
+  string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId, "mpeg-dash");
   XBMC->Log(LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
@@ -344,7 +328,7 @@ PVR_ERROR GetRecordingStreamProperties(const PVR_RECORDING* recording, PVR_NAMED
 {
 	XBMC->Log(LOG_DEBUG, "[recordings] play it...");
 
-	string strUrl = m_data->GetRecordingURL(*recording, protocol);
+	string strUrl = m_data->GetRecordingURL(*recording, "MPEG_DASH");
 	if (strUrl.empty()){
 		return PVR_ERROR_FAILED;
 	}
