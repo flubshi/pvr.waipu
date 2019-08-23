@@ -1,0 +1,39 @@
+# build artifacts
+build/
+pvr.*/addon.xml
+
+# Debian build files
+debian/changelog
+debian/files
+debian/*.log
+debian/*.substvars
+debian/.debhelper/
+debian/tmp/
+debian/kodi-pvr-*/
+obj-x86_64-linux-gnu/
+
+# commonly used editors
+# vim
+*.swp
+
+# Eclipse
+*.project
+*.cproject
+.classpath
+*.sublime-*
+.settings/
+
+# KDevelop 4
+*.kdev4
+
+# Visual Studio
+.vs/
+
+# gedit
+*~
+
+# CLion
+/.idea
+
+# clion
+.idea/
