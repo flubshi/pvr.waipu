@@ -20,7 +20,7 @@
  */
 
 #include "client.h"
-#include "xbmc_pvr_dll.h"
+#include "kodi/xbmc_pvr_dll.h"
 #include "WaipuData.h"
 #include <p8-platform/util/util.h>
 
