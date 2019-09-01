@@ -6,7 +6,7 @@
   provider-name="flubshi">
   <requires>
     @ADDON_DEPENDS@
-    <import addon="script.module.inputstreamhelper" version="0.3.3"/>
+    <import addon="script.module.inputstreamhelper" version="0.4.1"/>
   </requires>
   <extension
     point="xbmc.pvrclient"

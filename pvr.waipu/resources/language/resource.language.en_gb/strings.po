@@ -34,6 +34,10 @@ msgctxt "#37206"
 msgid "Check requirements"
 msgstr ""
 
+msgctxt "#37207"
+msgid "(Re)install Widevine CDM library..."
+msgstr ""
+
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr ""
