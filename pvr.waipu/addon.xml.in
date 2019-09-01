@@ -5,7 +5,7 @@
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
-    <import addon="script.module.inputstreamhelper" version="0.3.0"/>
+    <import addon="script.module.inputstreamhelper" version="0.4.1"/>
     <import addon="script.module.requests" version="2.3.0"/>
   </requires>
   <extension
