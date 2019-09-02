@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.1.9"
+  version="0.2.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>
     @ADDON_DEPENDS@
-    <import addon="script.module.inputstreamhelper" version="0.3.3"/>
+    <import addon="script.module.inputstreamhelper" version="0.4.1"/>
   </requires>
   <extension
     point="xbmc.pvrclient"
@@ -29,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.2.0 Fix timers not displayed; Add option to install widevine
 - 0.1.9 Update build sytem version; change header include way
 - 0.1.8 Drop HLS support
 - 0.1.7 Add workaround for O2 Accounts

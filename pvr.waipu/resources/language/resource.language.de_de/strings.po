@@ -34,6 +34,10 @@ msgctxt "#37206"
 msgid "Check requirements"
 msgstr "Überprüfe Anforderungen"
 
+msgctxt "#37207"
+msgid "(Re)install Widevine CDM library"
+msgstr "Widevine CDM Bibliothek (erneut) installieren"
+
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr "Fehler: Login nicht möglich. Ungültiger Account!"
