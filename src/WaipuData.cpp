@@ -732,7 +732,12 @@ PVR_ERROR WaipuData::GetTimers(ADDON_HANDLE handle)
 		return PVR_ERROR_SERVER_ERROR;
 	}
 
-    string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings");
+    Curl curl;
+    int statusCode;
+    curl.AddHeader("User-Agent",WAIPU_USER_AGENT);
+    curl.AddHeader("Authorization","Bearer "+m_apiToken.accessToken);
+    curl.AddHeader("Accept","application/vnd.waipu.recordings-v2+json");
+    string jsonRecordings = HttpRequestToCurl(curl, "GET", "https://recording.waipu.tv/api/recordings", "", statusCode);
     XBMC->Log(LOG_DEBUG, "[Timers] %s",jsonRecordings.c_str());
 
     jsonRecordings = "{\"result\": "+jsonRecordings+"}";
