@@ -20,10 +20,11 @@
  *
  */
 
-#include <vector>
-#include "p8-platform/os.h"
-#include "client.h"
 #include "Curl.h"
+#include "client.h"
+#include "p8-platform/os.h"
+
+#include <vector>
 
 using namespace std;
 
@@ -33,34 +34,35 @@ using namespace std;
  */
 static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 
-enum WAIPU_LOGIN_STATUS {
-	WAIPU_LOGIN_STATUS_OK,
-	WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS,
-	WAIPU_LOGIN_STATUS_NO_NETWORK,
-	WAIPU_LOGIN_STATUS_UNKNOWN
+enum WAIPU_LOGIN_STATUS
+{
+  WAIPU_LOGIN_STATUS_OK,
+  WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS,
+  WAIPU_LOGIN_STATUS_NO_NETWORK,
+  WAIPU_LOGIN_STATUS_UNKNOWN
 };
 
 struct WaipuApiToken
 {
-  string      accessToken;
-  string      refreshToken;
-  time_t      expires;
+  string accessToken;
+  string refreshToken;
+  time_t expires;
 };
 
 struct WaipuChannel
 {
-  int                iUniqueId; //waipu[orderIndex]
-  string             waipuID; // waipu[id]
-  int                iChannelNumber; //position
-  string             strChannelName; //waipu[displayName]
-  string             strIconPath; // waipu[links][rel=iconlargehd]
-  string             strStreamURL; // waipu[links][rel=livePlayout]
+  int iUniqueId; //waipu[orderIndex]
+  string waipuID; // waipu[id]
+  int iChannelNumber; //position
+  string strChannelName; //waipu[displayName]
+  string strIconPath; // waipu[links][rel=iconlargehd]
+  string strStreamURL; // waipu[links][rel=livePlayout]
 };
 
 struct WaipuEPGMappingEntry
 {
-  int         iBroadcastId;
-  int         iUniqueChannelId;
+  int iBroadcastId;
+  int iUniqueChannelId;
   std::string waipuId;
 };
 
@@ -75,21 +77,24 @@ public:
 
   int GetChannelGroupsAmount(void);
   PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
-  PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP &group);
+  PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
 
   virtual string GetChannelStreamUrl(int uniqueId, const string& protocol);
 
-  PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL &channel, time_t iStart, time_t iEnd);
+  PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle,
+                             const PVR_CHANNEL& channel,
+                             time_t iStart,
+                             time_t iEnd);
 
   int GetRecordingsAmount(bool bDeleted);
   PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool bDeleted);
-  std::string GetRecordingURL(const PVR_RECORDING &recording, const string& protocol);
-  PVR_ERROR DeleteRecording(const PVR_RECORDING &recording);
+  std::string GetRecordingURL(const PVR_RECORDING& recording, const string& protocol);
+  PVR_ERROR DeleteRecording(const PVR_RECORDING& recording);
 
   int GetTimersAmount(void);
   PVR_ERROR GetTimers(ADDON_HANDLE handle);
-  PVR_ERROR DeleteTimer(const PVR_TIMER &timer);
-  PVR_ERROR AddTimer(const PVR_TIMER &timer);
+  PVR_ERROR DeleteTimer(const PVR_TIMER& timer);
+  PVR_ERROR AddTimer(const PVR_TIMER& timer);
 
   std::string GetLicense(void);
   WAIPU_LOGIN_STATUS GetLoginStatus(void);
@@ -99,18 +104,19 @@ protected:
   string HttpDelete(const string& url, const string& postData);
   string HttpPost(const string& url, const string& postData);
   string HttpRequest(const string& action, const string& url, const string& postData);
-  string HttpRequestToCurl(Curl &curl, const string& action, const string& url, const string& postData, int &statusCode);
+  string HttpRequestToCurl(
+      Curl& curl, const string& action, const string& url, const string& postData, int& statusCode);
   bool ApiLogin();
   bool LoadChannelData(void);
 
 private:
-  std::vector<WaipuChannel>        m_channels;
-  std::string                      username;
-  std::string                      password;
-  WaipuApiToken                    m_apiToken;
-  std::string					   m_license;
-  int							   m_recordings_count;
-  bool							   m_active_recordings_update;
-  std::vector<string>			   m_user_channels;
-  WAIPU_LOGIN_STATUS               m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+  std::vector<WaipuChannel> m_channels;
+  std::string username;
+  std::string password;
+  WaipuApiToken m_apiToken;
+  std::string m_license;
+  int m_recordings_count;
+  bool m_active_recordings_update;
+  std::vector<string> m_user_channels;
+  WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
 };
