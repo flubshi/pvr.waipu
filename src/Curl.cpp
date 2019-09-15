@@ -2,18 +2,18 @@
  * taken from pvr:zattoo
  */
 #include "Curl.h"
-#include <utility>
-#include "client.h"
+
 #include "Utils.h"
+#include "client.h"
+
+#include <utility>
 
 using namespace std;
 using namespace ADDON;
 
-Curl::Curl()
-= default;
+Curl::Curl() = default;
 
-Curl::~Curl()
-= default;
+Curl::~Curl() = default;
 
 string Curl::GetCookie(const string& name)
 {
@@ -39,23 +39,25 @@ void Curl::ResetHeaders()
   headers.clear();
 }
 
-string Curl::Delete(const string& url, const string& postData, int &statusCode)
+string Curl::Delete(const string& url, const string& postData, int& statusCode)
 {
   return Request("DELETE", url, postData, statusCode);
 }
 
-string Curl::Get(const string& url, int &statusCode)
+string Curl::Get(const string& url, int& statusCode)
 {
   return Request("GET", url, "", statusCode);
 }
 
-string Curl::Post(const string& url, const string& postData, int &statusCode)
+string Curl::Post(const string& url, const string& postData, int& statusCode)
 {
   return Request("POST", url, postData, statusCode);
 }
 
-string Curl::Request(const string& action, const string& url, const string& postData,
-    int &statusCode)
+string Curl::Request(const string& action,
+                     const string& url,
+                     const string& postData,
+                     int& statusCode)
 {
   void* file = XBMC->CURLCreate(url.c_str());
   if (!file)
@@ -64,29 +66,24 @@ string Curl::Request(const string& action, const string& url, const string& post
     return "";
   }
 
-  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "customrequest",
-      action.c_str());
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "customrequest", action.c_str());
 
-  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding",
-      "gzip");
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding", "gzip");
   if (!postData.empty())
   {
-    string base64 = Base64Encode((const unsigned char *) postData.c_str(),
-        postData.size(), false);
-    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata",
-        base64.c_str());
+    string base64 = Base64Encode((const unsigned char*)postData.c_str(), postData.size(), false);
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "postdata", base64.c_str());
   }
 
-  for (auto const &entry : headers)
+  for (auto const& entry : headers)
   {
-    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, entry.first.c_str(),
-        entry.second.c_str());
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, entry.first.c_str(), entry.second.c_str());
   }
 
-  for (auto const &entry : options)
+  for (auto const& entry : options)
   {
     XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, entry.first.c_str(),
-        entry.second.c_str());
+                        entry.second.c_str());
   }
 
   // we have to set "failonerror" to get error results
@@ -101,23 +98,24 @@ string Curl::Request(const string& action, const string& url, const string& post
   statusCode = 200;
 
   // get the real statusCode
-  char *tmpCode = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+  char* tmpCode = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
   std::string tmpRespLine;
   tmpRespLine = tmpCode != nullptr ? tmpCode : "";
   vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
-  if (resp_protocol_parts.size() == 3){
-      statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
-      XBMC->Log(LOG_DEBUG, "HTTP response code: %i.", statusCode);
+  if (resp_protocol_parts.size() == 3)
+  {
+    statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
+    XBMC->Log(LOG_DEBUG, "HTTP response code: %i.", statusCode);
   }
   XBMC->FreeString(tmpCode);
 
   int numValues;
-  char **cookiesPtr = XBMC->GetFilePropertyValues(file,
-      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "set-cookie", &numValues);
+  char** cookiesPtr = XBMC->GetFilePropertyValues(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER,
+                                                  "set-cookie", &numValues);
 
   for (int i = 0; i < numValues; i++)
   {
-    char *cookiePtr = cookiesPtr[i];
+    char* cookiePtr = cookiesPtr[i];
     if (cookiePtr && *cookiePtr)
     {
       string cookie = cookiePtr;
@@ -134,11 +132,10 @@ string Curl::Request(const string& action, const string& url, const string& post
     }
   }
   XBMC->FreeStringArray(cookiesPtr, numValues);
-  
-  char *tmp = XBMC->GetFilePropertyValue(file,
-      XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
+
+  char* tmp = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
   location = tmp != nullptr ? tmp : "";
-  
+
   XBMC->FreeString(tmp);
 
 
@@ -157,16 +154,14 @@ string Curl::Request(const string& action, const string& url, const string& post
   return body;
 }
 
-std::string Curl::Base64Encode(unsigned char const* in, unsigned int in_len,
-    bool urlEncode)
+std::string Curl::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
 {
   std::string ret;
   int i(3);
   unsigned char c_3[3];
   unsigned char c_4[4];
 
-  const char *to_base64 =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const char* to_base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
   while (in_len)
   {
