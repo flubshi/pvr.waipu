@@ -196,14 +196,6 @@ bool WaipuData::ApiLogin()
       string jwt_payload = base64_decode(jwt_arr.at(1));
       XBMC->Log(LOG_DEBUG, "[jwt] payload: %s", jwt_payload.c_str());
 
-      if (!Utils::ends_with(jwt_payload, "}}}") && jwt_payload.size() > 0 &&
-          Utils::ends_with(jwt_payload, "subscription\":\""))
-      {
-        // this is a dirty hack. It seems that for some accounts the
-        // subscription is cutted
-        jwt_payload = jwt_payload + "O2\"}}}";
-      }
-
       Document jwt_doc;
       jwt_doc.Parse(jwt_payload.c_str());
 
