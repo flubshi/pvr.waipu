@@ -1,5 +1,5 @@
 /*
- * taken from pvr:zattoo
+ * originally taken from pvr.zattoo
  */
 #include "Curl.h"
 
@@ -17,11 +17,29 @@ Curl::~Curl() = default;
 
 string Curl::GetCookie(const string& name)
 {
-  if (cookies.find(name) == cookies.end())
+  for (const auto& cookie : cookies)
   {
-    return "";
+    if (cookie.name == name)
+      return cookie.value;
   }
-  return cookies[name];
+  return "";
+}
+
+void Curl::SetCookie(const std::string& host, const std::string& name, const std::string& value)
+{
+  for (list<Cookie>::iterator i = cookies.begin(); i != cookies.end(); ++i)
+  {
+    if (i->host == host && i->name == name)
+    {
+      i->value = value;
+      return;
+    }
+  }
+  Cookie cookie;
+  cookie.host = host;
+  cookie.name = name;
+  cookie.value = value;
+  cookies.push_back(cookie);
 }
 
 void Curl::AddHeader(const string& name, const string& value)
@@ -54,21 +72,58 @@ string Curl::Post(const string& url, const string& postData, int& statusCode)
   return Request("POST", url, postData, statusCode);
 }
 
-string Curl::Request(const string& action,
-                     const string& url,
-                     const string& postData,
-                     int& statusCode)
+void Curl::ParseCookies(void* file, const string& host)
+{
+  int numValues;
+  char** cookiesPtr = XBMC->GetFilePropertyValues(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER,
+                                                  "set-cookie", &numValues);
+  for (int i = 0; i < numValues; i++)
+  {
+    char* cookiePtr = cookiesPtr[i];
+    if (cookiePtr && *cookiePtr)
+    {
+      string cookie = cookiePtr;
+      std::string::size_type paramPos = cookie.find(';');
+      if (paramPos != std::string::npos)
+        cookie.resize(paramPos);
+      vector<string> parts = Utils::SplitString(cookie, '=', 2);
+      if (parts.size() != 2)
+      {
+        continue;
+      }
+      SetCookie(host, parts[0], parts[1]);
+      XBMC->Log(LOG_DEBUG, "Got cookie: %s.", parts[0].c_str());
+    }
+  }
+  XBMC->FreeStringArray(cookiesPtr, numValues);
+}
+
+string Curl::ParseHostname(const string& url)
+{
+  size_t pos = url.find_first_of(":");
+  if (pos == string::npos)
+    return "";
+  string host = url.substr(pos + 3);
+
+  size_t pos_end = host.find_first_of("://");
+  if (pos_end == string::npos)
+    return host;
+  host = host.substr(0, pos_end);
+  return host;
+}
+
+void* Curl::PrepareRequest(const string& action, const string& url, const string& postData)
 {
   void* file = XBMC->CURLCreate(url.c_str());
   if (!file)
   {
-    statusCode = -1;
-    return "";
+    return nullptr;
   }
-
+  XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "redirect-limit", "0");
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "customrequest", action.c_str());
 
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "acceptencoding", "gzip");
+
   if (!postData.empty())
   {
     string base64 = Base64Encode((const unsigned char*)postData.c_str(), postData.size(), false);
@@ -86,58 +141,79 @@ string Curl::Request(const string& action,
                         entry.second.c_str());
   }
 
+  string host = ParseHostname(url);
+  XBMC->Log(LOG_DEBUG, "Add cookies for host: %s.", host.c_str());
+  string cookie_s = "";
+  for (auto& cookie : cookies)
+  {
+    if (cookie.host != host)
+      continue;
+    cookie_s = cookie_s + cookie.name.c_str() + "=" + cookie.value.c_str() + "; ";
+  }
+  if (cookie_s.size() > 0)
+    XBMC->CURLAddOption(file, XFILE::CURL_OPTION_PROTOCOL, "cookie", cookie_s.c_str());
+
   // we have to set "failonerror" to get error results
   XBMC->CURLAddOption(file, XFILE::CURL_OPTION_HEADER, "failonerror", "false");
+  return file;
+}
 
-  if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+
+string Curl::Request(const string& action,
+                     const string& url,
+                     const string& postData,
+                     int& statusCode)
+{
+  int remaining_redirects = redirectLimit;
+  location = url;
+  bool redirect;
+  void* file = PrepareRequest(action, url, postData);
+
+  do
   {
-    statusCode = -1;
-    return "";
-  }
-
-  statusCode = 200;
-
-  // get the real statusCode
-  char* tmpCode = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
-  std::string tmpRespLine;
-  tmpRespLine = tmpCode != nullptr ? tmpCode : "";
-  vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
-  if (resp_protocol_parts.size() == 3)
-  {
-    statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
-    XBMC->Log(LOG_DEBUG, "HTTP response code: %i.", statusCode);
-  }
-  XBMC->FreeString(tmpCode);
-
-  int numValues;
-  char** cookiesPtr = XBMC->GetFilePropertyValues(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER,
-                                                  "set-cookie", &numValues);
-
-  for (int i = 0; i < numValues; i++)
-  {
-    char* cookiePtr = cookiesPtr[i];
-    if (cookiePtr && *cookiePtr)
+    redirect = false;
+    if (file == nullptr)
     {
-      string cookie = cookiePtr;
-      std::string::size_type paramPos = cookie.find(';');
-      if (paramPos != std::string::npos)
-        cookie.resize(paramPos);
-      vector<string> parts = Utils::SplitString(cookie, '=', 2);
-      if (parts.size() != 2)
-      {
-        continue;
-      }
-      cookies[parts[0]] = parts[1];
-      XBMC->Log(LOG_DEBUG, "Got cookie: %s.", parts[0].c_str());
+      statusCode = -1;
+      return "";
     }
-  }
-  XBMC->FreeStringArray(cookiesPtr, numValues);
 
-  char* tmp = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
-  location = tmp != nullptr ? tmp : "";
+    if (!XBMC->CURLOpen(file, XFILE::READ_NO_CACHE))
+    {
+      statusCode = -1;
+      return "";
+    }
 
-  XBMC->FreeString(tmp);
+    statusCode = 200;
 
+    // get the real statusCode
+    char* tmpCode = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+    std::string tmpRespLine;
+    tmpRespLine = tmpCode != nullptr ? tmpCode : "";
+    vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
+    if (resp_protocol_parts.size() >= 2)
+    {
+      statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
+      XBMC->Log(LOG_DEBUG, "HTTP response code: %i.", statusCode);
+    }
+    XBMC->FreeString(tmpCode);
+
+    ParseCookies(file, ParseHostname(location));
+
+    char* tmp = XBMC->GetFilePropertyValue(file, XFILE::FILE_PROPERTY_RESPONSE_HEADER, "Location");
+    location = tmp != nullptr ? tmp : "";
+    XBMC->Log(LOG_DEBUG, "Location: %s.", location.c_str());
+    XBMC->FreeString(tmp);
+
+    if (statusCode >= 301 && statusCode <= 303)
+    {
+      // handle redirect
+      redirect = true;
+      XBMC->Log(LOG_DEBUG, "redirects remaining: %i", remaining_redirects);
+      remaining_redirects--;
+      file = PrepareRequest("GET", location.c_str(), "");
+    }
+  } while (redirect && remaining_redirects >= 0);
 
   // read the file
   static const unsigned int CHUNKSIZE = 16384;
@@ -153,6 +229,7 @@ string Curl::Request(const string& action,
   XBMC->CloseFile(file);
   return body;
 }
+
 
 std::string Curl::Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode)
 {

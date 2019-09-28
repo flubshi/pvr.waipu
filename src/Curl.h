@@ -1,8 +1,16 @@
 /*
- * taken from pvr:zattoo
+ * originally taken from pvr.zattoo
  */
+#include <list>
 #include <map>
 #include <string>
+
+struct Cookie
+{
+  std::string host;
+  std::string name;
+  std::string value;
+};
 
 class Curl
 {
@@ -16,16 +24,26 @@ public:
   virtual void AddOption(const std::string& name, const std::string& value);
   virtual void ResetHeaders();
   virtual std::string GetCookie(const std::string& name);
+  virtual void SetCookie(const std::string& host,
+                         const std::string& name,
+                         const std::string& value);
   virtual std::string GetLocation() { return location; }
+  virtual void SetRedirectLimit(int limit) { redirectLimit = limit; }
 
 private:
+  virtual void* PrepareRequest(const std::string& action,
+                               const std::string& url,
+                               const std::string& postData);
+  virtual void ParseCookies(void* file, const std::string& host);
   virtual std::string Request(const std::string& action,
                               const std::string& url,
                               const std::string& postData,
                               int& statusCode);
+  virtual std::string ParseHostname(const std::string& url);
   std::string Base64Encode(unsigned char const* in, unsigned int in_len, bool urlEncode);
   std::map<std::string, std::string> headers;
   std::map<std::string, std::string> options;
-  std::map<std::string, std::string> cookies;
+  std::list<Cookie> cookies;
   std::string location;
+  int redirectLimit = 8;
 };
