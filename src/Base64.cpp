@@ -36,7 +36,7 @@ static const std::string BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static inline bool is_base64(unsigned char c)
 {
-  return (isalnum(c) || (c == '+') || (c == '/'));
+  return (isalnum(c) || (c == '+') || (c == '/') || (c == '_') || (c == '-'));
 }
 
 std::string base64_encode(char const* bytes_to_encode, unsigned int in_len)
@@ -93,7 +93,20 @@ std::string base64_decode(std::string const& encoded_string)
 
   while (in_len-- && (encoded_string[in_] != '=') && is_base64(encoded_string[in_]))
   {
-    char_array_4[i++] = encoded_string[in_];
+    if (encoded_string[in_] == '_')
+    {
+      // workaround for base64 URL safe, see: rfc4648
+      char_array_4[i++] = '/';
+    }
+    else if (encoded_string[in_] == '-')
+    {
+      // workaround for base64 URL safe, see: rfc4648
+      char_array_4[i++] = '+';
+    }
+    else
+    {
+      char_array_4[i++] = encoded_string[in_];
+    }
     in_++;
     if (i == 4)
     {

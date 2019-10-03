@@ -156,7 +156,7 @@ extern "C"
 
     if (name == "username")
     {
-      string username = (const char*)settingValue;
+      string username = static_cast<const char*>(settingValue);
       if (username != waipuUsername)
       {
         waipuUsername = username;
@@ -166,7 +166,7 @@ extern "C"
 
     if (name == "password")
     {
-      string password = (const char*)settingValue;
+      string password = static_cast<const char*>(settingValue);
       if (password != waipuPassword)
       {
         waipuPassword = password;
