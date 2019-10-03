@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.2.0"
+  version="1.2.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -29,6 +29,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.2.1 Internal improvements to prepare for O2 authentication
 - 1.1.0 Fix timers not displayed; Add option to install widevine
 - 1.0.8 Update build sytem version; change header include way
 - 1.0.7 Add workaround for O2 Accounts
