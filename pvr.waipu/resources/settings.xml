@@ -3,6 +3,7 @@
     <category label="37201">
 		<setting id="username" type="text" label="37202" default="" />
 		<setting id="password" type="text" option="hidden" label="37203" default="" />
+		<setting id="provider_select" label="37208" type="enum" lvalues="37209|37210" default="0" />
 		<setting type="sep"/>
 		<setting id="install_widevine" type="action" label="37207" action="RunScript(script.module.inputstreamhelper, widevine_install)" visible="!system.platform.android"/>
 		<setting id="run_check" type="action" label="37206" action="RunScript(special://xbmc/addons/pvr.waipu/resources/check_requirements.py)" />

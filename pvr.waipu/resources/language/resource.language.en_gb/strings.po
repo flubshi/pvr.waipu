@@ -38,6 +38,18 @@ msgctxt "#37207"
 msgid "(Re)install Widevine CDM library..."
 msgstr ""
 
+msgctxt "#37208"
+msgid "Provider"
+msgstr ""
+
+msgctxt "#37209"
+msgid "Waipu.tv"
+msgstr ""
+
+msgctxt "#37210"
+msgid "O2 TV (beta)"
+msgstr ""
+
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"
 msgstr ""

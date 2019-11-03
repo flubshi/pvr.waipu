@@ -69,7 +69,7 @@ struct WaipuEPGMappingEntry
 class WaipuData
 {
 public:
-  WaipuData(const std::string& user, const std::string& pass);
+  WaipuData(const std::string& user, const std::string& pass, const WAIPU_PROVIDER provider);
   virtual ~WaipuData(void);
 
   int GetChannelsAmount(void);
@@ -104,9 +104,12 @@ protected:
   string HttpRequestToCurl(
       Curl& curl, const string& action, const string& url, const string& postData, int& statusCode);
   bool ApiLogin();
+  bool WaipuLogin();
+  bool O2Login();
   bool LoadChannelData(void);
 
 private:
+  bool ParseAccessToken(void);
   std::vector<WaipuChannel> m_channels;
   std::string username;
   std::string password;
@@ -116,4 +119,5 @@ private:
   bool m_active_recordings_update;
   std::vector<string> m_user_channels;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+  WAIPU_PROVIDER provider;
 };

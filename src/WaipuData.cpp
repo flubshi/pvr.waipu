@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <regex>
 
 using namespace std;
 using namespace ADDON;
@@ -100,7 +101,67 @@ WAIPU_LOGIN_STATUS WaipuData::GetLoginStatus()
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
-  XBMC->Log(LOG_DEBUG, "[login check] start...");
+  if (provider == WAIPU_PROVIDER_WAIPU)
+  {
+    return WaipuLogin();
+  }
+  else
+  {
+    return O2Login();
+  }
+}
+
+bool WaipuData::ParseAccessToken(void)
+{
+  std::vector<std::string> jwt_arr = Utils::SplitString(m_apiToken.accessToken, '.', 3);
+  if (jwt_arr.size() == 3)
+  {
+    XBMC->Log(LOG_DEBUG, "[jwt] middle: %s", jwt_arr.at(1).c_str());
+    string jwt_payload = base64_decode(jwt_arr.at(1));
+    XBMC->Log(LOG_DEBUG, "[jwt] payload: %s", jwt_payload.c_str());
+
+    Document jwt_doc;
+    jwt_doc.Parse(jwt_payload.c_str());
+
+    if (jwt_doc.HasParseError())
+    {
+      m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+      XBMC->Log(LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
+      return false;
+    }
+
+    string userHandle = jwt_doc["userHandle"].GetString();
+    XBMC->Log(LOG_DEBUG, "[jwt] userHandle: %s", userHandle.c_str());
+    // generate the license
+    string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
+                           "\"userId\" : \"" +
+                           userHandle + "\"}";
+    XBMC->Log(LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
+    m_license = base64_encode(license_plain.c_str(), license_plain.length());
+    XBMC->Log(LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
+    // get user channels
+    m_user_channels.clear();
+    for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["SD"].GetArray())
+    {
+      string user_channel_s = user_channel.GetString();
+      XBMC->Log(LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
+      m_user_channels.push_back(user_channel_s);
+    }
+    for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["HD"].GetArray())
+    {
+      string user_channel_s = user_channel.GetString();
+      m_user_channels.push_back(user_channel_s);
+      XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
+    }
+  }
+  m_login_status = WAIPU_LOGIN_STATUS_OK;
+  return true;
+}
+
+
+bool WaipuData::WaipuLogin()
+{
+  XBMC->Log(LOG_DEBUG, "[login check] WAIPU.TV LOGIN...");
 
   time_t currTime;
   time(&currTime);
@@ -187,61 +248,117 @@ bool WaipuData::ApiLogin()
     XBMC->Log(LOG_DEBUG, "[login check] refreshToken: %s;", m_apiToken.refreshToken.c_str());
     m_apiToken.expires = currTime + doc["expires_in"].GetUint64();
     XBMC->Log(LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
-    // convert access token to license
-    // userHandle is part of jwt token
-    std::vector<std::string> jwt_arr = Utils::SplitString(m_apiToken.accessToken, '.', 3);
-    if (jwt_arr.size() == 3)
-    {
-      XBMC->Log(LOG_DEBUG, "[jwt] middle: %s", jwt_arr.at(1).c_str());
-      string jwt_payload = base64_decode(jwt_arr.at(1));
-      XBMC->Log(LOG_DEBUG, "[jwt] payload: %s", jwt_payload.c_str());
 
-      Document jwt_doc;
-      jwt_doc.Parse(jwt_payload.c_str());
-
-      if (jwt_doc.HasParseError())
-      {
-        m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
-        XBMC->Log(LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
-        return false;
-      }
-
-      string userHandle = jwt_doc["userHandle"].GetString();
-      XBMC->Log(LOG_DEBUG, "[jwt] userHandle: %s", userHandle.c_str());
-      // generate the license
-      string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
-                             "\"userId\" : \"" +
-                             userHandle + "\"}";
-      XBMC->Log(LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
-      m_license = base64_encode(license_plain.c_str(), license_plain.length());
-      XBMC->Log(LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
-      // get user channels
-      m_user_channels.clear();
-      for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["SD"].GetArray())
-      {
-        string user_channel_s = user_channel.GetString();
-        XBMC->Log(LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
-        m_user_channels.push_back(user_channel_s);
-      }
-      for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["HD"].GetArray())
-      {
-        string user_channel_s = user_channel.GetString();
-        m_user_channels.push_back(user_channel_s);
-        XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
-      }
-    }
-    m_login_status = WAIPU_LOGIN_STATUS_OK;
-    return true;
+    return ParseAccessToken();
   }
   // no valid session?
   m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
   return false;
 }
 
-WaipuData::WaipuData(const string& user, const string& pass)
+bool WaipuData::O2Login()
+{
+  XBMC->Log(LOG_DEBUG, "[login check] O2 TV LOGIN...");
+  time_t currTime;
+  time(&currTime);
+
+  if (!m_apiToken.accessToken.empty() && (m_apiToken.expires - 10 * 60) > currTime)
+  {
+    // API token exists and is valid, more than x in future
+    XBMC->Log(LOG_DEBUG, "[login check] old token still valid");
+    return true;
+  }
+
+  m_login_status = WAIPU_LOGIN_STATUS_OK;
+
+  // curl request
+  Curl curl;
+  int statusCode = 0;
+  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  curl.AddHeader("authority", "o2api.waipu.tv");
+  string respForm =
+      HttpRequestToCurl(curl, "GET",
+                        "https://o2api.waipu.tv/api/o2/login/"
+                        "token?redirectUri=https%3A%2F%2Fo2tv.waipu.tv%2F&inWebview=true",
+                        "", statusCode);
+
+  string postData = "";
+
+  // get the form:
+  regex formPattern("<form[^>]*name=\"Login\"[^>]*action=\"([^\"]*)\"[^>]*>([\\s\\S]*)</form>");
+  smatch matches;
+  if (regex_search(respForm, matches, formPattern))
+  {
+    string form_action = matches[1];
+    string form_content = matches[2];
+    XBMC->Log(LOG_DEBUG, "[form action] %s;", form_action.c_str());
+
+    regex inputPattern("<input[^>]*name=\"([^\"]*)\"[^>]*value=\"([^\"]*)\"[^>]*>");
+    // finding all the match.
+    for (sregex_iterator it =
+             sregex_iterator(form_content.begin(), form_content.end(), inputPattern);
+         it != sregex_iterator(); it++)
+    {
+      smatch match;
+      match = *it;
+      string input_name = match.str(1);
+      string input_value = match.str(2);
+      // we need to dirty HTML-decode &#x3d; to = for base64 padding:
+      input_value = Utils::ReplaceAll(input_value,"&#x3d;","=");
+
+      XBMC->Log(LOG_DEBUG, "[form input] %s -> %s;", input_name.c_str(), input_value.c_str());
+
+      if (input_name == "IDToken2")
+      {
+        // input for password
+        input_value = password;
+      }
+
+      postData =
+          postData + Utils::UrlEncode(input_name) + "=" + Utils::UrlEncode(input_value) + "&";
+    }
+    // if parameters available: add username
+    if (postData.length() > 0)
+      postData = postData + "IDToken1=" + Utils::UrlEncode(username) + "&";
+  }
+  else
+  {
+    XBMC->Log(LOG_ERROR, "O2 Login Form not found");
+    m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+    return false;
+  }
+
+
+  XBMC->Log(LOG_DEBUG, "[O2] POST params: %s", postData.c_str());
+
+  string resp = HttpRequestToCurl(curl, "POST", "https://login.o2online.de/sso/UI/Login",
+                                  postData.c_str(), statusCode);
+  XBMC->Log(LOG_DEBUG, "[login check] Login-response 2: (HTTP %i) %s;", statusCode, resp.c_str());
+
+  string cookie = curl.GetCookie("user_token");
+  if (cookie.size() == 0)
+  {
+    // invalid credentials ?
+    m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+    return false;
+  }
+
+  m_apiToken.accessToken = cookie;
+  XBMC->Log(LOG_DEBUG, "[login O2] access_token: %s;", cookie.c_str());
+  m_apiToken.refreshToken = "";
+  XBMC->Log(LOG_DEBUG, "[login check] refreshToken: empty");
+  m_apiToken.expires = currTime + 3600; // expires after 1h; TODO: find real value
+  XBMC->Log(LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
+
+  return ParseAccessToken();
+}
+
+
+WaipuData::WaipuData(const string& user, const string& pass, const WAIPU_PROVIDER provider_p)
 {
   username = user;
   password = pass;
+  provider = provider_p;
   m_recordings_count = 0;
   m_active_recordings_update = false;
 

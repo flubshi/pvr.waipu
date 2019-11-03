@@ -35,8 +35,20 @@ msgid "Check requirements"
 msgstr "Überprüfe Anforderungen"
 
 msgctxt "#37207"
-msgid "(Re)install Widevine CDM library"
-msgstr "Widevine CDM Bibliothek (erneut) installieren"
+msgid "(Re)install Widevine CDM library..."
+msgstr "Widevine CDM Bibliothek (erneut) installieren..."
+
+msgctxt "#37208"
+msgid "Provider"
+msgstr "Anbieter"
+
+msgctxt "#37209"
+msgid "Waipu.tv"
+msgstr "Waipu.tv"
+
+msgctxt "#37210"
+msgid "O2 TV"
+msgstr "O2 TV (beta)"
 
 msgctxt "#37230"
 msgid "Error: Login not possible. Check credentials!"

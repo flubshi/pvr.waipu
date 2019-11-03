@@ -26,4 +26,5 @@ public:
   static int GetIDDirty(std::string str);
   static int stoiDefault(std::string str, int i);
   static bool ends_with(std::string const& haystack, std::string const& end);
+  static std::string ReplaceAll(std::string str, const std::string& search, const std::string& replace);
 };
