@@ -9,18 +9,15 @@
 # RAPIDJSON_INCLUDE_DIRS - the RapidJSON parser include directory
 #
 
+find_package(PkgConfig)
 if(PKG_CONFIG_FOUND)
-  pkg_check_modules(PC_RapidJSON RapidJSON>=1.0.2 QUIET)
+  pkg_check_modules(PC_RapidJSON RapidJSON>=${RapidJSON_FIND_VERSION} QUIET)
 endif()
 
-if(CORE_SYSTEM_NAME STREQUAL windows OR CORE_SYSTEM_NAME STREQUAL windowsstore)
-  set(RapidJSON_VERSION 1.1.0)
+if(PC_RapidJSON_VERSION)
+  set(RapidJSON_VERSION ${PC_RapidJSON_VERSION})
 else()
-  if(PC_RapidJSON_VERSION)
-    set(RapidJSON_VERSION ${PC_RapidJSON_VERSION})
-  else()
-    find_package(RapidJSON 1.1.0 CONFIG REQUIRED QUIET)
-  endif()
+  find_package(RapidJSON ${RapidJSON_FIND_VERSION} CONFIG REQUIRED QUIET)
 endif()
 
 find_path(RapidJSON_INCLUDE_DIR NAMES rapidjson/rapidjson.h
