@@ -45,6 +45,7 @@ std::string g_strClientPath = "";
 
 std::string waipuUsername;
 std::string waipuPassword;
+WAIPU_PROVIDER provider = WAIPU_PROVIDER_WAIPU;
 std::string protocol;
 
 CHelper_libXBMC_addon* XBMC = NULL;
@@ -70,6 +71,14 @@ extern "C"
     if (XBMC->GetSetting("protocol", &buffer))
     {
       protocol = buffer;
+    }
+    if (XBMC->GetSetting("provider_select", &intBuffer))
+    {
+	if(intBuffer == 0){
+	    provider = WAIPU_PROVIDER_WAIPU;
+	}else{
+	    provider = WAIPU_PROVIDER_O2;
+	}
     }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
   }
@@ -108,7 +117,7 @@ extern "C"
 
     if (!waipuUsername.empty() && !waipuPassword.empty())
     {
-      m_data = new WaipuData(waipuUsername, waipuPassword);
+      m_data = new WaipuData(waipuUsername, waipuPassword, provider);
 
       switch (m_data->GetLoginStatus())
       {
@@ -170,6 +179,26 @@ extern "C"
       if (password != waipuPassword)
       {
         waipuPassword = password;
+        return ADDON_STATUS_NEED_RESTART;
+      }
+    }
+
+    if (name == "provider_select")
+    {
+      int tmpProviderID = *static_cast<const int*>(settingValue);
+      WAIPU_PROVIDER tmpProvider;
+      if (tmpProviderID == 0)
+      {
+        tmpProvider = WAIPU_PROVIDER_WAIPU;
+      }
+      else
+      {
+        tmpProvider = WAIPU_PROVIDER_O2;
+      }
+
+      if (tmpProvider != provider)
+      {
+        provider = tmpProvider;
         return ADDON_STATUS_NEED_RESTART;
       }
     }

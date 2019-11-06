@@ -28,3 +28,9 @@ extern std::string g_strUserPath;
 extern std::string g_strClientPath;
 extern ADDON::CHelper_libXBMC_addon* XBMC;
 extern CHelper_libXBMC_pvr* PVR;
+
+enum WAIPU_PROVIDER
+{
+  WAIPU_PROVIDER_WAIPU,
+  WAIPU_PROVIDER_O2
+};
