@@ -304,7 +304,7 @@ bool WaipuData::O2Login()
       string input_name = match.str(1);
       string input_value = match.str(2);
       // we need to dirty HTML-decode &#x3d; to = for base64 padding:
-      input_value = Utils::ReplaceAll(input_value,"&#x3d;","=");
+      input_value = Utils::ReplaceAll(input_value, "&#x3d;", "=");
 
       XBMC->Log(LOG_DEBUG, "[form input] %s -> %s;", input_name.c_str(), input_value.c_str());
 
@@ -368,6 +368,7 @@ WaipuData::WaipuData(const string& user, const string& pass, const WAIPU_PROVIDE
 WaipuData::~WaipuData(void)
 {
   m_channels.clear();
+  m_channelGroups.clear();
   m_apiToken = {};
 }
 
@@ -404,6 +405,10 @@ bool WaipuData::LoadChannelData(void)
   XBMC->Log(LOG_DEBUG, "[channels] iterate channels");
   XBMC->Log(LOG_DEBUG, "[channels] size: %i;", channelsDoc["result"].Size());
 
+
+  WaipuChannelGroup favgroup;
+  favgroup.name = "Favoriten";
+
   int i = 0;
   for (const auto& channel : channelsDoc["result"].GetArray())
   {
@@ -431,9 +436,9 @@ bool WaipuData::LoadChannelData(void)
     waipu_channel.waipuID = waipuid; // waipu[id]
     XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;", waipu_channel.waipuID.c_str());
 
-    int orderindex = channel["orderIndex"].GetUint() + 1;
-    waipu_channel.iUniqueId = orderindex; // waipu[orderIndex]
-    XBMC->Log(LOG_DEBUG, "[channel] id: %i;", orderindex);
+    int uniqueId = Utils::GetChannelId(waipuid.c_str());
+    waipu_channel.iUniqueId = uniqueId;
+    XBMC->Log(LOG_DEBUG, "[channel] id: %i;", uniqueId);
 
     string displayName = channel["displayName"].GetString();
     waipu_channel.strChannelName = displayName; // waipu[displayName]
@@ -483,8 +488,14 @@ bool WaipuData::LoadChannelData(void)
     }
     XBMC->Log(LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
 
+    bool isFav = channel["faved"].GetBool();
+    if(isFav)
+      favgroup.channels.push_back(waipu_channel);
+
     m_channels.push_back(waipu_channel);
   }
+
+  m_channelGroups.push_back(favgroup);
 
   return true;
 }
@@ -571,17 +582,48 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
 
 int WaipuData::GetChannelGroupsAmount(void)
 {
-  return -1;
+  return static_cast<int>(m_channelGroups.size());
 }
 
-PVR_ERROR WaipuData::GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
+PVR_ERROR WaipuData::GetChannelGroups(ADDON_HANDLE handle)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  std::vector<WaipuChannelGroup>::iterator it;
+  for (it = m_channelGroups.begin(); it != m_channelGroups.end(); ++it)
+  {
+    PVR_CHANNEL_GROUP xbmcGroup;
+    memset(&xbmcGroup, 0, sizeof(PVR_CHANNEL_GROUP));
+    xbmcGroup.iPosition = 0; /* not supported  */
+    xbmcGroup.bIsRadio = false; /* is radio group */
+    strncpy(xbmcGroup.strGroupName, it->name.c_str(), sizeof(xbmcGroup.strGroupName) - 1);
+
+    PVR->TransferChannelGroup(handle, &xbmcGroup);
+  }
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  for (const auto& cgroup : m_channelGroups)
+  {
+    if (cgroup.name != group.strGroupName)
+      continue;
+
+    for (const auto& channel : cgroup.channels)
+    {
+      PVR_CHANNEL_GROUP_MEMBER xbmcGroupMember;
+      memset(&xbmcGroupMember, 0, sizeof(PVR_CHANNEL_GROUP_MEMBER));
+
+      strncpy(xbmcGroupMember.strGroupName, group.strGroupName,
+              sizeof(xbmcGroupMember.strGroupName) - 1);
+      xbmcGroupMember.iChannelUniqueId = static_cast<unsigned int>(channel.iUniqueId);
+      xbmcGroupMember.iChannelNumber = static_cast<unsigned int>(channel.iChannelNumber);
+
+      PVR->TransferChannelGroupMember(handle, &xbmcGroupMember);
+    }
+    return PVR_ERROR_NO_ERROR;
+  }
+
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle,
