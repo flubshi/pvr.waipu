@@ -74,11 +74,14 @@ extern "C"
     }
     if (XBMC->GetSetting("provider_select", &intBuffer))
     {
-	if(intBuffer == 0){
-	    provider = WAIPU_PROVIDER_WAIPU;
-	}else{
-	    provider = WAIPU_PROVIDER_O2;
-	}
+      if (intBuffer == 0)
+      {
+        provider = WAIPU_PROVIDER_WAIPU;
+      }
+      else
+      {
+        provider = WAIPU_PROVIDER_O2;
+      }
     }
     XBMC->Log(LOG_DEBUG, "End Readsettings");
   }
@@ -224,6 +227,7 @@ extern "C"
     pCapabilities->bSupportsTV = true;
     pCapabilities->bSupportsRecordings = true;
     pCapabilities->bSupportsTimers = true;
+    pCapabilities->bSupportsChannelGroups = true;
 
     return PVR_ERROR_NO_ERROR;
   }
@@ -360,13 +364,25 @@ extern "C"
     return ret;
   }
 
-  int GetChannelGroupsAmount(void) { return -1; }
+  int GetChannelGroupsAmount(void) { return m_data->GetChannelGroupsAmount(); }
 
-  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio) { return PVR_ERROR_NOT_IMPLEMENTED; }
+  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio)
+  {
+    if (bRadio)
+      return PVR_ERROR_NO_ERROR;
+
+    if (m_data)
+      return m_data->GetChannelGroups(handle);
+
+    return PVR_ERROR_SERVER_ERROR;
+  }
 
   PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group)
   {
-    return PVR_ERROR_NOT_IMPLEMENTED;
+    if (m_data)
+      return m_data->GetChannelGroupMembers(handle, group);
+
+    return PVR_ERROR_SERVER_ERROR;
   }
 
   PVR_ERROR SignalStatus(PVR_SIGNAL_STATUS& signalStatus) { return PVR_ERROR_NOT_IMPLEMENTED; }

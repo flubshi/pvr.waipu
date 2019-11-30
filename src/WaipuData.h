@@ -59,6 +59,12 @@ struct WaipuChannel
   string strStreamURL; // waipu[links][rel=livePlayout]
 };
 
+struct WaipuChannelGroup
+{
+  std::string name;
+  std::vector<WaipuChannel> channels;
+};
+
 struct WaipuEPGMappingEntry
 {
   int iBroadcastId;
@@ -76,7 +82,7 @@ public:
   PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
 
   int GetChannelGroupsAmount(void);
-  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle, bool bRadio);
+  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
   PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
 
   virtual string GetChannelStreamUrl(int uniqueId, const string& protocol);
@@ -111,6 +117,7 @@ protected:
 private:
   bool ParseAccessToken(void);
   std::vector<WaipuChannel> m_channels;
+  std::vector<WaipuChannelGroup> m_channelGroups;
   std::string username;
   std::string password;
   WaipuApiToken m_apiToken;
