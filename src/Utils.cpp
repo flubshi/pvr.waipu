@@ -151,6 +151,15 @@ int Utils::GetIDDirty(std::string str)
   return rand() % 99999 + 1;
 }
 
+int Utils::GetChannelId(const char* strChannelName)
+{
+  int iId = 0;
+  int c;
+  while ((c = *strChannelName++))
+    iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
+  return abs(iId);
+}
+
 int Utils::stoiDefault(std::string str, int i)
 {
   try
