@@ -51,7 +51,7 @@ struct WaipuApiToken
 
 struct WaipuChannel
 {
-  int iUniqueId; //waipu[orderIndex]
+  int iUniqueId;
   string waipuID; // waipu[id]
   int iChannelNumber; //position
   string strChannelName; //waipu[displayName]

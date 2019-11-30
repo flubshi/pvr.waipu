@@ -24,7 +24,10 @@ public:
   static time_t StringToTime(std::string timeString);
   static std::string ltrim(std::string str, const std::string chars = "\t\n\v\f\r _");
   static int GetIDDirty(std::string str);
+  static int GetChannelId(const char* strChannelName);
   static int stoiDefault(std::string str, int i);
   static bool ends_with(std::string const& haystack, std::string const& end);
-  static std::string ReplaceAll(std::string str, const std::string& search, const std::string& replace);
+  static std::string ReplaceAll(std::string str,
+                                const std::string& search,
+                                const std::string& replace);
 };
