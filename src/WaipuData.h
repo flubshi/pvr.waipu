@@ -65,11 +65,11 @@ struct WaipuChannelGroup
   std::vector<WaipuChannel> channels;
 };
 
-struct WaipuEPGMappingEntry
+struct WaipuEPGEntry
 {
-  int iBroadcastId;
+  int iUniqueBroadcastId;
   int iUniqueChannelId;
-  std::string waipuId;
+  bool isRecordable;
 };
 
 class WaipuData
@@ -101,6 +101,7 @@ public:
 
   std::string GetLicense(void);
   WAIPU_LOGIN_STATUS GetLoginStatus(void);
+  PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable);
 
 protected:
   string HttpGet(const string& url);
@@ -117,6 +118,7 @@ protected:
 private:
   bool ParseAccessToken(void);
   std::vector<WaipuChannel> m_channels;
+  std::vector<WaipuEPGEntry> m_epgEntries;
   std::vector<WaipuChannelGroup> m_channelGroups;
   std::string username;
   std::string password;

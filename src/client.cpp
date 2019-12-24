@@ -541,7 +541,15 @@ extern "C"
   PVR_ERROR SetRecordingLifetime(const PVR_RECORDING*) { return PVR_ERROR_NOT_IMPLEMENTED; }
   PVR_ERROR GetStreamProperties(PVR_STREAM_PROPERTIES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
   PVR_ERROR GetStreamTimes(PVR_STREAM_TIMES*) { return PVR_ERROR_NOT_IMPLEMENTED; }
-  PVR_ERROR IsEPGTagRecordable(const EPG_TAG*, bool*) { return PVR_ERROR_NOT_IMPLEMENTED; }
+  PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable)
+  {
+    if (m_data)
+    {
+      return m_data->IsEPGTagRecordable(tag, bIsRecordable);
+    }
+
+    return PVR_ERROR_FAILED;
+  }
   PVR_ERROR GetEPGTagEdl(const EPG_TAG* epgTag, PVR_EDL_ENTRY edl[], int* size)
   {
     return PVR_ERROR_NOT_IMPLEMENTED;

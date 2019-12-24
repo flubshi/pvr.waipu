@@ -368,6 +368,7 @@ WaipuData::WaipuData(const string& user, const string& pass, const WAIPU_PROVIDE
 WaipuData::~WaipuData(void)
 {
   m_channels.clear();
+  m_epgEntries.clear();
   m_channelGroups.clear();
   m_apiToken = {};
 }
@@ -489,7 +490,7 @@ bool WaipuData::LoadChannelData(void)
     XBMC->Log(LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
 
     bool isFav = channel["faved"].GetBool();
-    if(isFav)
+    if (isFav)
       favgroup.channels.push_back(waipu_channel);
 
     m_channels.push_back(waipu_channel);
@@ -676,6 +677,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle,
     for (const auto& epgData : epgDoc["result"].GetArray())
     {
       EPG_TAG tag;
+      WaipuEPGEntry epgEntry;
       memset(&tag, 0, sizeof(EPG_TAG));
 
       // generate a unique boadcast id
@@ -684,9 +686,17 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle,
       int dirtyID = Utils::GetIDDirty(epg_bid);
       XBMC->Log(LOG_DEBUG, "[epg] epg_bid dirty: %i;", dirtyID);
       tag.iUniqueBroadcastId = dirtyID;
+      epgEntry.iUniqueBroadcastId = dirtyID;
 
       // channel ID
       tag.iUniqueChannelId = myChannel.iUniqueId;
+      epgEntry.iUniqueChannelId = myChannel.iUniqueId;
+
+      // is recordable
+      bool isRecordable = !epgData["recordingForbidden"].GetBool();
+      XBMC->Log(LOG_DEBUG, "[epg] recordable: %i;", isRecordable);
+      epgEntry.isRecordable = isRecordable;
+      m_epgEntries.push_back(epgEntry);
 
       // set title
       tag.strTitle = epgData["title"].GetString();
@@ -1125,4 +1135,21 @@ std::string WaipuData::GetLicense(void)
   // ensure that userHandle is valid
   ApiLogin();
   return m_license;
+}
+
+PVR_ERROR WaipuData::IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable)
+{
+
+  for (const auto& epgEntry : m_epgEntries)
+  {
+    if (epgEntry.iUniqueBroadcastId != tag->iUniqueBroadcastId)
+      continue;
+    if (epgEntry.iUniqueChannelId != tag->iUniqueChannelId)
+      continue;
+    *bIsRecordable = epgEntry.isRecordable;
+    return PVR_ERROR_NO_ERROR;
+  }
+
+  *bIsRecordable = false;
+  return PVR_ERROR_NO_ERROR;
 }
