@@ -130,12 +130,12 @@ extern "C"
       case WAIPU_LOGIN_STATUS_NO_NETWORK:
         m_CurStatus = ADDON_STATUS_NEED_RESTART;
         XBMC->Log(LOG_ERROR, "[load data] Network issue");
-        XBMC->QueueNotification(QUEUE_ERROR, "No network connection");
+        XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30031));
         break;
       case WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS:
         m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
         XBMC->Log(LOG_ERROR, "[load data] Login invalid");
-        XBMC->QueueNotification(QUEUE_ERROR, "Invalid login credentials");
+        XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30032));
         break;
       case WAIPU_LOGIN_STATUS_UNKNOWN:
         XBMC->Log(LOG_ERROR, "[login status] unknown state");

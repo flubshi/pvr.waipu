@@ -10,46 +10,54 @@ msgstr ""
 "Language: de_DE\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgctxt "#37201"
+msgctxt "#30001"
 msgid "General"
 msgstr "Allgemein"
 
-msgctxt "#37202"
+msgctxt "#30002"
 msgid "Mail"
 msgstr "E-Mail"
 
-msgctxt "#37203"
+msgctxt "#30003"
 msgid "Password"
 msgstr "Passwort"
 
-msgctxt "#37204"
+msgctxt "#30004"
 msgid "Protocol"
 msgstr "Protokoll"
 
-msgctxt "#37205"
+msgctxt "#30005"
 msgid "Misc"
 msgstr "Sonstiges"
 
-msgctxt "#37206"
+msgctxt "#30006"
 msgid "Check requirements"
 msgstr "Überprüfe Anforderungen"
 
-msgctxt "#37207"
+msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
 msgstr "Widevine CDM Bibliothek (erneut) installieren..."
 
-msgctxt "#37208"
+msgctxt "#30008"
 msgid "Provider"
 msgstr "Anbieter"
 
-msgctxt "#37209"
+msgctxt "#30009"
 msgid "Waipu.tv"
 msgstr "Waipu.tv"
 
-msgctxt "#37210"
+msgctxt "#30010"
 msgid "O2 TV"
 msgstr "O2 TV (beta)"
 
-msgctxt "#37230"
+msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
 msgstr "Fehler: Login nicht möglich. Ungültiger Account!"
+
+msgctxt "#30031"
+msgid "No network connection"
+msgstr "Keine Netzwerkverbindung"
+
+msgctxt "#30032"
+msgid "Invalid login credentials"
+msgstr "Ungültige Zugangsdaten"
