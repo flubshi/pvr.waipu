@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.3.1"
+  version="1.3.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
     <import addon="script.module.inputstreamhelper" version="0.4.1"/>
     <import addon="script.module.requests" version="2.3.0"/>
+    <import addon="inputstream.adaptive" minversion="2.4.2"/>
   </requires>
   <extension
     point="xbmc.pvrclient"
@@ -29,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.3.2 Add inputstream.adaptive to dependencies; Fix translation IDs; Show record option only if available
 - 1.3.1 Add channel groups: display favorites
 - 1.3.0 Implement O2 authentication
 - 1.2.4 Fix Ubuntu packaging: adjust rapidjson dependency
