@@ -419,12 +419,16 @@ bool WaipuData::LoadChannelData(void)
         m_user_channels.end())
       continue;
 
+    bool tvfuse = false;
     // check if user has hidden this channel
     if (channel.HasMember("properties") && channel["properties"].IsArray())
     {
       bool skipChannel = false;
       for (auto& prop : channel["properties"].GetArray())
+      {
         skipChannel |= (prop.GetString() == string("UserSetHidden"));
+        tvfuse |= (prop.GetString() == string("tvfuse"));
+      }
       if (skipChannel)
         continue;
     }
@@ -433,6 +437,9 @@ bool WaipuData::LoadChannelData(void)
     WaipuChannel waipu_channel;
     waipu_channel.iChannelNumber = i; // position
     XBMC->Log(LOG_DEBUG, "[channel] channelnr(pos): %i;", waipu_channel.iChannelNumber);
+
+    waipu_channel.tvfuse = tvfuse;
+    XBMC->Log(LOG_DEBUG, "[channel] tvfuse: %i;", waipu_channel.tvfuse);
 
     waipu_channel.waipuID = waipuid; // waipu[id]
     XBMC->Log(LOG_DEBUG, "[channel] waipuid: %s;", waipu_channel.waipuID.c_str());
@@ -691,6 +698,14 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle,
       // channel ID
       tag.iUniqueChannelId = myChannel.iUniqueId;
       epgEntry.iUniqueChannelId = myChannel.iUniqueId;
+
+      // add streamUrlProvider if it is video on demand
+      if (myChannel.tvfuse && epgData.HasMember("streamUrlProvider") && !epgData["streamUrlProvider"].IsNull())
+      {
+        string streamUrlProvider = epgData["streamUrlProvider"].GetString();
+        XBMC->Log(LOG_DEBUG, "[epg] streamUrlProvider: %s;", streamUrlProvider.c_str());
+        epgEntry.streamUrlProvider = streamUrlProvider;
+      }
 
       // is recordable
       bool isRecordable = !epgData["recordingForbidden"].GetBool();
@@ -954,6 +969,43 @@ std::string WaipuData::GetRecordingURL(const PVR_RECORDING& recording, const str
   return "";
 }
 
+string WaipuData::GetEPGTagURL(const EPG_TAG& tag, const string& protocol)
+{
+  ApiLogin();
+
+  for (const auto& epgEntry : m_epgEntries)
+  {
+    if (epgEntry.iUniqueChannelId != tag.iUniqueChannelId)
+      continue;
+    if (epgEntry.iUniqueBroadcastId != tag.iUniqueBroadcastId)
+      continue;
+
+    string url = epgEntry.streamUrlProvider;
+    XBMC->Log(LOG_DEBUG, "play epgTAG -> %s", tag.strTitle);
+    XBMC->Log(LOG_DEBUG, "play url -> %s", url.c_str());
+
+    string tag_resp = HttpGet(url);
+    XBMC->Log(LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
+
+    Document tagDoc;
+    tagDoc.Parse(tag_resp.c_str());
+    if (tagDoc.GetParseError())
+    {
+      XBMC->Log(LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+      return "";
+    }
+    XBMC->Log(LOG_DEBUG, "[tag] streams");
+    // check if streams there
+    if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+    {
+      string mpdUrl = tagDoc["player"]["mpd"].GetString();
+      XBMC->Log(LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
+      return mpdUrl;
+    }
+  }
+  return "";
+}
+
 PVR_ERROR WaipuData::DeleteRecording(const PVR_RECORDING& recording)
 {
   if (ApiLogin())
@@ -1159,5 +1211,19 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable)
   }
 
   *bIsRecordable = false;
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR WaipuData::IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable)
+{
+  for (const auto& channel : m_channels)
+  {
+    if (channel.iUniqueId != tag->iUniqueChannelId)
+      continue;
+    *bIsPlayable = channel.tvfuse;
+    return PVR_ERROR_NO_ERROR;
+  }
+
+  *bIsPlayable = false;
   return PVR_ERROR_NO_ERROR;
 }
