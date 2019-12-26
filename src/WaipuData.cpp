@@ -1139,6 +1139,14 @@ std::string WaipuData::GetLicense(void)
 
 PVR_ERROR WaipuData::IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable)
 {
+  time_t current_time;
+  time(&current_time);
+  if (tag->endTime < current_time)
+  {
+    // if tag is in past, no recording is possible
+    *bIsRecordable = false;
+    return PVR_ERROR_NO_ERROR;
+  }
 
   for (const auto& epgEntry : m_epgEntries)
   {
