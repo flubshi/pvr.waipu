@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="0.2.1"
+  version="0.2.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>
     @ADDON_DEPENDS@
     <import addon="script.module.inputstreamhelper" version="0.4.1"/>
+    <import addon="inputstream.adaptive" minversion="2.3.21"/>
   </requires>
   <extension
     point="xbmc.pvrclient"
@@ -29,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 0.2.2 Add inputstream.adaptive as dependency
 - 0.2.1 Fix channel order: calculate unique channel id
 - 0.2.0 Fix timers not displayed; Add option to install widevine
 - 0.1.9 Update build sytem version; change header include way
