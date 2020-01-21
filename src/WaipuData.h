@@ -57,6 +57,7 @@ struct WaipuChannel
   string strChannelName; //waipu[displayName]
   string strIconPath; // waipu[links][rel=iconlargehd]
   string strStreamURL; // waipu[links][rel=livePlayout]
+  bool tvfuse; // tvfuse is on demand channel
 };
 
 struct WaipuChannelGroup
@@ -70,6 +71,7 @@ struct WaipuEPGEntry
   int iUniqueBroadcastId;
   int iUniqueChannelId;
   bool isRecordable;
+  string streamUrlProvider;
 };
 
 class WaipuData
@@ -92,6 +94,7 @@ public:
   int GetRecordingsAmount(bool bDeleted);
   PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool bDeleted);
   std::string GetRecordingURL(const PVR_RECORDING& recording, const string& protocol);
+  std::string GetEPGTagURL(const EPG_TAG& tag, const string& protocol);
   PVR_ERROR DeleteRecording(const PVR_RECORDING& recording);
 
   int GetTimersAmount(void);
@@ -102,6 +105,7 @@ public:
   std::string GetLicense(void);
   WAIPU_LOGIN_STATUS GetLoginStatus(void);
   PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable);
+  PVR_ERROR IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable);
 
 protected:
   string HttpGet(const string& url);

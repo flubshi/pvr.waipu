@@ -263,13 +263,14 @@ extern "C"
     return PVR_ERROR_SERVER_ERROR;
   }
 
-  PVR_ERROR IsEPGTagPlayable(const EPG_TAG*, bool* bIsPlayable)
+  PVR_ERROR IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable)
   {
-    /**
-  *bIsPlayable = true;
-  return PVR_ERROR_NO_ERROR;
-  **/
-    return PVR_ERROR_NOT_IMPLEMENTED;
+    if (m_data)
+    {
+      return m_data->IsEPGTagPlayable(tag, bIsPlayable);
+    }
+
+    return PVR_ERROR_FAILED;
   }
 
   int GetChannelsAmount(void)
@@ -482,8 +483,20 @@ extern "C"
                                       PVR_NAMED_VALUE* properties,
                                       unsigned int* iPropertiesCount)
   {
-    return PVR_ERROR_NOT_IMPLEMENTED;
+    XBMC->Log(LOG_DEBUG, "[EPG TAG] play it...");
+
+    string strUrl = m_data->GetEPGTagURL(*tag, protocol);
+    if (strUrl.empty())
+    {
+      return PVR_ERROR_FAILED;
+    }
+    *iPropertiesCount = 0;
+    setStreamProperties(properties, iPropertiesCount, strUrl);
+    setStreamProperty(properties, iPropertiesCount, PVR_STREAM_PROPERTY_ISREALTIMESTREAM, "true");
+
+    return PVR_ERROR_NO_ERROR;
   }
+
   PVR_ERROR CallMenuHook(const PVR_MENUHOOK& menuhook, const PVR_MENUHOOK_DATA&)
   {
     return PVR_ERROR_NOT_IMPLEMENTED;
