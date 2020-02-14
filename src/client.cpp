@@ -254,11 +254,11 @@ extern "C"
 
   PVR_ERROR GetDriveSpace(long long* iTotal, long long* iUsed) { return PVR_ERROR_NOT_IMPLEMENTED; }
 
-  PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd)
+  PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, const PVR_CHANNEL& channel, time_t iStart, time_t iEnd)
   {
 
     if (m_data)
-      return m_data->GetEPGForChannel(handle, iChannelUid, iStart, iEnd);
+      return m_data->GetEPGForChannel(handle, channel.iUniqueId, iStart, iEnd);
 
     return PVR_ERROR_SERVER_ERROR;
   }
@@ -516,6 +516,7 @@ extern "C"
   int ReadRecordedStream(unsigned char* pBuffer, unsigned int iBufferSize) { return 0; }
   long long SeekRecordedStream(long long iPosition, int iWhence /* = SEEK_SET */) { return 0; }
   long long LengthRecordedStream(void) { return 0; }
+  bool IsTimeshifting(void) { return false; }
   void DemuxReset(void) {}
   void DemuxFlush(void) {}
   void FillBuffer(bool mode) {}
