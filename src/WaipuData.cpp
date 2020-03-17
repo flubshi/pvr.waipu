@@ -741,14 +741,22 @@ PVR_ERROR WaipuData::GetEPGForChannel(ADDON_HANDLE handle,
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
       {
-        tag.iSeriesNumber = Utils::stoiDefault(epgData["season"].GetString(), 0);
+        tag.iSeriesNumber = Utils::stoiDefault(epgData["season"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE);
       }
-
+      else
+      {
+        tag.iSeriesNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+      }
       // episodeNumber
       if (epgData.HasMember("episode") && epgData["episode"].IsString())
       {
-        tag.iEpisodeNumber = Utils::stoiDefault(epgData["episode"].GetString(), 0);
+        tag.iEpisodeNumber = Utils::stoiDefault(epgData["episode"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE);
       }
+      else
+      {
+        tag.iEpisodeNumber = EPG_TAG_INVALID_SERIES_EPISODE;
+      }
+      tag.iEpisodePartNumber = EPG_TAG_INVALID_SERIES_EPISODE;
 
       // episodeName
       if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
@@ -865,13 +873,21 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
     // iSeriesNumber
     if (epgData.HasMember("season") && !epgData["season"].IsNull())
     {
-      tag.iSeriesNumber = Utils::stoiDefault(epgData["season"].GetString(), 0);
+      tag.iSeriesNumber = Utils::stoiDefault(epgData["season"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE);
+    }
+    else
+    {
+      tag.iSeriesNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
     }
 
     // episodeNumber
     if (epgData.HasMember("episode") && !epgData["episode"].IsNull())
     {
-      tag.iEpisodeNumber = Utils::stoiDefault(epgData["episode"].GetString(), 0);
+      tag.iEpisodeNumber = Utils::stoiDefault(epgData["episode"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE);
+    }
+    else
+    {
+      tag.iEpisodeNumber = PVR_RECORDING_INVALID_SERIES_EPISODE;
     }
 
     // episodeName
