@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.4.2"
+  version="1.4.3"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -30,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.4.3 Update PVR API 6.3.0
 - 1.4.2 Update PVR API 6.2.0
 - 1.4.1 New settings format; add external dependencies
 - 1.4.0 Implement Video on Demand channels
