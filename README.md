@@ -41,5 +41,5 @@ For any support regarding this plugin, please create a github issue.
 
 ## Useful links
 
-* [Kodi's PVR user support](http://forum.kodi.tv/forumdisplay.php?fid=167)
-* [Kodi's PVR development support](http://forum.kodi.tv/forumdisplay.php?fid=136)
+* [Kodi's PVR user support](https://forum.kodi.tv/forumdisplay.php?fid=167)
+* [Kodi's PVR development support](https://forum.kodi.tv/forumdisplay.php?fid=136)
