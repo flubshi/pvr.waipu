@@ -309,7 +309,7 @@ extern "C"
   {
     setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_STREAMURL, url);
     XBMC->Log(LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
-    setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAMADDON,
+    setStreamProperty(properties, propertiesCount, PVR_STREAM_PROPERTY_INPUTSTREAM,
                       "inputstream.adaptive");
 
     if (protocol == "MPEG_DASH")
