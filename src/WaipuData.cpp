@@ -407,8 +407,14 @@ bool WaipuData::LoadChannelData(void)
   XBMC->Log(LOG_DEBUG, "[channels] size: %i;", channelsDoc["result"].Size());
 
 
-  WaipuChannelGroup favgroup;
-  favgroup.name = "Favoriten";
+  WaipuChannelGroup cgroup_fav;
+  cgroup_fav.name = "Favoriten";
+
+  WaipuChannelGroup cgroup_live;
+  cgroup_live.name = "Live TV";
+
+  WaipuChannelGroup cgroup_vod;
+  cgroup_vod.name = "VoD";
 
   int i = 0;
   for (const auto& channel : channelsDoc["result"].GetArray())
@@ -497,13 +503,24 @@ bool WaipuData::LoadChannelData(void)
     XBMC->Log(LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
 
     bool isFav = channel["faved"].GetBool();
-    if (isFav)
-      favgroup.channels.push_back(waipu_channel);
+    if (isFav){
+	// user added channel to favorites
+	cgroup_fav.channels.push_back(waipu_channel);
+    }
+    if(tvfuse){
+	// Video on Demand channel
+	cgroup_vod.channels.push_back(waipu_channel);
+    }else{
+	// Not VoD -> Live TV
+	cgroup_live.channels.push_back(waipu_channel);
+    }
 
     m_channels.push_back(waipu_channel);
   }
 
-  m_channelGroups.push_back(favgroup);
+  m_channelGroups.push_back(cgroup_fav);
+  m_channelGroups.push_back(cgroup_live);
+  m_channelGroups.push_back(cgroup_vod);
 
   return true;
 }
