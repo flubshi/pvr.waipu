@@ -1,6 +1,6 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](pvr.waipu/LICENSE.txt)
 [![Build Status](https://travis-ci.org/flubshi/pvr.waipu.svg?branch=Matrix)](https://travis-ci.org/flubshi/pvr.waipu)
-[![Build status](https://ci.appveyor.com/api/projects/status/mak70bfs0bj78y53/branch/Matrix?svg=true)](https://ci.appveyor.com/project/flubshi/pvr-waipu/branch/Matrix)
+[![Build Status](https://dev.azure.com/flubshi/pvr.waipu/_apis/build/status/flubshi.pvr.waipu?branchName=Matrix)](https://dev.azure.com/flubshi/pvr.waipu/_build/latest?definitionId=1&branchName=Matrix)
 [![Build Status](https://jenkins.kodi.tv/buildStatus/icon?job=flubshi%2Fpvr.waipu%2FMatrix)](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/)
 
 # waipu PVR
