@@ -3,8 +3,12 @@
 [![Build Status](https://dev.azure.com/flubshi/pvr.waipu/_apis/build/status/flubshi.pvr.waipu?branchName=Matrix)](https://dev.azure.com/flubshi/pvr.waipu/_build/latest?definitionId=1&branchName=Matrix)
 [![Build Status](https://jenkins.kodi.tv/buildStatus/icon?job=flubshi%2Fpvr.waipu%2FMatrix)](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/)
 
-# waipu PVR
-waipu PVR client addon for [Kodi](https://kodi.tv)
+# Waipu PVR client for Kodi
+This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provide Kodi integration for the german TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
+
+# Preview Images
+
+<img src="pvr.waipu/resources/screenshots/screenshot-01.jpg" width="300" /> <img src="pvr.waipu/resources/screenshots/screenshot-02.jpg" width="300" />
 
 ## Installation
 
@@ -12,15 +16,15 @@ Starting with Kodi 19 - Matrix, pvr.waipu will become an official Kodi plugin an
 
 pvr.waipu also supports the stable version Kodi 18 - Leia. To use it, you need to compile it yourself, or download and install a precompiled version:
 
-|Platform|Kodi 18|Kodi 19|
-|---|---|---|
-|Windows (x64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-x86_64/)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-x86_64/)|
-|Windows (i686)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-i686)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-i686)|
-|OSX (x64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+osx-x86_64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+osx-x86_64)|
-|Android (aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-aarch64)|
-|Android (ARMv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-armv7)|
-|iOS (aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-aarch64)|
-|iOS (ARMv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-armv7)|
+|Platform|Kodi 18|Kodi 18 (O2 TV)|Kodi 19|
+|---|:---:|:---:|:---:|
+|Windows (x64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-x86_64/)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-x86_64/)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-x86_64/)|
+|Windows (i686)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-i686)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-i686)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+windows-i686)|
+|OSX (x64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+osx-x86_64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+osx-x86_64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+osx-x86_64)|
+|Android (aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-aarch64)|
+|Android (ARMv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+android-armv7)|
+|iOS (aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-aarch64)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-aarch64)|
+|iOS (ARMv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Leia-Backported/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-armv7)|[Download](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/lastSuccessfulBuild/artifact/cmake/addons/build/zips/pvr.waipu+ios-armv7)|
 
 ## Disclaimer
 
