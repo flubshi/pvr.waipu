@@ -6,7 +6,7 @@
 # Waipu PVR client for Kodi
 This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provide Kodi integration for the german TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
 
-# Preview Images
+## Preview Images
 
 <img src="pvr.waipu/resources/screenshots/screenshot-01.jpg" width="300" /> <img src="pvr.waipu/resources/screenshots/screenshot-02.jpg" width="300" />
 
