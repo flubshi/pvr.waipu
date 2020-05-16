@@ -31,8 +31,8 @@ msgid "Misc"
 msgstr "Sonstiges"
 
 msgctxt "#30006"
-msgid "Check requirements"
-msgstr "Überprüfe Anforderungen"
+msgid "InputStream Helper information"
+msgstr "InputStream Helper Informationen"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
