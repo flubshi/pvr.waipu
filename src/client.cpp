@@ -86,7 +86,7 @@ extern "C"
     XBMC->Log(LOG_DEBUG, "End Readsettings");
   }
 
-  ADDON_STATUS ADDON_Create(void* hdl, void* props)
+  ADDON_STATUS ADDON_Create(void* hdl, const char* globalApiVersion, void* props)
   {
     if (!hdl || !props)
       return ADDON_STATUS_UNKNOWN;
