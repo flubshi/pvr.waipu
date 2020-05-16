@@ -130,7 +130,8 @@ private:
   std::string m_license;
   int m_recordings_count;
   bool m_active_recordings_update;
-  std::vector<string> m_user_channels;
+  std::vector<string> m_user_channels_sd;
+  std::vector<string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
   WAIPU_PROVIDER provider;
 };

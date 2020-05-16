@@ -140,17 +140,18 @@ bool WaipuData::ParseAccessToken(void)
     m_license = base64_encode(license_plain.c_str(), license_plain.length());
     XBMC->Log(LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
     // get user channels
-    m_user_channels.clear();
+    m_user_channels_sd.clear();
+    m_user_channels_hd.clear();
     for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["SD"].GetArray())
     {
       string user_channel_s = user_channel.GetString();
       XBMC->Log(LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
-      m_user_channels.push_back(user_channel_s);
+      m_user_channels_sd.push_back(user_channel_s);
     }
     for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["HD"].GetArray())
     {
       string user_channel_s = user_channel.GetString();
-      m_user_channels.push_back(user_channel_s);
+      m_user_channels_hd.push_back(user_channel_s);
       XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
     }
   }
@@ -421,9 +422,16 @@ bool WaipuData::LoadChannelData(void)
   {
     string waipuid = channel["id"].GetString();
     // check if channel is part of user channels:
-    if (find(m_user_channels.begin(), m_user_channels.end(), waipuid.c_str()) ==
-        m_user_channels.end())
+    bool isHD = false;
+    if (find(m_user_channels_sd.begin(), m_user_channels_sd.end(), waipuid.c_str()) !=
+        m_user_channels_sd.end()){
+	isHD = false;
+    }else if (find(m_user_channels_hd.begin(), m_user_channels_hd.end(), waipuid.c_str()) !=
+        m_user_channels_hd.end()){
+	isHD = true;
+    }else{
       continue;
+    }
 
     bool tvfuse = false;
     // check if user has hidden this channel
@@ -488,13 +496,13 @@ bool WaipuData::LoadChannelData(void)
       }
       XBMC->Log(LOG_DEBUG, "[channel] link: %s -> %s;", rel.c_str(), href.c_str());
     }
-    if (icon_sd.size() > 0)
-    {
-      waipu_channel.strIconPath = icon_sd + "?width=256&height=256";
-    }
-    else if (icon_hd.size() > 0)
+    if (icon_hd.size() > 0 && isHD)
     {
       waipu_channel.strIconPath = icon_hd + "?width=256&height=256";
+    }
+    else if (icon_sd.size() > 0)
+    {
+      waipu_channel.strIconPath = icon_sd + "?width=256&height=256";
     }
     else if (icon.size() > 0)
     {
