@@ -52,15 +52,14 @@
 					<dependency type="visible" operator="!is"
 						setting="system.platform.android">true</dependency>
 				</setting>
-				<setting id="run_check" type="string" label="30006" help="">
+				<setting id="run_is_info" type="string" label="30006" help="">
 					<level>0</level>
 					<default />
 					<constraints>
 						<allowempty>true</allowempty>
 					</constraints>
 					<control type="button" format="action">
-						<data>RunScript(special://xbmc/addons/pvr.waipu/resources/check_requirements.py)
-						</data>
+						<data>RunScript(script.module.inputstreamhelper,info)</data>
 					</control>
 					<dependency type="visible" operator="!is"
 						setting="system.platform.android">true</dependency>

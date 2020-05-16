@@ -31,7 +31,7 @@ msgid "Misc"
 msgstr ""
 
 msgctxt "#30006"
-msgid "Check requirements"
+msgid "InputStream Helper information"
 msgstr ""
 
 msgctxt "#30007"
