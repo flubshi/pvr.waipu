@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.4.6"
+  version="1.4.7"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -30,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.4.7 Show HD channel logos; Remove 'check requirements' script 
 - 1.4.6 Update PVR API 6.5.0
 - 1.4.5 Improve CI and readme
 - 1.4.4 Update PVR API 6.4.0; minor cleanups
