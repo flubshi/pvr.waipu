@@ -4,7 +4,7 @@
 [![Build Status](https://jenkins.kodi.tv/buildStatus/icon?job=flubshi%2Fpvr.waipu%2FMatrix)](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Matrix/)
 
 # Waipu PVR client for Kodi
-This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provide Kodi integration for the german TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
+This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provides Kodi integration for the German TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
 
 ## Preview Images
 
