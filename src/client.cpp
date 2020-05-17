@@ -25,6 +25,7 @@
 #include "kodi/xbmc_pvr_dll.h"
 
 #include <p8-platform/util/util.h>
+#include <memory>
 
 using namespace std;
 using namespace ADDON;
@@ -33,8 +34,8 @@ using namespace ADDON;
 #define snprintf _snprintf
 #endif
 
-ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
-WaipuData* m_data = NULL;
+static ADDON_STATUS m_CurStatus = ADDON_STATUS_UNKNOWN;
+static std::unique_ptr<WaipuData> m_data;
 
 /* User adjustable settings are saved here.
  * Default values are defined inside client.h
@@ -120,24 +121,24 @@ extern "C"
 
     if (!waipuUsername.empty() && !waipuPassword.empty())
     {
-      m_data = new WaipuData(waipuUsername, waipuPassword, provider);
+      m_data.reset(new WaipuData(waipuUsername, waipuPassword, provider));
 
       switch (m_data->GetLoginStatus())
       {
-      case WAIPU_LOGIN_STATUS_OK:
+      case WAIPU_LOGIN_STATUS::OK:
         m_CurStatus = ADDON_STATUS_OK;
         break;
-      case WAIPU_LOGIN_STATUS_NO_NETWORK:
+      case WAIPU_LOGIN_STATUS::NO_NETWORK:
         m_CurStatus = ADDON_STATUS_NEED_RESTART;
         XBMC->Log(LOG_ERROR, "[load data] Network issue");
         XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30031));
         break;
-      case WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS:
+      case WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS:
         m_CurStatus = ADDON_STATUS_NEED_SETTINGS;
         XBMC->Log(LOG_ERROR, "[load data] Login invalid");
         XBMC->QueueNotification(QUEUE_ERROR, XBMC->GetLocalizedString(30032));
         break;
-      case WAIPU_LOGIN_STATUS_UNKNOWN:
+      case WAIPU_LOGIN_STATUS::UNKNOWN:
         XBMC->Log(LOG_ERROR, "[login status] unknown state");
         m_CurStatus = ADDON_STATUS_UNKNOWN;
         break;
@@ -158,7 +159,7 @@ extern "C"
 
   void ADDON_Destroy()
   {
-    delete m_data;
+    m_data.reset();
     m_CurStatus = ADDON_STATUS_UNKNOWN;
   }
 
