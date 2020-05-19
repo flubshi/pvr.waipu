@@ -879,9 +879,11 @@ PVR_ERROR WaipuData::GetRecordings(ADDON_HANDLE handle, bool bDeleted)
     // set folder; test
     strncpy(tag.strDirectory, rec_title.c_str(), sizeof(tag.strTitle) - 1);
 
-    // set image
-    if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray())
-    {
+      // set image
+      if (epgData.HasMember ("previewImages")
+	  && epgData["previewImages"].IsArray ()
+	  && epgData["previewImages"].Size () > 0)
+	{
       string rec_img = epgData["previewImages"][0].GetString();
       rec_img = rec_img + "?width=256&height=256";
       strncpy(tag.strIconPath, rec_img.c_str(), sizeof(tag.strIconPath) - 1);
