@@ -101,7 +101,7 @@ WAIPU_LOGIN_STATUS WaipuData::GetLoginStatus()
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
-  if (provider == WAIPU_PROVIDER_WAIPU)
+  if (m_provider == WAIPU_PROVIDER_WAIPU)
   {
     return WaipuLogin();
   }
@@ -125,7 +125,7 @@ bool WaipuData::ParseAccessToken(void)
 
     if (jwt_doc.HasParseError())
     {
-      m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
       XBMC->Log(LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
       return false;
     }
@@ -155,7 +155,7 @@ bool WaipuData::ParseAccessToken(void)
       XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
     }
   }
-  m_login_status = WAIPU_LOGIN_STATUS_OK;
+  m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
 }
 
@@ -186,8 +186,8 @@ bool WaipuData::WaipuLogin()
   else
   {
     // get API by login user/pw
-    dataStream << "username=" << Utils::UrlEncode(username)
-               << "&password=" << Utils::UrlEncode(password) << "&grant_type=password";
+    dataStream << "username=" << Utils::UrlEncode(m_username)
+               << "&password=" << Utils::UrlEncode(m_password) << "&grant_type=password";
     XBMC->Log(LOG_DEBUG, "[login check] Login-Request (user/pw): %s;", dataStream.str().c_str());
   }
   string jsonString;
@@ -206,14 +206,14 @@ bool WaipuData::WaipuLogin()
   if (jsonString.length() == 0 && statusCode == -1)
   {
     // no network connection?
-    m_login_status = WAIPU_LOGIN_STATUS_NO_NETWORK;
+    m_login_status = WAIPU_LOGIN_STATUS::NO_NETWORK;
     XBMC->Log(LOG_ERROR, "[Login] no network connection");
     return false;
   }
   else if (statusCode == 401)
   {
     // invalid credentials
-    m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+    m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
     return false;
   }
 
@@ -224,14 +224,14 @@ bool WaipuData::WaipuLogin()
     if (doc.GetParseError())
     {
       XBMC->Log(LOG_ERROR, "[Login] ERROR: error while parsing json");
-      m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
       return false;
     }
 
     if (doc.HasMember("error") && doc["error"] == "invalid_request")
     {
       XBMC->Log(LOG_ERROR, "[Login] ERROR: invalid credentials?");
-      m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
       return false;
     }
     else if (doc.HasMember("error"))
@@ -239,7 +239,7 @@ bool WaipuData::WaipuLogin()
       // unhandled error -> handle if known
       string err = doc["error"].GetString();
       XBMC->Log(LOG_ERROR, "[Login] ERROR: (%s)", err.c_str());
-      m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
       return false;
     }
 
@@ -253,7 +253,7 @@ bool WaipuData::WaipuLogin()
     return ParseAccessToken();
   }
   // no valid session?
-  m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+  m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
   return false;
 }
 
@@ -270,7 +270,7 @@ bool WaipuData::O2Login()
     return true;
   }
 
-  m_login_status = WAIPU_LOGIN_STATUS_OK;
+  m_login_status = WAIPU_LOGIN_STATUS::OK;
 
   // curl request
   Curl curl;
@@ -312,7 +312,7 @@ bool WaipuData::O2Login()
       if (input_name == "IDToken2")
       {
         // input for password
-        input_value = password;
+        input_value = m_password;
       }
 
       postData =
@@ -320,12 +320,12 @@ bool WaipuData::O2Login()
     }
     // if parameters available: add username
     if (postData.length() > 0)
-      postData = postData + "IDToken1=" + Utils::UrlEncode(username) + "&";
+      postData = postData + "IDToken1=" + Utils::UrlEncode(m_username) + "&";
   }
   else
   {
     XBMC->Log(LOG_ERROR, "O2 Login Form not found");
-    m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+    m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
     return false;
   }
 
@@ -340,7 +340,7 @@ bool WaipuData::O2Login()
   if (cookie.size() == 0)
   {
     // invalid credentials ?
-    m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+    m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
     return false;
   }
 
@@ -355,23 +355,14 @@ bool WaipuData::O2Login()
 }
 
 
-WaipuData::WaipuData(const string& user, const string& pass, const WAIPU_PROVIDER provider_p)
+WaipuData::WaipuData(const string& username, const string& password, const WAIPU_PROVIDER provider):
+  m_username(username),
+  m_password(password),
+  m_provider(provider),
+  m_recordings_count(0),
+  m_active_recordings_update(false)
 {
-  username = user;
-  password = pass;
-  provider = provider_p;
-  m_recordings_count = 0;
-  m_active_recordings_update = false;
-
   LoadChannelData();
-}
-
-WaipuData::~WaipuData(void)
-{
-  m_channels.clear();
-  m_epgEntries.clear();
-  m_channelGroups.clear();
-  m_apiToken = {};
 }
 
 bool WaipuData::LoadChannelData(void)
