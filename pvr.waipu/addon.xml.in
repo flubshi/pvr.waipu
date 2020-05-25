@@ -10,7 +10,7 @@
     <import addon="inputstream.adaptive" minversion="2.4.2"/>
   </requires>
   <extension
-    point="xbmc.pvrclient"
+    point="kodi.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">waipu.tv PVR Client</summary>
