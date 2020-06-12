@@ -17,14 +17,12 @@ set(PVRWAIPU_SOURCES
                     src/Curl.cpp
                     src/Utils.cpp
                     src/Base64.cpp
-                    src/client.cpp
                     src/WaipuData.cpp)
 
 set(PVRWAIPU_HEADERS
                     src/Curl.h
                     src/Utils.h
                     src/Base64.h
-                    src/client.h
                     src/WaipuData.h)
 
 addon_version(pvr.waipu IPTV)

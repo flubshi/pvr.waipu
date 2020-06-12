@@ -21,7 +21,7 @@
  */
 
 #include "Curl.h"
-#include "client.h"
+#include "kodi/addon-instance/PVR.h"
 #include "p8-platform/os.h"
 
 #include <vector>
@@ -32,6 +32,12 @@
  */
 static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 
+enum WAIPU_PROVIDER
+{
+  WAIPU_PROVIDER_WAIPU = 0,
+  WAIPU_PROVIDER_O2
+};
+
 enum class WAIPU_LOGIN_STATUS
 {
   OK,
@@ -40,41 +46,58 @@ enum class WAIPU_LOGIN_STATUS
   UNKNOWN
 };
 
-class WaipuData
+class ATTRIBUTE_HIDDEN WaipuData : public kodi::addon::CAddonBase,
+                                   public kodi::addon::CInstancePVRClient
 {
 public:
-  WaipuData(const std::string& username, const std::string& password, const WAIPU_PROVIDER provider);
+  WaipuData() = default;
   WaipuData(const WaipuData&) = delete;
   WaipuData(WaipuData&&) = delete;
   WaipuData& operator=(const WaipuData&) = delete;
   WaipuData& operator=(WaipuData&&) = delete;
 
-  int GetChannelsAmount(void);
-  PVR_ERROR GetChannels(ADDON_HANDLE handle, bool bRadio);
+  ADDON_STATUS Create() override;
+  ADDON_STATUS SetSetting(const std::string& settingName,
+                          const kodi::CSettingValue& settingValue) override;
 
-  int GetChannelGroupsAmount(void);
-  PVR_ERROR GetChannelGroups(ADDON_HANDLE handle);
-  PVR_ERROR GetChannelGroupMembers(ADDON_HANDLE handle, const PVR_CHANNEL_GROUP& group);
+  PVR_ERROR GetCapabilities(kodi::addon::PVRCapabilities& capabilities) override;
+  PVR_ERROR GetBackendName(std::string& name) override;
+  PVR_ERROR GetBackendVersion(std::string& version) override;
+  PVR_ERROR GetConnectionString(std::string& connection) override;
 
-  std::string GetChannelStreamUrl(int uniqueId, const std::string& protocol);
+  PVR_ERROR GetChannelsAmount(int& amount) override;
+  PVR_ERROR GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results) override;
 
-  PVR_ERROR GetEPGForChannel(ADDON_HANDLE handle, int iChannelUid, time_t iStart, time_t iEnd);
+  PVR_ERROR GetChannelGroupsAmount(int& amount) override;
+  PVR_ERROR GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsResultSet& results) override;
+  PVR_ERROR GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& group,
+                                   kodi::addon::PVRChannelGroupMembersResultSet& results) override;
+  PVR_ERROR GetChannelStreamProperties(
+      const kodi::addon::PVRChannel& channel,
+      std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
-  int GetRecordingsAmount(bool bDeleted);
-  PVR_ERROR GetRecordings(ADDON_HANDLE handle, bool bDeleted);
-  std::string GetRecordingURL(const PVR_RECORDING& recording, const std::string& protocol);
-  std::string GetEPGTagURL(const EPG_TAG& tag, const std::string& protocol);
-  PVR_ERROR DeleteRecording(const PVR_RECORDING& recording);
+  PVR_ERROR GetEPGForChannel(int channelUid,
+                             time_t start,
+                             time_t end,
+                             kodi::addon::PVREPGTagsResultSet& results) override;
+  PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
+  PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
+  PVR_ERROR GetEPGTagStreamProperties(
+      const kodi::addon::PVREPGTag& tag,
+      std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
-  int GetTimersAmount(void);
-  PVR_ERROR GetTimers(ADDON_HANDLE handle);
-  PVR_ERROR DeleteTimer(const PVR_TIMER& timer);
-  PVR_ERROR AddTimer(const PVR_TIMER& timer);
+  PVR_ERROR GetRecordingsAmount(bool deleted, int& amount) override;
+  PVR_ERROR GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results) override;
+  PVR_ERROR DeleteRecording(const kodi::addon::PVRRecording& recording) override;
+  PVR_ERROR GetRecordingStreamProperties(
+      const kodi::addon::PVRRecording& recording,
+      std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
-  std::string GetLicense(void);
-  WAIPU_LOGIN_STATUS GetLoginStatus(void);
-  PVR_ERROR IsEPGTagRecordable(const EPG_TAG* tag, bool* bIsRecordable);
-  PVR_ERROR IsEPGTagPlayable(const EPG_TAG* tag, bool* bIsPlayable);
+  PVR_ERROR GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types) override;
+  PVR_ERROR GetTimersAmount(int& amount) override;
+  PVR_ERROR GetTimers(kodi::addon::PVRTimersResultSet& results) override;
+  PVR_ERROR DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete) override;
+  PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
 
 private:
   struct WaipuApiToken
@@ -109,9 +132,10 @@ private:
     std::string streamUrlProvider;
   };
 
-  const std::string m_username;
-  const std::string m_password;
-  const WAIPU_PROVIDER m_provider;
+  std::string m_username;
+  std::string m_password;
+  std::string m_protocol;
+  WAIPU_PROVIDER m_provider;
 
   std::vector<WaipuChannel> m_channels;
   std::vector<WaipuEPGEntry> m_epgEntries;
@@ -119,13 +143,25 @@ private:
 
   WaipuApiToken m_apiToken;
   std::string m_license;
-  int m_recordings_count;
-  bool m_active_recordings_update;
+  int m_recordings_count = 0;
+  bool m_active_recordings_update = false;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
 
+  void ReadSettings(void);
   bool ParseAccessToken(void);
+
+  void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
+
+  std::string GetChannelStreamUrl(int uniqueId, const std::string& protocol);
+  std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
+                              const std::string& protocol);
+  std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
+  std::string GetLicense(void);
+  void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
+                           const std::string& url,
+                           bool realtime);
 
   std::string HttpGet(const std::string& url);
   std::string HttpDelete(const std::string& url, const std::string& postData);

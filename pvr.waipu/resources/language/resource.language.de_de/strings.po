@@ -61,3 +61,7 @@ msgstr "Keine Netzwerkverbindung"
 msgctxt "#30032"
 msgid "Invalid login credentials"
 msgstr "Ungültige Zugangsdaten"
+
+msgctxt "#30033"
+msgid "Required username and password not available"
+msgstr "Benötigter Benutzername mit Password nicht vorhanden"

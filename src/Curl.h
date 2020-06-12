@@ -1,6 +1,9 @@
 /*
  * originally taken from pvr.zattoo
  */
+
+#include "kodi/Filesystem.h"
+
 #include <list>
 #include <map>
 #include <string>
@@ -31,10 +34,10 @@ public:
   virtual void SetRedirectLimit(int limit) { redirectLimit = limit; }
 
 private:
-  virtual void* PrepareRequest(const std::string& action,
-                               const std::string& url,
-                               const std::string& postData);
-  virtual void ParseCookies(void* file, const std::string& host);
+  virtual kodi::vfs::CFile* PrepareRequest(const std::string& action,
+                                           const std::string& url,
+                                           const std::string& postData);
+  virtual void ParseCookies(kodi::vfs::CFile* file, const std::string& host);
   virtual std::string Request(const std::string& action,
                               const std::string& url,
                               const std::string& postData,
