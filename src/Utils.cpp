@@ -4,7 +4,8 @@
 
 #include "Utils.h"
 
-#include "client.h"
+#include "kodi/Filesystem.h"
+#include "kodi/General.h"
 #include "p8-platform/os.h"
 
 #include <algorithm>
@@ -13,11 +14,9 @@
 #include <iterator>
 #include <sstream>
 
-using namespace ADDON;
-
 std::string Utils::GetFilePath(std::string strPath, bool bUserPath)
 {
-  return (bUserPath ? g_strUserPath : g_strClientPath) + PATH_SEPARATOR_CHAR + strPath;
+  return (bUserPath ? kodi::GetBaseUserPath(strPath) : kodi::GetAddonPath(strPath));
 }
 
 // http://stackoverflow.com/a/17708801
@@ -85,23 +84,22 @@ std::vector<std::string> Utils::SplitString(const std::string& str, const char& 
 
 std::string Utils::ReadFile(const std::string& path)
 {
-  void* file;
-  file = XBMC->CURLCreate(path.c_str());
-  if (!file || !XBMC->CURLOpen(file, 0))
+  kodi::vfs::CFile file;
+  file.CURLCreate(path);
+  if (!file.CURLCreate(path) || !file.CURLOpen(0))
   {
-    XBMC->Log(LOG_ERROR, "Failed to open file [%s].", path.c_str());
+    kodi::Log(ADDON_LOG_ERROR, "Failed to open file [%s].", path.c_str());
     return "";
   }
 
   char buf[1025];
   ssize_t nbRead;
   std::string content;
-  while ((nbRead = XBMC->ReadFile(file, buf, 1024)) > 0)
+  while ((nbRead = file.Read(buf, 1024)) > 0)
   {
     buf[nbRead] = 0;
     content.append(buf);
   }
-  XBMC->CloseFile(file);
 
   return content;
 }

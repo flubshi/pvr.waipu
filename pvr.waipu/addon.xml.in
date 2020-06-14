@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.5.2"
+  version="2.0.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -10,7 +10,7 @@
     <import addon="inputstream.adaptive" minversion="2.4.2"/>
   </requires>
   <extension
-    point="xbmc.pvrclient"
+    point="kodi.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
     <summary lang="de_DE">waipu.tv PVR Client</summary>
@@ -30,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 2.0.0 Update PVR API 7.0.0; Rework addon to support new API interface
 - 1.5.2 Internal code cleanup
 - 1.5.1 Fix crash if no preview image available for recording
 - 1.5.0 Update PVR API 6.5.1; Update Global API 1.2.0
