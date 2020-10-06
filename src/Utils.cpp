@@ -6,7 +6,6 @@
 
 #include "kodi/Filesystem.h"
 #include "kodi/General.h"
-#include "p8-platform/os.h"
 
 #include <algorithm>
 #include <iomanip>
