@@ -22,7 +22,6 @@
 
 #include "Curl.h"
 #include "kodi/addon-instance/PVR.h"
-#include "p8-platform/os.h"
 
 #include <vector>
 
