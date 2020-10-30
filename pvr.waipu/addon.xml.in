@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="2.0.1"
+  version="2.1.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -30,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 2.1.0 Update PVR API 7.0.2
 - 2.0.1 Remove p8-platform dependency
 - 2.0.0 Update PVR API 7.0.0; Rework addon to support new API interface
 - 1.5.2 Internal code cleanup
