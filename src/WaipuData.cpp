@@ -428,38 +428,33 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
         XBMC->Log(LOG_DEBUG, "No stream login");
         return "";
       }
-      string playoutURL = thisChannel.strStreamURL;
-      XBMC->Log(LOG_DEBUG, "URL source: %s", playoutURL.c_str());
 
-      string jsonStreams = HttpGet(playoutURL.c_str());
-      XBMC->Log(LOG_DEBUG, "Stream result: %s", jsonStreams.c_str());
+      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \"dash\", \"requestMuxInstrumentation\": false}}";
 
-      Document streamsDoc;
-      XBMC->Log(LOG_DEBUG, "Stream result: %s", jsonStreams.c_str());
-      streamsDoc.Parse(jsonStreams.c_str());
-      if (streamsDoc.GetParseError())
+      Curl curl;
+      int statusCode;
+      curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+      curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
+      curl.AddHeader("Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json");
+
+      string jsonStreamURL = HttpRequestToCurl(curl, "POST", "https://stream-url-provider.waipu.tv/api/stream-url", postData, statusCode);
+
+      Document streamURLDoc;
+      streamURLDoc.Parse(jsonStreamURL.c_str());
+      if (streamURLDoc.GetParseError())
       {
-        XBMC->Log(LOG_ERROR, "[GetChannelStreamURL] ERROR: error while parsing json");
-        return "";
+	  XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
+          return "";
       }
 
-      for (const auto& stream : streamsDoc["streams"].GetArray())
+      if(!streamURLDoc.HasMember("streamUrl"))
       {
-        string c_protocol = stream["protocol"].GetString();
-        XBMC->Log(LOG_DEBUG, "[stream] protocol: %s;", c_protocol.c_str());
-        if (c_protocol == protocol)
-        {
-          for (const auto& link : stream["links"].GetArray())
-          {
-            string href = link["href"].GetString();
-            XBMC->Log(LOG_DEBUG, "[stream] href: %s;", href.c_str());
-            if (!href.empty())
-            {
-              return href;
-            }
-          }
-        }
+	  XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
+          return "";
       }
+
+      return streamURLDoc["streamUrl"].GetString();
+
     }
   }
   return "";
