@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.4.1-backported"
+  version="1.4.2-backported"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -30,6 +30,7 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 1.4.2-backported: Implement new StreamURL API
 - 1.4.1-backported: Fix crash if recording has no preview image 
 - 1.4.0-backported: Make unstable version Leia compatibel
 - 1.4.0 Implement Video on Demand channels
