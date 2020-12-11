@@ -738,7 +738,7 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
 
-  string protocol_fix = m_protocol == "MPEG_DASH" ? "mpeg-dash" : "hls";
+  string protocol_fix = m_protocol == "MPEG_DASH" ? "dash" : "hls";
   string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), protocol_fix);
   kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
@@ -765,7 +765,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
         return "";
       }
 
-      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \"dash\", \"requestMuxInstrumentation\": false}}";
+      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false}}";
 
       Curl curl;
       int statusCode;
