@@ -104,6 +104,13 @@ bool WaipuData::ApiLogin()
 {
   XBMC->Log(LOG_DEBUG, "[login check] start...");
 
+  if(m_login_failed_counter > 3){
+      // more than 3 consecutive failed login attempts
+      // block login attempt
+      m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+      return false;
+  }
+
   time_t currTime;
   time(&currTime);
   XBMC->Log(LOG_DEBUG, "[token] current time %i", currTime);
@@ -155,6 +162,8 @@ bool WaipuData::ApiLogin()
   {
     // invalid credentials
     m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+    // login failed, increase counter
+    m_login_failed_counter = m_login_failed_counter + 1;
     return false;
   }
 
@@ -180,6 +189,8 @@ bool WaipuData::ApiLogin()
       // unhandled error -> handle if known
       string err = doc["error"].GetString();
       XBMC->Log(LOG_ERROR, "[Login] ERROR: (%s)", err.c_str());
+      // login failed, increase counter
+      m_login_failed_counter = m_login_failed_counter + 1;
       m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
       return false;
     }
@@ -212,6 +223,8 @@ bool WaipuData::ApiLogin()
       if (jwt_doc.HasParseError())
       {
         m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
+        // login failed, increase counter
+        m_login_failed_counter = m_login_failed_counter + 1;
         XBMC->Log(LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
         return false;
       }
@@ -240,10 +253,14 @@ bool WaipuData::ApiLogin()
         XBMC->Log(LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
       }
     }
+    // login okay, reset counter
+    m_login_failed_counter = 0;
     m_login_status = WAIPU_LOGIN_STATUS_OK;
     return true;
   }
   // no valid session?
+  // login failed, increase counter
+  m_login_failed_counter = m_login_failed_counter + 1;
   m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
   return false;
 }
