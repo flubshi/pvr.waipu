@@ -351,7 +351,7 @@ extern "C"
                                        unsigned int* iPropertiesCount)
   {
 
-    string protocol_fix = protocol == "MPEG_DASH" ? "mpeg-dash" : "hls";
+    string protocol_fix = protocol == "MPEG_DASH" ? "dash" : "hls";
     string strUrl = m_data->GetChannelStreamUrl(channel->iUniqueId, protocol_fix);
     XBMC->Log(LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
     PVR_ERROR ret = PVR_ERROR_FAILED;

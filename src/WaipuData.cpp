@@ -552,7 +552,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
         return "";
       }
 
-      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \"dash\", \"requestMuxInstrumentation\": false}}";
+      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false}}";
 
       Curl curl;
       int statusCode;
