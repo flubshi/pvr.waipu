@@ -143,6 +143,7 @@ private:
   WaipuApiToken m_apiToken;
   std::string m_license;
   int m_recordings_count = 0;
+  int m_login_failed_counter = 0;
   bool m_active_recordings_update = false;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
