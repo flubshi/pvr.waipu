@@ -128,7 +128,8 @@ private:
   std::string password;
   WaipuApiToken m_apiToken;
   std::string m_license;
-  int m_recordings_count;
+  int m_recordings_count = 0;
+  int m_login_failed_counter = 0;
   bool m_active_recordings_update;
   std::vector<string> m_user_channels;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS_UNKNOWN;
