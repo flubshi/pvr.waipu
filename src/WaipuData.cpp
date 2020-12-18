@@ -101,14 +101,33 @@ WAIPU_LOGIN_STATUS WaipuData::GetLoginStatus()
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
+  if(m_login_failed_counter > 3){
+      // more than 3 consecutive failed login attempts
+      // block login attempt
+      m_login_status = WAIPU_LOGIN_STATUS_INVALID_CREDENTIALS;
+      return false;
+  }
+
+  bool login_result;
   if (provider == WAIPU_PROVIDER_WAIPU)
   {
     return WaipuLogin();
+    login_result = WaipuLogin();
   }
   else
   {
     return O2Login();
+    login_result = O2Login();
   }
+  if(login_result){
+      // login okay, reset counter
+      m_login_failed_counter = 0;
+  }else{
+      // login failed, increase counter
+      m_login_failed_counter = m_login_failed_counter + 1;
+  }
+
+  return login_result;
 }
 
 bool WaipuData::ParseAccessToken(void)
