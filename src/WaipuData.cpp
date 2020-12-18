@@ -117,8 +117,9 @@ bool WaipuData::ApiLogin()
   }
 
   ostringstream dataStream;
-  if (m_apiToken.expires < currTime && false)
+  if (!m_apiToken.refreshToken.empty())
   {
+    // Since the refresh token is valid for a long time, we do not check expiration for now
     // refresh API token
     dataStream << "refresh_token=" << Utils::UrlEncode(m_apiToken.refreshToken)
                << "&grant_type=refresh_token";
