@@ -14,11 +14,18 @@ For any support regarding this plugin, please create a github issue.
 
 ### Linux
 
-1. `git clone --branch Leia https://github.com/xbmc/xbmc.git`
-2. `git clone --branch Leia https://github.com/flubshi/pvr.waipu.git`
-3. `cd pvr.waipu && mkdir build && cd build`
-4. `cmake -DADDONS_TO_BUILD=pvr.waipu -DADDON_SRC_PREFIX=../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../../xbmc/addons -DPACKAGE_ZIP=1 ../../xbmc/cmake/addons`
-5. `make`
+```bash
+git clone --branch Leia https://github.com/xbmc/xbmc.git
+mkdir -p xbmc/cmake/addons/addons/pvr.waipu/
+echo "pvr.waipu https://github.com/flubshi/pvr.waipu Leia" > xbmc/cmake/addons/addons/pvr.waipu/pvr.waipu.txt
+echo "all" > xbmc/cmake/addons/addons/pvr.waipu/platforms.txt
+
+git clone --branch Leia https://github.com/flubshi/pvr.waipu.git
+mkdir -p pvr.waipu/build && cd pvr.waipu/build
+
+cmake -DADDONS_TO_BUILD=pvr.waipu -DADDON_SRC_PREFIX=../.. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../../xbmc/addons -DPACKAGE_ZIP=1 ../../xbmc/cmake/addons
+make
+```
 
 
 ## Useful links
