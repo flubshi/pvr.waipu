@@ -95,14 +95,31 @@ string WaipuData::HttpRequestToCurl(
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
+  if(m_login_failed_counter > 3){
+      // more than 3 consecutive failed login attempts
+      // block login attempt
+      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
+      return false;
+  }
+
+  bool login_result;
   if (m_provider == WAIPU_PROVIDER_WAIPU)
   {
-    return WaipuLogin();
+    login_result = WaipuLogin();
   }
   else
   {
-    return O2Login();
+    login_result = O2Login();
   }
+  if(login_result){
+      // login okay, reset counter
+      m_login_failed_counter = 0;
+  }else{
+      // login failed, increase counter
+      m_login_failed_counter = m_login_failed_counter + 1;
+  }
+
+  return login_result;
 }
 
 bool WaipuData::ParseAccessToken(void)
@@ -419,6 +436,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     if (username != m_username)
     {
       m_username = username;
+      m_login_failed_counter = 0;
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -428,6 +446,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     std::string password = settingValue.GetString();
     if (password != m_password)
     {
+      m_login_failed_counter = 0;
       m_password = password;
       return ADDON_STATUS_NEED_RESTART;
     }
@@ -448,6 +467,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     WAIPU_PROVIDER tmpProvider = settingValue.GetEnum<WAIPU_PROVIDER>();
     if (tmpProvider != m_provider)
     {
+      m_login_failed_counter = 0;
       m_provider = tmpProvider;
       return ADDON_STATUS_NEED_RESTART;
     }
