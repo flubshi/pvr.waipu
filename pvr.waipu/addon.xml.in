@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="1.4.2-backported"
+  version="2.3.0-backported"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -30,39 +30,10 @@
     <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
   </assets>
   <news>
+- 2.3.0-backported: Improve login and authentication; allow user to select HLS/DASH streams
 - 1.4.2-backported: Implement new StreamURL API
 - 1.4.1-backported: Fix crash if recording has no preview image 
 - 1.4.0-backported: Make unstable version Leia compatibel
-- 1.4.0 Implement Video on Demand channels
-- 1.3.3 Fix: hide recordable option for items in the past 
-- 1.3.2 Add inputstream.adaptive to dependencies; Fix translation IDs; Show record option only if available
-- 1.3.1 Add channel groups: display favorites
-- 1.3.0 Implement O2 authentication
-- 1.2.4 Fix Ubuntu packaging: adjust rapidjson dependency
-- 1.2.3 Fix Ubuntu packaging: add rapidjson dependency
-- 1.2.2 Fix Debian/Ubuntu packaging (thx Rechi)
-- 1.2.1 Internal improvements to prepare for O2 authentication
-- 1.1.0 Fix timers not displayed; Add option to install widevine
-- 1.0.8 Update build sytem version; change header include way
-- 1.0.7 Add workaround for O2 Accounts
-- 1.0.6 Improved error handling related to login problems (no network, invalid credentials)
-- 1.0.5 Settings check requirements: handle network issues
-- 1.0.4 Improvements and preparation for error handling
-- 1.0.3 Settings: Add check to verify requirements (widevine and network status)
-- 1.0.2 Do not show hidden channels
-- 1.0.1 Code cleanup: remove usage of kodi-platform
-- 1.0.0 Fix windows build
-- 0.5.0 Update to PVR addon API v6.0.0
-- 0.1.0 adjust dst workaround; fix stoi
-- 0.0.9 Improve handling of recordings, update user-agent, readme and description  
-- 0.0.8 Check for JSON parse errors
-- 0.0.7 Prepare for kodi binary repo
-- 0.0.6 Add timers, fixes
-- 0.0.5 Implement timers (list and delete)
-- 0.0.4 Implement deletion of recordings
-- 0.0.3 Implement recordings
-- 0.0.2 First release: EPG and Live TV
-- 0.0.1 Initial alpha version
   </news>
   </extension>
 </addon>
