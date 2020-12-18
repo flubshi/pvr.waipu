@@ -167,7 +167,7 @@ bool WaipuData::WaipuLogin()
   time(&currTime);
   XBMC->Log(LOG_DEBUG, "[token] current time %i", currTime);
   XBMC->Log(LOG_DEBUG, "[token] expire  time %i", m_apiToken.expires);
-  if (!m_apiToken.accessToken.empty() && (m_apiToken.expires - 10 * 60) > currTime)
+  if (!m_apiToken.accessToken.empty() && (m_apiToken.expires - 20 * 60) > currTime)
   {
     // API token exists and is valid, more than x in future
     XBMC->Log(LOG_DEBUG, "[login check] old token still valid");
@@ -175,8 +175,9 @@ bool WaipuData::WaipuLogin()
   }
 
   ostringstream dataStream;
-  if (m_apiToken.expires < currTime && false)
+  if (!m_apiToken.refreshToken.empty())
   {
+    // Since the refresh token is valid for a long time, we do not check expiration for now
     // refresh API token
     dataStream << "refresh_token=" << Utils::UrlEncode(m_apiToken.refreshToken)
                << "&grant_type=refresh_token";
