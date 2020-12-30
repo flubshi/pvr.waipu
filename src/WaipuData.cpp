@@ -1121,12 +1121,12 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
     }
 
     auto channel = *it;
-    XBMC->Log(LOG_DEBUG, "Get replay url for channel %s", channel.strChannelName.c_str());
+    kodi::Log(ADDON_LOG_DEBUG, "Get replay url for channel %s", channel.strChannelName.c_str());
 
     if (!ApiLogin())
     {
       // invalid
-      XBMC->Log(LOG_DEBUG, "No stream login");
+      kodi::Log(ADDON_LOG_DEBUG, "No stream login");
       return "";
     }
 
@@ -1145,13 +1145,13 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
     streamURLDoc.Parse(jsonStreamURL.c_str());
     if (streamURLDoc.GetParseError())
     {
-      XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
+      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
       return "";
     }
 
     if(!streamURLDoc.HasMember("streamUrl"))
     {
-      XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
+      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
       return "";
     }
 
