@@ -1038,15 +1038,26 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool&
 
 PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable)
 {
+  isPlayable = false;
   for (const auto& channel : m_channels)
   {
     if (channel.iUniqueId != tag.GetUniqueChannelId())
       continue;
     isPlayable = channel.tvfuse;
-    return PVR_ERROR_NO_ERROR;
+    if (isPlayable) {
+      return PVR_ERROR_NO_ERROR;
+    }
   }
 
-  isPlayable = false;
+  auto current_time = time(NULL);
+  if (current_time < tag.GetEndTime())
+  {
+    isPlayable = true;
+  }
+  if (tag.GetStartTime() > current_time)
+  {
+    isPlayable = false;
+  }
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1078,27 +1089,73 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
       continue;
 
     string url = epgEntry.streamUrlProvider;
-    kodi::Log(ADDON_LOG_DEBUG, "play epgTAG -> %s", tag.GetTitle().c_str());
-    kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
-
-    string tag_resp = HttpGet(url);
-    kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
-
-    Document tagDoc;
-    tagDoc.Parse(tag_resp.c_str());
-    if (tagDoc.GetParseError())
+    if (!url.empty())
     {
-      kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+      kodi::Log(ADDON_LOG_DEBUG, "play epgTAG -> %s", tag.GetTitle().c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
+
+      string tag_resp = HttpGet(url);
+      kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
+
+      Document tagDoc;
+      tagDoc.Parse(tag_resp.c_str());
+      if (tagDoc.GetParseError())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+        return "";
+      }
+      kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
+      // check if streams there
+      if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+      {
+        string mpdUrl = tagDoc["player"]["mpd"].GetString();
+        kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
+        return mpdUrl;
+      }
+    }
+    
+    auto it = find_if(m_channels.begin(), m_channels.end(), [tag] (const WaipuChannel& c) { return c.iUniqueId == tag.GetUniqueChannelId(); } );
+    if (it == m_channels.end())
+    {
       return "";
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
-    // check if streams there
-    if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+
+    auto channel = *it;
+    XBMC->Log(LOG_DEBUG, "Get replay url for channel %s", channel.strChannelName.c_str());
+
+    if (!ApiLogin())
     {
-      string mpdUrl = tagDoc["player"]["mpd"].GetString();
-      kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
-      return mpdUrl;
+      // invalid
+      XBMC->Log(LOG_DEBUG, "No stream login");
+      return "";
     }
+
+    auto startTime = std::to_string(tag.GetStartTime());
+    string postData = "{\"stream\": { \"station\": \""+channel.waipuID+"\", \"protocol\": \"dash\", \"requestMuxInstrumentation\": false, \"startTime\": "+startTime+"}}";
+
+    Curl curl;
+    int statusCode;
+    curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+    curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
+    curl.AddHeader("Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json");
+
+    string jsonStreamURL = HttpRequestToCurl(curl, "POST", "https://stream-url-provider.waipu.tv/api/stream-url", postData, statusCode);
+
+    Document streamURLDoc;
+    streamURLDoc.Parse(jsonStreamURL.c_str());
+    if (streamURLDoc.GetParseError())
+    {
+      XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
+      return "";
+    }
+
+    if(!streamURLDoc.HasMember("streamUrl"))
+    {
+      XBMC->Log(LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
+      return "";
+    }
+
+    return streamURLDoc["streamUrl"].GetString();
   }
   return "";
 }
