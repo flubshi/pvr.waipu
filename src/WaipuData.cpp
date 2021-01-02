@@ -165,6 +165,10 @@ bool WaipuData::ParseAccessToken(void)
       m_user_channels_hd.push_back(user_channel_s);
       kodi::Log(ADDON_LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
     }
+    if(jwt_doc["userAssets"].HasMember("instantRestart")){
+	m_account_replay_allowed = jwt_doc["userAssets"]["instantRestart"].GetBool();
+	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
+    }
   }
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
@@ -937,6 +941,12 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       bool isRecordable = !epgData["recordingForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] recordable: %i;", isRecordable);
       epgEntry.isRecordable = isRecordable;
+
+      // instantRestartAllowed
+      bool instantRestartAllowed = !epgData["instantRestartForbidden"].GetBool();
+      kodi::Log(ADDON_LOG_DEBUG, "[epg] instantRestartAllowed: %i;", instantRestartAllowed);
+      epgEntry.instantRestartAllowed = instantRestartAllowed;
+
       m_epgEntries.push_back(epgEntry);
 
       // set title
@@ -1039,6 +1049,8 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool&
 PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable)
 {
   isPlayable = false;
+
+  // check if channel is onDemand and allows playback
   for (const auto& channel : m_channels)
   {
     if (channel.iUniqueId != tag.GetUniqueChannelId())
@@ -1049,15 +1061,22 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
     }
   }
 
+  // check if program is running and replay allowed
   auto current_time = time(NULL);
-  if (current_time < tag.GetEndTime())
+  if (m_account_replay_allowed && current_time > tag.GetStartTime() && current_time < tag.GetEndTime())
   {
-    isPlayable = true;
+      // tag is now running, check if epg tag allows replay
+      for (const auto& epgEntry : m_epgEntries)
+      {
+        if (epgEntry.iUniqueBroadcastId != tag.GetUniqueBroadcastId())
+          continue;
+        if (epgEntry.iUniqueChannelId != tag.GetUniqueChannelId())
+          continue;
+        isPlayable = epgEntry.instantRestartAllowed;
+        return PVR_ERROR_NO_ERROR;
+      }
   }
-  if (tag.GetStartTime() > current_time)
-  {
-    isPlayable = false;
-  }
+
   return PVR_ERROR_NO_ERROR;
 }
 

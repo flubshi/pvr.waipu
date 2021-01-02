@@ -128,6 +128,7 @@ private:
     int iUniqueBroadcastId;
     int iUniqueChannelId;
     bool isRecordable;
+    bool instantRestartAllowed;
     std::string streamUrlProvider;
   };
 
@@ -145,6 +146,7 @@ private:
   int m_recordings_count = 0;
   int m_login_failed_counter = 0;
   bool m_active_recordings_update = false;
+  bool m_account_replay_allowed = false;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
