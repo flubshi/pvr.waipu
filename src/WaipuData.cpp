@@ -425,7 +425,7 @@ void WaipuData::ReadSettings(void)
 
   m_username = kodi::GetSettingString("username");
   m_password = kodi::GetSettingString("password");
-  m_protocol = kodi::GetSettingString("protocol", "MPEG_DASH");
+  m_protocol = kodi::GetSettingString("protocol", "dash");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
@@ -526,7 +526,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (m_protocol == "MPEG_DASH")
+  if (m_protocol == "dash")
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
@@ -543,7 +543,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
-  else if (m_protocol == "HLS")
+  else if (m_protocol == "hls")
   {
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls");
@@ -762,8 +762,7 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
 
-  string protocol_fix = m_protocol == "MPEG_DASH" ? "dash" : "hls";
-  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), protocol_fix);
+  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), m_protocol, "");
   kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
@@ -774,7 +773,7 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
   return ret;
 }
 
-string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
+string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, const string& startTime)
 {
   for (const auto& thisChannel : m_channels)
   {
@@ -789,7 +788,12 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
         return "";
       }
 
-      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false}}";
+      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false";
+      if (!startTime.empty())
+      {
+	  postData += ", \"startTime\": "+startTime;
+      }
+      postData += "}}";
 
       Curl curl;
       int statusCode;
@@ -1132,49 +1136,10 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
         return mpdUrl;
       }
     }
-    
-    auto it = find_if(m_channels.begin(), m_channels.end(), [tag] (const WaipuChannel& c) { return c.iUniqueId == tag.GetUniqueChannelId(); } );
-    if (it == m_channels.end())
-    {
-      return "";
-    }
 
-    auto channel = *it;
-    kodi::Log(ADDON_LOG_DEBUG, "Get replay url for channel %s", channel.strChannelName.c_str());
-
-    if (!ApiLogin())
-    {
-      // invalid
-      kodi::Log(ADDON_LOG_DEBUG, "No stream login");
-      return "";
-    }
-
-    auto startTime = std::to_string(tag.GetStartTime());
-    string postData = "{\"stream\": { \"station\": \""+channel.waipuID+"\", \"protocol\": \"dash\", \"requestMuxInstrumentation\": false, \"startTime\": "+startTime+"}}";
-
-    Curl curl;
-    int statusCode;
-    curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
-    curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
-    curl.AddHeader("Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json");
-
-    string jsonStreamURL = HttpRequestToCurl(curl, "POST", "https://stream-url-provider.waipu.tv/api/stream-url", postData, statusCode);
-
-    Document streamURLDoc;
-    streamURLDoc.Parse(jsonStreamURL.c_str());
-    if (streamURLDoc.GetParseError())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
-      return "";
-    }
-
-    if(!streamURLDoc.HasMember("streamUrl"))
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
-      return "";
-    }
-
-    return streamURLDoc["streamUrl"].GetString();
+    // fallback to replay playback
+    string startTime = std::to_string(tag.GetStartTime());
+    return GetChannelStreamUrl(tag.GetUniqueChannelId(), protocol, startTime);
   }
   return "";
 }
