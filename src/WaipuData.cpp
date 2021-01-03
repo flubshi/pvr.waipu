@@ -518,7 +518,7 @@ std::string WaipuData::GetLicense(void)
 
 void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                                     const std::string& url,
-                                    bool realtime)
+                                    bool realtime, bool playTimeshiftBuffer)
 {
   kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
 
@@ -532,6 +532,11 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
     properties.emplace_back("inputstream.adaptive.manifest_type", "mpd");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
+
+    if (playTimeshiftBuffer)
+    {
+       properties.emplace_back("inputstream.adaptive.play_timeshift_buffer","true");
+    }
 
     // get widevine license
     string license = GetLicense();
@@ -767,7 +772,7 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
-    SetStreamProperties(properties, strUrl, true);
+    SetStreamProperties(properties, strUrl, true, false);
     ret = PVR_ERROR_NO_ERROR;
   }
   return ret;
@@ -779,12 +784,12 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
   {
     if (thisChannel.iUniqueId == (int)uniqueId)
     {
-      kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", thisChannel.strChannelName.c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Get live url for channel %s", thisChannel.strChannelName.c_str());
 
       if (!ApiLogin())
       {
         // invalid
-        kodi::Log(ADDON_LOG_DEBUG, "No stream login");
+        kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] No stream login");
         return "";
       }
 
@@ -794,6 +799,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
 	  postData += ", \"startTime\": "+startTime;
       }
       postData += "}}";
+      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
       Curl curl;
       int statusCode;
@@ -1095,7 +1101,7 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true);
+  SetStreamProperties(properties, strUrl, true, true);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -1378,7 +1384,7 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true);
+  SetStreamProperties(properties, strUrl, false, false);
 
   return PVR_ERROR_NO_ERROR;
 }

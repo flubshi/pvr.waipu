@@ -163,7 +163,7 @@ private:
   std::string GetLicense(void);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
-                           bool realtime);
+                           bool realtime, bool playTimeshiftBuffer);
 
   std::string HttpGet(const std::string& url);
   std::string HttpDelete(const std::string& url, const std::string& postData);
