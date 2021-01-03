@@ -1343,11 +1343,13 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;",
             recordingDoc["streamingDetails"]["streams"].Size());
 
+  string protocol_fix = protocol == "dash" ? "MPEG_DASH" : "HLS";
+
   for (const auto& stream : recordingDoc["streamingDetails"]["streams"].GetArray())
   {
     string current_protocol = stream["protocol"].GetString();
     kodi::Log(ADDON_LOG_DEBUG, "[stream] protocol: %s;", current_protocol.c_str());
-    if (current_protocol == protocol)
+    if (current_protocol == protocol_fix)
     {
       string href = stream["href"].GetString();
       kodi::Log(ADDON_LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
@@ -1384,7 +1386,7 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, false, false);
+  SetStreamProperties(properties, strUrl, true, false);
 
   return PVR_ERROR_NO_ERROR;
 }
