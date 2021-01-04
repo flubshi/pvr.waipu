@@ -128,6 +128,7 @@ private:
     int iUniqueBroadcastId;
     int iUniqueChannelId;
     bool isRecordable;
+    bool instantRestartAllowed;
     std::string streamUrlProvider;
   };
 
@@ -145,6 +146,7 @@ private:
   int m_recordings_count = 0;
   int m_login_failed_counter = 0;
   bool m_active_recordings_update = false;
+  bool m_account_replay_allowed = false;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
@@ -154,14 +156,14 @@ private:
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
 
-  std::string GetChannelStreamUrl(int uniqueId, const std::string& protocol);
+  std::string GetChannelStreamUrl(int uniqueId, const std::string& protocol, const std::string& startTime);
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
   std::string GetLicense(void);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
-                           bool realtime);
+                           bool realtime, bool playTimeshiftBuffer);
 
   std::string HttpGet(const std::string& url);
   std::string HttpDelete(const std::string& url, const std::string& postData);

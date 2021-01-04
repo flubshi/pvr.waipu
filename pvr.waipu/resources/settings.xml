@@ -70,11 +70,11 @@
 			<group id="3" label="">
 				<setting id="protocol" type="string" label="30004" help="">
 					<level>2</level>
-					<default>MPEG_DASH</default>
+					<default>dash</default>
 					<constraints>
 						<options sort="ascending">
-							<option label="MPEG_DASH">MPEG_DASH</option>
-							<option label="HLS">HLS</option>
+							<option label="MPEG_DASH">dash</option>
+							<option label="HLS">hls</option>
 						</options>
 						<allowempty>false</allowempty>
 					</constraints>

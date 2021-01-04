@@ -165,6 +165,10 @@ bool WaipuData::ParseAccessToken(void)
       m_user_channels_hd.push_back(user_channel_s);
       kodi::Log(ADDON_LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
     }
+    if(jwt_doc["userAssets"].HasMember("instantRestart")){
+	m_account_replay_allowed = jwt_doc["userAssets"]["instantRestart"].GetBool();
+	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
+    }
   }
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
@@ -421,7 +425,7 @@ void WaipuData::ReadSettings(void)
 
   m_username = kodi::GetSettingString("username");
   m_password = kodi::GetSettingString("password");
-  m_protocol = kodi::GetSettingString("protocol", "MPEG_DASH");
+  m_protocol = kodi::GetSettingString("protocol", "dash");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
@@ -514,7 +518,7 @@ std::string WaipuData::GetLicense(void)
 
 void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                                     const std::string& url,
-                                    bool realtime)
+                                    bool realtime, bool playTimeshiftBuffer)
 {
   kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
 
@@ -522,12 +526,17 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (m_protocol == "MPEG_DASH")
+  if (m_protocol == "dash")
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
     properties.emplace_back("inputstream.adaptive.manifest_type", "mpd");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
+
+    if (playTimeshiftBuffer)
+    {
+       properties.emplace_back("inputstream.adaptive.play_timeshift_buffer","true");
+    }
 
     // get widevine license
     string license = GetLicense();
@@ -539,7 +548,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
-  else if (m_protocol == "HLS")
+  else if (m_protocol == "hls")
   {
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls");
@@ -758,34 +767,39 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
 
-  string protocol_fix = m_protocol == "MPEG_DASH" ? "dash" : "hls";
-  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), protocol_fix);
+  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), m_protocol, "");
   kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
   if (!strUrl.empty())
   {
-    SetStreamProperties(properties, strUrl, true);
+    SetStreamProperties(properties, strUrl, true, false);
     ret = PVR_ERROR_NO_ERROR;
   }
   return ret;
 }
 
-string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol)
+string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, const string& startTime)
 {
   for (const auto& thisChannel : m_channels)
   {
     if (thisChannel.iUniqueId == (int)uniqueId)
     {
-      kodi::Log(ADDON_LOG_DEBUG, "Get live url for channel %s", thisChannel.strChannelName.c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Get live url for channel %s", thisChannel.strChannelName.c_str());
 
       if (!ApiLogin())
       {
         // invalid
-        kodi::Log(ADDON_LOG_DEBUG, "No stream login");
+        kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] No stream login");
         return "";
       }
 
-      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false}}";
+      string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false";
+      if (!startTime.empty())
+      {
+	  postData += ", \"startTime\": "+startTime;
+      }
+      postData += "}}";
+      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
       Curl curl;
       int statusCode;
@@ -937,6 +951,12 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       bool isRecordable = !epgData["recordingForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] recordable: %i;", isRecordable);
       epgEntry.isRecordable = isRecordable;
+
+      // instantRestartAllowed
+      bool instantRestartAllowed = !epgData["instantRestartForbidden"].GetBool();
+      kodi::Log(ADDON_LOG_DEBUG, "[epg] instantRestartAllowed: %i;", instantRestartAllowed);
+      epgEntry.instantRestartAllowed = instantRestartAllowed;
+
       m_epgEntries.push_back(epgEntry);
 
       // set title
@@ -1038,15 +1058,35 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool&
 
 PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable)
 {
+  isPlayable = false;
+
+  // check if channel is onDemand and allows playback
   for (const auto& channel : m_channels)
   {
     if (channel.iUniqueId != tag.GetUniqueChannelId())
       continue;
     isPlayable = channel.tvfuse;
-    return PVR_ERROR_NO_ERROR;
+    if (isPlayable) {
+      return PVR_ERROR_NO_ERROR;
+    }
   }
 
-  isPlayable = false;
+  // check if program is running and replay allowed
+  auto current_time = time(NULL);
+  if (m_account_replay_allowed && current_time > tag.GetStartTime() && current_time < tag.GetEndTime())
+  {
+      // tag is now running, check if epg tag allows replay
+      for (const auto& epgEntry : m_epgEntries)
+      {
+        if (epgEntry.iUniqueBroadcastId != tag.GetUniqueBroadcastId())
+          continue;
+        if (epgEntry.iUniqueChannelId != tag.GetUniqueChannelId())
+          continue;
+        isPlayable = epgEntry.instantRestartAllowed;
+        return PVR_ERROR_NO_ERROR;
+      }
+  }
+
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1061,7 +1101,7 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true);
+  SetStreamProperties(properties, strUrl, true, true);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -1078,27 +1118,34 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
       continue;
 
     string url = epgEntry.streamUrlProvider;
-    kodi::Log(ADDON_LOG_DEBUG, "play epgTAG -> %s", tag.GetTitle().c_str());
-    kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
-
-    string tag_resp = HttpGet(url);
-    kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
-
-    Document tagDoc;
-    tagDoc.Parse(tag_resp.c_str());
-    if (tagDoc.GetParseError())
+    if (!url.empty())
     {
-      kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
-      return "";
+      kodi::Log(ADDON_LOG_DEBUG, "play epgTAG -> %s", tag.GetTitle().c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
+
+      string tag_resp = HttpGet(url);
+      kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
+
+      Document tagDoc;
+      tagDoc.Parse(tag_resp.c_str());
+      if (tagDoc.GetParseError())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+        return "";
+      }
+      kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
+      // check if streams there
+      if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+      {
+        string mpdUrl = tagDoc["player"]["mpd"].GetString();
+        kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
+        return mpdUrl;
+      }
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
-    // check if streams there
-    if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
-    {
-      string mpdUrl = tagDoc["player"]["mpd"].GetString();
-      kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
-      return mpdUrl;
-    }
+
+    // fallback to replay playback
+    string startTime = std::to_string(tag.GetStartTime());
+    return GetChannelStreamUrl(tag.GetUniqueChannelId(), protocol, startTime);
   }
   return "";
 }
@@ -1296,11 +1343,13 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;",
             recordingDoc["streamingDetails"]["streams"].Size());
 
+  string protocol_fix = protocol == "dash" ? "MPEG_DASH" : "HLS";
+
   for (const auto& stream : recordingDoc["streamingDetails"]["streams"].GetArray())
   {
     string current_protocol = stream["protocol"].GetString();
     kodi::Log(ADDON_LOG_DEBUG, "[stream] protocol: %s;", current_protocol.c_str());
-    if (current_protocol == protocol)
+    if (current_protocol == protocol_fix)
     {
       string href = stream["href"].GetString();
       kodi::Log(ADDON_LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
@@ -1337,7 +1386,7 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true);
+  SetStreamProperties(properties, strUrl, true, false);
 
   return PVR_ERROR_NO_ERROR;
 }
