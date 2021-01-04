@@ -169,6 +169,10 @@ bool WaipuData::ParseAccessToken(void)
 	m_account_replay_allowed = jwt_doc["userAssets"]["instantRestart"].GetBool();
 	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
     }
+    if(jwt_doc["userAssets"].HasMember("hoursRecording")){
+	m_account_hours_recording = jwt_doc["userAssets"]["hoursRecording"].GetInt();
+	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
+    }
   }
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
@@ -1028,6 +1032,13 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
 PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable)
 {
+  if (m_account_hours_recording == 0)
+  {
+    // recording option not available
+    isRecordable = false;
+    return PVR_ERROR_NO_ERROR;
+  }
+
   time_t current_time;
   time(&current_time);
   if (tag.GetEndTime() < current_time)
@@ -1147,8 +1158,8 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
 
 PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 {
-  amount = -1;
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  amount = m_recordings_count;
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
@@ -1406,8 +1417,8 @@ PVR_ERROR WaipuData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types
 
 PVR_ERROR WaipuData::GetTimersAmount(int& amount)
 {
-  amount = -1;
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  amount = m_timers_count;
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
@@ -1439,6 +1450,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc["result"].Size());
 
   int recordings_count = 0;
+  int timers_count = 0;
 
   for (const auto& timer : timersDoc["result"].GetArray())
   {
@@ -1452,6 +1464,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
     // new tag
     kodi::addon::PVRTimer tag;
+    ++timers_count;
 
     if (status == "SCHEDULED")
     {
@@ -1527,6 +1540,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     m_active_recordings_update = true;
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   }
+  m_timers_count = timers_count;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -1570,6 +1584,13 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
     }
   }
   return PVR_ERROR_FAILED;
+}
+
+PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
+{
+  total = m_account_hours_recording * 1024 * 1024;
+  used =  0;
+  return PVR_ERROR_NO_ERROR;
 }
 
 ADDONCREATOR(WaipuData)
