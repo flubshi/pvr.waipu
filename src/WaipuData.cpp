@@ -683,11 +683,6 @@ bool WaipuData::LoadChannelData(void)
         icon_hd = href;
         continue;
       }
-      else if (rel == "livePlayout")
-      {
-        waipu_channel.strStreamURL = href; // waipu[links][rel=livePlayout]
-        continue;
-      }
       kodi::Log(ADDON_LOG_DEBUG, "[channel] link: %s -> %s;", rel.c_str(), href.c_str());
     }
     if (icon_hd.size() > 0 && isHD)

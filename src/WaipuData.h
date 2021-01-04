@@ -113,7 +113,6 @@ private:
     int iChannelNumber; //position
     std::string strChannelName; //waipu[displayName]
     std::string strIconPath; // waipu[links][rel=iconlargehd]
-    std::string strStreamURL; // waipu[links][rel=livePlayout]
     bool tvfuse; // tvfuse is on demand channel
   };
 
