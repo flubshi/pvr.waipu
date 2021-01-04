@@ -97,6 +97,7 @@ public:
   PVR_ERROR GetTimers(kodi::addon::PVRTimersResultSet& results) override;
   PVR_ERROR DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete) override;
   PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
+  PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
   struct WaipuApiToken
@@ -113,7 +114,6 @@ private:
     int iChannelNumber; //position
     std::string strChannelName; //waipu[displayName]
     std::string strIconPath; // waipu[links][rel=iconlargehd]
-    std::string strStreamURL; // waipu[links][rel=livePlayout]
     bool tvfuse; // tvfuse is on demand channel
   };
 
@@ -144,9 +144,11 @@ private:
   WaipuApiToken m_apiToken;
   std::string m_license;
   int m_recordings_count = 0;
+  int m_timers_count = 0;
   int m_login_failed_counter = 0;
   bool m_active_recordings_update = false;
   bool m_account_replay_allowed = false;
+  int m_account_hours_recording = 0;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
