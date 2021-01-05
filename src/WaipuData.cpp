@@ -34,41 +34,35 @@ using namespace std;
 using namespace rapidjson;
 
 // BEGIN CURL helpers from zattoo addon:
-string WaipuData::HttpGet(const string& url)
+string WaipuData::HttpGet(const string& url, const map<string,string>& headers)
 {
-  return HttpRequest("GET", url, "");
+  return HttpRequest("GET", url, "", headers);
 }
 
-string WaipuData::HttpDelete(const string& url, const string& postData)
+string WaipuData::HttpDelete(const string& url, const string& postData, const map<string,string>& headers)
 {
-  return HttpRequest("DELETE", url, postData);
+  return HttpRequest("DELETE", url, postData, headers);
 }
 
-string WaipuData::HttpPost(const string& url, const string& postData)
+string WaipuData::HttpPost(const string& url, const string& postData, const map<string,string>& headers)
 {
-  return HttpRequest("POST", url, postData);
+  return HttpRequest("POST", url, postData, headers);
 }
 
-string WaipuData::HttpRequest(const string& action, const string& url, const string& postData)
+string WaipuData::HttpRequest(const string& action, const string& url, const string& postData, const map<string,string>& headers)
 {
   Curl curl;
   int statusCode;
 
-  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  for (auto const& header : headers)
+  {
+    curl.AddHeader(header.first, header.second);
+  }
+
+  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
 
-  if (action == "DELETE")
-  {
-    curl.AddHeader("Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json");
-  }
-  else
-  {
-    curl.AddHeader("Content-Type", "application/vnd.waipu.start-recording-v2+json");
-  }
-
-  string content = HttpRequestToCurl(curl, action, url, postData, statusCode);
-
-  return content;
+  return HttpRequestToCurl(curl, action, url, postData, statusCode);
 }
 
 string WaipuData::HttpRequestToCurl(
@@ -215,7 +209,7 @@ bool WaipuData::WaipuLogin()
   // curl request
   Curl curl;
   int statusCode = 0;
-  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("Authorization", "Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
   curl.AddHeader("Content-Type", "application/x-www-form-urlencoded");
   jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token",
@@ -296,7 +290,7 @@ bool WaipuData::O2Login()
   // curl request
   Curl curl;
   int statusCode = 0;
-  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("authority", "o2api.waipu.tv");
   string respForm =
       HttpRequestToCurl(curl, "GET",
@@ -800,13 +794,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
-      Curl curl;
-      int statusCode;
-      curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
-      curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
-      curl.AddHeader("Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json");
-
-      string jsonStreamURL = HttpRequestToCurl(curl, "POST", "https://stream-url-provider.waipu.tv/api/stream-url", postData, statusCode);
+      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}});
 
       Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
@@ -1170,13 +1158,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
   }
   m_active_recordings_update = true;
 
-  Curl curl;
-  int statusCode;
-  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
-  curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
-  curl.AddHeader("Accept", "application/vnd.waipu.recordings-v2+json");
-  string jsonRecordings =
-      HttpRequestToCurl(curl, "GET", "https://recording.waipu.tv/api/recordings", "", statusCode);
+  string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",{{"Accept", "application/vnd.waipu.recordings-v2+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", jsonRecordings.c_str());
 
   jsonRecordings = "{\"result\": " + jsonRecordings + "}";
@@ -1372,7 +1354,7 @@ PVR_ERROR WaipuData::DeleteRecording(const kodi::addon::PVRRecording& recording)
     string recording_id = recording.GetRecordingId();
     string request_data = "{\"ids\":[\"" + recording_id + "\"]}";
     kodi::Log(ADDON_LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
-    string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str());
+    string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(), {{"Content-Type","application/vnd.waipu.pvr-recording-ids-v2+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
     return PVR_ERROR_NO_ERROR;
@@ -1428,13 +1410,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     return PVR_ERROR_SERVER_ERROR;
   }
 
-  Curl curl;
-  int statusCode;
-  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
-  curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
-  curl.AddHeader("Accept", "application/vnd.waipu.recordings-v2+json");
-  string jsonRecordings =
-      HttpRequestToCurl(curl, "GET", "https://recording.waipu.tv/api/recordings", "", statusCode);
+  string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings", {{"Accept", "application/vnd.waipu.recordings-v2+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[Timers] %s", jsonRecordings.c_str());
 
   jsonRecordings = "{\"result\": " + jsonRecordings + "}";
@@ -1552,7 +1528,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     int timer_id = timer.GetClientIndex();
     string request_data = "{\"ids\":[\"" + to_string(timer_id) + "\"]}";
     kodi::Log(ADDON_LOG_DEBUG, "[delete timer] req: %s;", request_data.c_str());
-    string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str());
+    string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),{{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete timer] response: %s;", deleted.c_str());
     kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
     return PVR_ERROR_NO_ERROR;
@@ -1577,7 +1553,7 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
         continue;
       string postData = "{\"programId\":\"_" + to_string(timer.GetEPGUid()) +
                         "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
-      string recordResp = HttpPost("https://recording.waipu.tv/api/recordings", postData);
+      string recordResp = HttpPost("https://recording.waipu.tv/api/recordings", postData, {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
       kodi::Log(ADDON_LOG_DEBUG, "[add timer] response: %s;", recordResp.c_str());
       kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
       return PVR_ERROR_NO_ERROR;

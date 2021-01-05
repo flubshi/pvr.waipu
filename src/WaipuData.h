@@ -23,6 +23,7 @@
 #include "Curl.h"
 #include "kodi/addon-instance/PVR.h"
 
+#include <map>
 #include <vector>
 
 /**
@@ -167,10 +168,10 @@ private:
                            const std::string& url,
                            bool realtime, bool playTimeshiftBuffer);
 
-  std::string HttpGet(const std::string& url);
-  std::string HttpDelete(const std::string& url, const std::string& postData);
-  std::string HttpPost(const std::string& url, const std::string& postData);
-  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData);
+  std::string HttpGet(const std::string& url, const std::map<std::string,std::string>& headers = {});
+  std::string HttpDelete(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
+  std::string HttpPost(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
+  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
   std::string HttpRequestToCurl(
       Curl& curl, const std::string& action, const std::string& url, const std::string& postData, int& statusCode);
   bool ApiLogin();
