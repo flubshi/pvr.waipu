@@ -135,12 +135,12 @@ bool WaipuData::ParseAccessToken(void)
       return false;
     }
 
-    string userHandle = jwt_doc["userHandle"].GetString();
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", userHandle.c_str());
+    m_userhandle = jwt_doc["userHandle"].GetString();
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.c_str());
     // generate the license
     string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
                            "\"userId\" : \"" +
-                           userHandle + "\"}";
+                           m_userhandle + "\"}";
     kodi::Log(ADDON_LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
     m_license = base64_encode(license_plain.c_str(), license_plain.length());
     kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
@@ -786,6 +786,29 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
         return "";
       }
 
+      // --------- BEGIN X-Device-Token
+      // \"sdpalp25\": false, \"sdpalp50\": false, \"hd720p25\": false, \"hd720p50\": false,
+      string capabilitesData = "{\"type\": \"tv\", \"model\": \"Kodi 19\", \"manufacturer\": \"Team Kodi\", \"platform\": \"Kodi 19\", \"appVersion\": \"3.14.0-79db181\", \"capabilities\": {\"audio\": {\"aac\": true},\"video\": { \"hd1080p25\": true, \"hd1080p50\": true,\"hevc2160p50\": false}}}";
+      string jsonDeviceToken = HttpPost("https://device-capabilities.waipu.tv/api/device-capabilities", capabilitesData, {{"Content-Type", "application/vnd.dc.device-info-v1+json"},{"X-USERCONTEXT-USERHANDLE",m_userhandle.c_str()}});
+
+      kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] response: %s", jsonDeviceToken.c_str());
+
+      string deviceToken = "";
+
+      Document deviceTokenDoc;
+      deviceTokenDoc.Parse(jsonDeviceToken.c_str());
+      if (!deviceTokenDoc.GetParseError())
+      {
+	  if(deviceTokenDoc.HasMember("token"))
+	  {
+	      deviceToken = deviceTokenDoc["token"].GetString();
+	      kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s", deviceToken.c_str());
+	  }
+      }
+
+
+      // --------- END X-Device-Token
+
       string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false";
       if (!startTime.empty())
       {
@@ -794,7 +817,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
-      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}});
+      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", deviceToken.c_str()}});
 
       Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
