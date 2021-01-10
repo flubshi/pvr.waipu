@@ -108,6 +108,12 @@ private:
     time_t expires;
   };
 
+  struct WaipuDeviceToken
+  {
+    std::string token;
+    time_t expires;
+  };
+
   struct WaipuChannel
   {
     int iUniqueId;
@@ -144,6 +150,7 @@ private:
   std::vector<WaipuChannelGroup> m_channelGroups;
 
   WaipuApiToken m_apiToken;
+  WaipuDeviceToken m_deviceCapabilitiesToken;
   std::string m_license;
   int m_recordings_count = 0;
   int m_timers_count = 0;
@@ -179,4 +186,5 @@ private:
   bool WaipuLogin();
   bool O2Login();
   bool LoadChannelData(void);
+  bool RefreshDeviceCapabiltiesToken(void);
 };

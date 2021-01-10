@@ -67,7 +67,56 @@
 			</group>
 		</category>
 		<category id="misc" label="30005" help="">
-			<group id="3" label="">
+			<group id="4" label="30012">
+	         <setting id="streaming_capabilities_video_sdpalp25" type="boolean" label="30014" help="">
+	            <level>2</level>
+	            <default>true</default>
+	            <control type="toggle"/>
+	         </setting>
+	         <setting id="streaming_capabilities_video_sdpalp50" type="boolean" label="30015" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hd720p25" type="boolean" label="30016" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hd720p50" type="boolean" label="30017" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hd1080p25" type="boolean" label="30018" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hd1080p50" type="boolean" label="30019" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hevc1080p50" type="boolean" label="30020" help="">
+               <level>2</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
+            <setting id="streaming_capabilities_video_hevc2160p50" type="boolean" label="30021" help="">
+               <level>2</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
+			</group>
+			<group id="5" label="30013">
+            <setting id="streaming_capabilities_audio_aac" type="boolean" label="30025" help="">
+               <level>2</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
+         </group>
+			<group id="3" label="30011">
 				<setting id="protocol" type="string" label="30004" help="">
 					<level>2</level>
 					<default>dash</default>

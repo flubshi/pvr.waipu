@@ -370,6 +370,74 @@ bool WaipuData::O2Login()
   return ParseAccessToken();
 }
 
+bool WaipuData::RefreshDeviceCapabiltiesToken()
+{
+  kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
+
+  time_t currTime;
+  time(&currTime);
+  kodi::Log(ADDON_LOG_DEBUG, "[device token] current time %i", currTime);
+  kodi::Log(ADDON_LOG_DEBUG, "[device token] expire  time %i", m_deviceCapabilitiesToken.expires);
+  if (!m_deviceCapabilitiesToken.token.empty() && (m_deviceCapabilitiesToken.expires - 5 * 60) > currTime)
+  {
+    // device token exists and is valid, more than x in future
+    kodi::Log(ADDON_LOG_DEBUG, "[device token] old token still valid, no need to refresh");
+    return true;
+  }
+
+  // Get new device token
+  kodi::Log(ADDON_LOG_DEBUG, "[device token] New deviceToken required...");
+
+  // \"sdpalp25\": false, \"sdpalp50\": false, \"hd720p25\": false, \"hd720p50\": false,
+  string appVersion;
+  GetBackendVersion(appVersion);
+
+  bool cap_audio_aac = kodi::GetSettingBoolean("streaming_capabilities_audio_aac",false);
+
+  string capabilitesData = "{\"type\": \"receiver\", \"model\": \"Kodi 19\", \"manufacturer\": \"Team Kodi\", \"platform\": \"Kodi 19-pvr.waipu\", \"appVersion\": \""+appVersion+"\", \"capabilities\": {\"audio\": {\"aac\": "+(cap_audio_aac ? "true" : "false")+"},\"video\": { ";
+
+  vector<string> video_cap_options = { "sdpalp25", "sdpalp50", "hd720p25", "hd720p50", "hd1080p25", "hd1080p50", "hevc1080p50", "hevc2160p50" };
+  bool first = true;
+  for (const std::string& cap_option : video_cap_options)
+  {
+    bool cap_value = kodi::GetSettingBoolean("streaming_capabilities_video_"+cap_option, false);
+    capabilitesData += string(first ? "" : ",")+ "\""+cap_option+"\": " + (cap_value ? "true" : "false");
+    first = false;
+  }
+  capabilitesData += "}}}";
+
+  string jsonDeviceToken = HttpPost("https://device-capabilities.waipu.tv/api/device-capabilities", capabilitesData, {{"Content-Type", "application/vnd.dc.device-info-v1+json"},{"X-USERCONTEXT-USERHANDLE",m_userhandle.c_str()}});
+
+  kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] response: %s", jsonDeviceToken.c_str());
+
+  string deviceToken = "";
+
+  Document deviceTokenDoc;
+  deviceTokenDoc.Parse(jsonDeviceToken.c_str());
+  if (deviceTokenDoc.GetParseError())
+  {
+      kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] parse error :(");
+      return false;
+  }
+
+  if(deviceTokenDoc.HasMember("token"))
+  {
+    m_deviceCapabilitiesToken.token = deviceTokenDoc["token"].GetString();
+    kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s", m_deviceCapabilitiesToken.token.c_str());
+
+    if(deviceTokenDoc.HasMember("expiresIn")){
+	m_deviceCapabilitiesToken.expires = currTime + deviceTokenDoc["expiresIn"].GetUint64();
+	kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] expires: %i;", m_deviceCapabilitiesToken.expires);
+    }else{
+	m_apiToken.expires = currTime + 5 * 60;
+    }
+    return true;
+  }
+
+  kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] unknown error :(");
+  return false;
+}
+
 
 ADDON_STATUS WaipuData::Create()
 {
@@ -473,6 +541,11 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       m_provider = tmpProvider;
       return ADDON_STATUS_NEED_RESTART;
     }
+  }else if (settingName.rfind("streaming_capabilities_", 0) == 0)
+  {
+    // settings name begins with "streaming_capabilities_"
+    // reset capabilities to force refresh
+    m_deviceCapabilitiesToken.token = "";
   }
 
   return ADDON_STATUS_OK;
@@ -786,28 +859,8 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
         return "";
       }
 
-      // --------- BEGIN X-Device-Token
-      // \"sdpalp25\": false, \"sdpalp50\": false, \"hd720p25\": false, \"hd720p50\": false,
-      string capabilitesData = "{\"type\": \"tv\", \"model\": \"Kodi 19\", \"manufacturer\": \"Team Kodi\", \"platform\": \"Kodi 19\", \"appVersion\": \"3.14.0-79db181\", \"capabilities\": {\"audio\": {\"aac\": true},\"video\": { \"hd1080p25\": true, \"hd1080p50\": true,\"hevc2160p50\": false}}}";
-      string jsonDeviceToken = HttpPost("https://device-capabilities.waipu.tv/api/device-capabilities", capabilitesData, {{"Content-Type", "application/vnd.dc.device-info-v1+json"},{"X-USERCONTEXT-USERHANDLE",m_userhandle.c_str()}});
-
-      kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] response: %s", jsonDeviceToken.c_str());
-
-      string deviceToken = "";
-
-      Document deviceTokenDoc;
-      deviceTokenDoc.Parse(jsonDeviceToken.c_str());
-      if (!deviceTokenDoc.GetParseError())
-      {
-	  if(deviceTokenDoc.HasMember("token"))
-	  {
-	      deviceToken = deviceTokenDoc["token"].GetString();
-	      kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s", deviceToken.c_str());
-	  }
-      }
-
-
-      // --------- END X-Device-Token
+      // ensure device token is fresh
+      RefreshDeviceCapabiltiesToken();
 
       string postData = "{\"stream\": { \"station\": \""+thisChannel.waipuID+"\", \"protocol\": \""+protocol+"\", \"requestMuxInstrumentation\": false";
       if (!startTime.empty())
@@ -817,7 +870,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
-      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", deviceToken.c_str()}});
+      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", m_deviceCapabilitiesToken.token.c_str()}});
 
       Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
