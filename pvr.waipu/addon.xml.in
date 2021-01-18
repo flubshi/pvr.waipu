@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="2.5.0"
+  version="2.5.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
-    <import addon="script.module.inputstreamhelper" version="0.4.1"/>
-    <import addon="script.module.requests" version="2.3.0"/>
-    <import addon="inputstream.adaptive" minversion="2.4.2"/>
+    <import addon="script.module.inputstreamhelper" version="0.5.2"/>
+    <import addon="inputstream.adaptive" minversion="2.6.5"/>
   </requires>
   <extension
     point="kodi.pvrclient"
@@ -18,18 +17,19 @@
     <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
     <description lang="en_US">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
     <platform>@PLATFORM@</platform>
-      <license>GNU General Public License. Version 2, June 1991</license>
-  <forum></forum>
-  <website>https://www.waipu.tv/</website>
-  <email></email>
-  <source>https://github.com/flubshi/pvr.waipu</source>
-  <assets>
-    <icon>icon.png</icon>
-    <fanart>fanart.jpg</fanart>
-    <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
-    <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
-  </assets>
-  <news>
+    <license>GNU General Public License. Version 2, June 1991</license>
+    <forum></forum>
+    <website>https://www.waipu.tv/</website>
+    <email></email>
+    <source>https://github.com/flubshi/pvr.waipu</source>
+    <assets>
+      <icon>icon.png</icon>
+      <fanart>fanart.jpg</fanart>
+      <screenshot>resources/screenshots/screenshot-01.jpg</screenshot>
+      <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
+    </assets>
+    <news>
+- 2.5.1 Update addon depends versions and remove script.module.requests
 - 2.5.0 Update PVR API 7.1.0
 - 2.4.0 Implement replay feature (thanks to quthla); improve recording/timer handling
 - 2.3.0 Improve login and authentication; allow user to select HLS/DASH streams
@@ -37,6 +37,6 @@
 - 2.1.0 Update PVR API 7.0.2
 - 2.0.1 Remove p8-platform dependency
 - 2.0.0 Update PVR API 7.0.0; Rework addon to support new API interface
-  </news>
+    </news>
   </extension>
 </addon>
