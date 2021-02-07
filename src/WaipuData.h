@@ -23,6 +23,7 @@
 #include "Curl.h"
 #include "kodi/addon-instance/PVR.h"
 
+#include <map>
 #include <vector>
 
 /**
@@ -107,6 +108,12 @@ private:
     time_t expires;
   };
 
+  struct WaipuDeviceToken
+  {
+    std::string token;
+    time_t expires;
+  };
+
   struct WaipuChannel
   {
     int iUniqueId;
@@ -134,6 +141,7 @@ private:
 
   std::string m_username;
   std::string m_password;
+  std::string m_userhandle = "";
   std::string m_protocol;
   WAIPU_PROVIDER m_provider;
 
@@ -142,6 +150,7 @@ private:
   std::vector<WaipuChannelGroup> m_channelGroups;
 
   WaipuApiToken m_apiToken;
+  WaipuDeviceToken m_deviceCapabilitiesToken;
   std::string m_license;
   int m_recordings_count = 0;
   int m_timers_count = 0;
@@ -167,14 +176,15 @@ private:
                            const std::string& url,
                            bool realtime, bool playTimeshiftBuffer);
 
-  std::string HttpGet(const std::string& url);
-  std::string HttpDelete(const std::string& url, const std::string& postData);
-  std::string HttpPost(const std::string& url, const std::string& postData);
-  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData);
+  std::string HttpGet(const std::string& url, const std::map<std::string,std::string>& headers = {});
+  std::string HttpDelete(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
+  std::string HttpPost(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
+  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
   std::string HttpRequestToCurl(
       Curl& curl, const std::string& action, const std::string& url, const std::string& postData, int& statusCode);
   bool ApiLogin();
   bool WaipuLogin();
   bool O2Login();
   bool LoadChannelData(void);
+  bool RefreshDeviceCapabiltiesToken(void);
 };

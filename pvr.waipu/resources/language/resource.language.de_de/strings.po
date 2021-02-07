@@ -27,8 +27,8 @@ msgid "Protocol"
 msgstr "Protokoll"
 
 msgctxt "#30005"
-msgid "Misc"
-msgstr "Sonstiges"
+msgid "Streaming"
+msgstr "Streaming"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
@@ -49,6 +49,54 @@ msgstr "Waipu.tv"
 msgctxt "#30010"
 msgid "O2 TV"
 msgstr "O2 TV (beta)"
+
+msgctxt "#30011"
+msgid "Streaming Protocol"
+msgstr "Streaming Protokoll"
+
+msgctxt "#30012"
+msgid "Video Resolution"
+msgstr "Video Auflösung"
+
+msgctxt "#30013"
+msgid "Audio Codecs"
+msgstr "Audio Codecs"
+
+msgctxt "#30014"
+msgid "SD-PALp25: h264; 720x540; 25fps"
+msgstr "SD-PALp25: h264; 720x540; 25fps"
+
+msgctxt "#30015"
+msgid "SD-PALp50: h264; 720x540; 50fps"
+msgstr "SD-PALp50: h264; 720x540; 50fps"
+
+msgctxt "#30016"
+msgid "HD-720p25: h264; 1280x720; 25fps"
+msgstr "HD-720p25: h264; 1280x720; 25fps"
+
+msgctxt "#30017"
+msgid "HD-720p50: h264; 1280x720; 50fps"
+msgstr "HD-720p50: h264; 1280x720; 50fps"
+
+msgctxt "#30018"
+msgid "HD-1080p25: h264; 1920x1080; 25fps"
+msgstr "HD-1080p25: h264; 1920x1080; 25fps"
+
+msgctxt "#30019"
+msgid "HD-1080p50: h264; 1920x1080; 50fps"
+msgstr "HD-1080p50: h264; 1920x1080; 50fps"
+
+msgctxt "#30020"
+msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
+msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
+
+msgctxt "#30021"
+msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
+msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
+
+msgctxt "#30025"
+msgid "AAC-LC: 128kBit, 48kHz"
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
