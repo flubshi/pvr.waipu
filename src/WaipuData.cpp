@@ -89,11 +89,21 @@ string WaipuData::HttpRequestToCurl(
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
-  if(m_login_failed_counter > 3){
-      // more than 3 consecutive failed login attempts
-      // block login attempt
-      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
-      return false;
+  if(m_login_failed_counter > WAIPU_LOGIN_FAILED_LOCK_LIMIT){
+     // more than x consecutive failed login attempts
+     // check time limit
+     time_t currTime;
+     time(&currTime);
+     if(m_login_failed_locktime + 3*60 < currTime)
+     {
+       kodi::Log(ADDON_LOG_ERROR, "[API LOGIN] Reset login lock due to timer");
+       m_login_failed_counter = 0;
+     }else{
+       // block login attempt
+       kodi::Log(ADDON_LOG_ERROR, "[API LOGIN] Locked due to invalid attempts");
+       m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
+       return false;
+     }
   }
 
   bool login_result;
@@ -109,6 +119,12 @@ bool WaipuData::ApiLogin()
       // login okay, reset counter
       m_login_failed_counter = 0;
   }else{
+      if(m_login_failed_counter == WAIPU_LOGIN_FAILED_LOCK_LIMIT)
+	{
+	  time_t currTime;
+	  time(&currTime);
+	  m_login_failed_locktime = currTime;
+	}
       // login failed, increase counter
       m_login_failed_counter = m_login_failed_counter + 1;
   }
