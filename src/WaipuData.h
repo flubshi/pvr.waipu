@@ -31,6 +31,7 @@
  * Let's try to be honest, otherwise we have to fallback to "waipu-2.29.2-c0f220b-9446 (Android 8.1.0)"
  */
 static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
+static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
 
 enum WAIPU_PROVIDER
 {
@@ -155,6 +156,7 @@ private:
   int m_recordings_count = 0;
   int m_timers_count = 0;
   int m_login_failed_counter = 0;
+  time_t m_login_failed_locktime = 0;
   bool m_active_recordings_update = false;
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
