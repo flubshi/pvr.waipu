@@ -20,6 +20,7 @@
  *
  */
 
+#include "categories.h"
 #include "Curl.h"
 #include "kodi/addon-instance/PVR.h"
 
@@ -163,6 +164,7 @@ private:
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+  Categories m_categories;
 
   void ReadSettings(void);
   bool ParseAccessToken(void);
