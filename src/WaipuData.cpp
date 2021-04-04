@@ -1120,8 +1120,19 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       // genre
       if (epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull())
       {
-        tag.SetGenreType(EPG_GENRE_USE_STRING);
-        tag.SetGenreDescription(epgData["genreDisplayName"].GetString());
+        string genreStr = epgData["genreDisplayName"].GetString();
+        int genre = m_categories.Category(genreStr);
+        if (genre)
+        {
+          tag.SetGenreSubType(genre & 0x0F);
+          tag.SetGenreType(genre & 0xF0);
+        }
+        else
+        {
+          tag.SetGenreType(EPG_GENRE_USE_STRING);
+          tag.SetGenreSubType(0); /* not supported */
+          tag.SetGenreDescription(genreStr);
+        }
       }
 
       results.Add(tag);
@@ -1395,9 +1406,19 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     // genre
     if (epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull())
     {
-      tag.SetGenreType(EPG_GENRE_USE_STRING);
-      string genre = epgData["genreDisplayName"].GetString();
-      tag.SetGenreDescription(genre);
+      string genreStr = epgData["genreDisplayName"].GetString();
+      int genre = m_categories.Category(genreStr);
+      if (genre)
+      {
+        tag.SetGenreSubType(genre & 0x0F);
+        tag.SetGenreType(genre & 0xF0);
+      }
+      else
+      {
+        tag.SetGenreType(EPG_GENRE_USE_STRING);
+        tag.SetGenreSubType(0); /* not supported */
+        tag.SetGenreDescription(genreStr);
+      }
     }
 
     // epg mapping
