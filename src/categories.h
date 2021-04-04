@@ -35,6 +35,7 @@ public:
 
   std::string Category(int category) const;
   int Category(const std::string& category);
+  void WriteMissingCategories();
 
 private:
   void LoadEITCategories();

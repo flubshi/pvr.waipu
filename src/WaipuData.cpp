@@ -1118,6 +1118,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       results.Add(tag);
     }
   }
+  m_categories.WriteMissingCategories();
+
   return PVR_ERROR_NO_ERROR;
 }
 

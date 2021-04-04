@@ -80,6 +80,17 @@ int Categories::Category(const std::string& category)
   return 0;
 }
 
+void Categories::WriteMissingCategories()
+{
+  //cat ~/.kodi/temp/kodi.log| grep "MissingCategory" | cut -d"'" -f2 | sort -u > ~/fehlende_Kategorien.txt
+  CategoryByNameMap::const_iterator it;
+  std::string missing = "";
+  for (it = m_categoriesByName.begin(); it != m_categoriesByName.end(); ++it)
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "%s: MissingCategory='%s'", __FUNCTION__, it->first.c_str());
+  }
+}
+
 void Categories::LoadEITCategories()
 {
   const char *filePath = "special://home/addons/pvr.waipu/resources/eit_categories.txt";
