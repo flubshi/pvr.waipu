@@ -135,6 +135,12 @@ std::string Utils::ltrim(std::string str, const std::string chars)
   return str;
 }
 
+std::string Utils::rtrim(std::string str, const std::string chars )
+{
+   str.erase( str.find_last_not_of( chars ) + 1 );
+   return str;
+}
+
 int Utils::GetIDDirty(std::string str)
 {
   // str= "_1035245078" or = "misc-rand-int-whatever"

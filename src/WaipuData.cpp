@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2019 flubshi
+ *      Copyright (C) 2019 - 2021 flubshi
  *      https://github.com/flubshi
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -507,7 +507,7 @@ void WaipuData::ReadSettings(void)
 
   m_username = kodi::GetSettingString("username");
   m_password = kodi::GetSettingString("password");
-  m_protocol = kodi::GetSettingString("protocol", "dash");
+  m_protocol = kodi::GetSettingString("protocol", "auto");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
@@ -605,7 +605,8 @@ std::string WaipuData::GetLicense(void)
 
 void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                                     const std::string& url,
-                                    bool realtime, bool playTimeshiftBuffer)
+                                    bool realtime, bool playTimeshiftBuffer,
+                                    const std::string& protocol)
 {
   kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
 
@@ -613,7 +614,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (m_protocol == "dash")
+  if (protocol == "dash")
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
@@ -635,7 +636,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
-  else if (m_protocol == "hls")
+  else if (protocol == "hls")
   {
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls");
@@ -645,7 +646,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   }
   else
   {
-    kodi::Log(ADDON_LOG_ERROR, "[SetStreamProperties] called with invalid protocol '%s'", m_protocol.c_str());
+    kodi::Log(ADDON_LOG_ERROR, "[SetStreamProperties] called with invalid protocol '%s'", protocol.c_str());
   }
 }
 
@@ -848,13 +849,32 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
 PVR_ERROR WaipuData::GetChannelStreamProperties(
     const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
-
-  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), m_protocol, "");
-  kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
   PVR_ERROR ret = PVR_ERROR_FAILED;
+  string protocol = m_protocol;
+  if (protocol == "auto")
+  {
+    // use hls where possible, fallback to dash
+    protocol = "dash";
+    for (const auto& thisChannel : m_channels)
+    {
+      if (thisChannel.iUniqueId == channel.GetUniqueId())
+      {
+        if (m_hls_allowlist.contains(thisChannel.waipuID))
+        {
+          protocol = "hls";
+          break;
+        }
+      }
+    }
+    kodi::Log(ADDON_LOG_DEBUG, "protocol auto select: %s", protocol.c_str());
+  }
+
+  string strUrl = GetChannelStreamUrl(channel.GetUniqueId(), protocol, "");
+  kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
+
   if (!strUrl.empty())
   {
-    SetStreamProperties(properties, strUrl, true, false);
+    SetStreamProperties(properties, strUrl, true, false, protocol);
     ret = PVR_ERROR_NO_ERROR;
   }
   return ret;
@@ -1181,13 +1201,16 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
 {
   kodi::Log(ADDON_LOG_DEBUG, "[EPG TAG] play it...");
 
-  string strUrl = GetEPGTagURL(tag, m_protocol);
+  string protocol = m_protocol;
+  if (protocol == "auto") protocol = "dash";  //fallback to dash
+
+  string strUrl = GetEPGTagURL(tag, protocol);
   if (strUrl.empty())
   {
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true, true);
+  SetStreamProperties(properties, strUrl, true, true, protocol);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -1460,13 +1483,16 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
 {
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] play it...");
 
-  string strUrl = GetRecordingURL(recording, m_protocol);
+  string protocol = m_protocol;
+  if (protocol == "auto") protocol = "dash"; //fallback to dash
+
+  string strUrl = GetRecordingURL(recording, protocol);
   if (strUrl.empty())
   {
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true, false);
+  SetStreamProperties(properties, strUrl, true, false, protocol);
 
   return PVR_ERROR_NO_ERROR;
 }
