@@ -31,7 +31,8 @@
 
 #if defined(_WIN32) || defined(_WIN64)
 /* We are on Windows */
-# define strtok_r strtok_s
+#define strtok_r strtok_s
+#define strdup _strdup
 #endif
 
 Categories::Categories() :
