@@ -119,9 +119,10 @@
 			<group id="3" label="30011">
 				<setting id="protocol" type="string" label="30004" help="">
 					<level>2</level>
-					<default>dash</default>
+					<default>auto</default>
 					<constraints>
 						<options sort="ascending">
+							<option label="AUTO">auto</option>
 							<option label="MPEG_DASH">dash</option>
 							<option label="HLS">hls</option>
 						</options>

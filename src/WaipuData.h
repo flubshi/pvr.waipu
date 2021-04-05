@@ -1,6 +1,6 @@
 #pragma once
 /*
- *      Copyright (C) 2019 flubshi
+ *      Copyright (C) 2019 - 2021 flubshi
  *      https://github.com/flubshi
  *
  *  This Program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
  */
 
 #include "Curl.h"
+#include "HLSAllowlist.h"
 #include "kodi/addon-instance/PVR.h"
 
 #include <map>
@@ -163,6 +164,7 @@ private:
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+  HLSAllowlist m_hls_allowlist;
 
   void ReadSettings(void);
   bool ParseAccessToken(void);
@@ -176,7 +178,7 @@ private:
   std::string GetLicense(void);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
-                           bool realtime, bool playTimeshiftBuffer);
+                           bool realtime, bool playTimeshiftBuffer, const std::string& protocol);
 
   std::string HttpGet(const std::string& url, const std::map<std::string,std::string>& headers = {});
   std::string HttpDelete(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});

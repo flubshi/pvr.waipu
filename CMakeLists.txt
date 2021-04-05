@@ -12,12 +12,14 @@ include_directories(${KODI_INCLUDE_DIR}/.. # Hack way with "/..", need bigger Ko
 set(PVRWAIPU_SOURCES
                     src/Curl.cpp
                     src/Utils.cpp
+                    src/HLSAllowlist.cpp
                     src/Base64.cpp
                     src/WaipuData.cpp)
 
 set(PVRWAIPU_HEADERS
                     src/Curl.h
                     src/Utils.h
+                    src/HLSAllowlist.h
                     src/Base64.h
                     src/WaipuData.h)
 
