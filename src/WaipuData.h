@@ -20,6 +20,7 @@
  *
  */
 
+#include "categories.h"
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "kodi/addon-instance/PVR.h"
@@ -165,6 +166,7 @@ private:
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
   HLSAllowlist m_hls_allowlist;
+  Categories m_categories;
 
   void ReadSettings(void);
   bool ParseAccessToken(void);
