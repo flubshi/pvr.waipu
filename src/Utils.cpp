@@ -129,6 +129,16 @@ time_t Utils::StringToTime(std::string timeString)
   return ret;
 }
 
+
+std::string Utils::TimeToString(const time_t time)
+{
+  char time_str[100];
+  std::tm* pstm = std::localtime(&time);
+  // 2019-01-20T23:59:59
+  std::strftime(time_str, 32, "%Y-%m-%dT%H:%M:%S", pstm);
+  return time_str;
+}
+
 std::string Utils::ltrim(std::string str, const std::string chars)
 {
   str.erase(0, str.find_first_not_of(chars));
