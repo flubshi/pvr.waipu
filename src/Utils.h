@@ -22,6 +22,7 @@ public:
                                               const char& delim,
                                               int maxParts = 0);
   static time_t StringToTime(std::string timeString);
+  static std::string TimeToString(time_t time);
   static std::string ltrim(std::string str, const std::string chars = "\t\n\v\f\r _");
   static std::string rtrim(std::string str, const std::string chars = "\t\n\v\f\r ");
   static int GetIDDirty(std::string str);

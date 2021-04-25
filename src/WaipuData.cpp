@@ -989,15 +989,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     if (myChannel.iUniqueId != channelUid)
       continue;
 
-    char startTime[100];
-    std::tm* pstm = std::localtime(&start);
-    // 2019-01-20T23:59:59
-    std::strftime(startTime, 32, "%Y-%m-%dT%H:%M:%S", pstm);
-
-    char endTime[100];
-    std::tm* petm = std::localtime(&end);
-    // 2019-01-20T23:59:59
-    std::strftime(endTime, 32, "%Y-%m-%dT%H:%M:%S", petm);
+    string startTime = Utils::TimeToString(start);
+    string endTime = Utils::TimeToString(end);
 
     string jsonEpg =
         HttpGet("https://epg.waipu.tv/api/channels/" + myChannel.waipuID +
@@ -1230,43 +1223,63 @@ string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const string& 
 {
   ApiLogin();
 
-  for (const auto& epgEntry : m_epgEntries)
+  for (const auto& thisChannel : m_channels)
   {
-    if (epgEntry.iUniqueChannelId != tag.GetUniqueChannelId())
-      continue;
-    if (epgEntry.iUniqueBroadcastId != tag.GetUniqueBroadcastId())
-      continue;
-
-    string url = epgEntry.streamUrlProvider;
-    if (!url.empty())
+    if (thisChannel.iUniqueId == tag.GetUniqueChannelId())
     {
-      kodi::Log(ADDON_LOG_DEBUG, "play epgTAG -> %s", tag.GetTitle().c_str());
-      kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
+      string startTime = Utils::TimeToString(tag.GetStartTime());
+      string endTime = Utils::TimeToString(tag.GetEndTime());
 
-      string tag_resp = HttpGet(url);
-      kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
-
-      Document tagDoc;
-      tagDoc.Parse(tag_resp.c_str());
-      if (tagDoc.GetParseError())
+      string jsonEpg =
+	  HttpGet("https://epg.waipu.tv/api/channels/" + thisChannel.waipuID +
+	          "/programs?includeRunningAtStartTime=false&startTime=" + string(startTime) + "&stopTime=" + string(endTime));
+      kodi::Log(ADDON_LOG_DEBUG, "[epg-single-tag] %s", jsonEpg.c_str());
+      if (jsonEpg.size() == 0)
       {
-        kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+        kodi::Log(ADDON_LOG_ERROR, "[epg-single-tag] empty server response");
         return "";
       }
-      kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
-      // check if streams there
-      if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+      jsonEpg = "{\"result\": " + jsonEpg + "}";
+
+      Document epgDoc;
+      epgDoc.Parse(jsonEpg.c_str());
+
+      if (epgDoc.GetParseError() || epgDoc["result"].Size() == 0 || !epgDoc["result"][0].HasMember("streamUrlProvider") || epgDoc["result"][0]["streamUrlProvider"].IsNull())
       {
-        string mpdUrl = tagDoc["player"]["mpd"].GetString();
-        kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
-        return mpdUrl;
+        // fallback to replay playback
+        kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] streamUrlProvider not found -> fallback to replay!");
+        string startTime = std::to_string(tag.GetStartTime());
+        return GetChannelStreamUrl(tag.GetUniqueChannelId(), protocol, startTime);
+      }
+
+      string url = epgDoc["result"][0]["streamUrlProvider"].GetString();
+
+      if (!url.empty())
+      {
+        kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
+
+        string tag_resp = HttpGet(url);
+        kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
+
+        Document tagDoc;
+        tagDoc.Parse(tag_resp.c_str());
+        if (tagDoc.GetParseError())
+        {
+          kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
+          return "";
+        }
+        kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
+        // check if streams there
+        if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
+        {
+          string mpdUrl = tagDoc["player"]["mpd"].GetString();
+          kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
+          return mpdUrl;
+        }
       }
     }
-
-    // fallback to replay playback
-    string startTime = std::to_string(tag.GetStartTime());
-    return GetChannelStreamUrl(tag.GetUniqueChannelId(), protocol, startTime);
   }
+  kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] channel or tag not found!");
   return "";
 }
 
