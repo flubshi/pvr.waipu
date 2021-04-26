@@ -49,6 +49,9 @@ enum class WAIPU_LOGIN_STATUS
   UNKNOWN
 };
 
+static const unsigned int EPG_TAG_FLAG_IS_RECORDABLE = (1 << 28);
+static const unsigned int EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED = (1 << 29);
+
 class ATTRIBUTE_HIDDEN WaipuData : public kodi::addon::CAddonBase,
                                    public kodi::addon::CInstancePVRClient
 {
@@ -133,15 +136,6 @@ private:
     std::vector<WaipuChannel> channels;
   };
 
-  struct WaipuEPGEntry
-  {
-    int iUniqueBroadcastId;
-    int iUniqueChannelId;
-    bool isRecordable;
-    bool instantRestartAllowed;
-    std::string streamUrlProvider;
-  };
-
   std::string m_username;
   std::string m_password;
   std::string m_userhandle = "";
@@ -149,7 +143,6 @@ private:
   WAIPU_PROVIDER m_provider;
 
   std::vector<WaipuChannel> m_channels;
-  std::vector<WaipuEPGEntry> m_epgEntries;
   std::vector<WaipuChannelGroup> m_channelGroups;
 
   WaipuApiToken m_apiToken;
