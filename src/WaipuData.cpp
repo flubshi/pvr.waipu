@@ -1017,7 +1017,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     for (const auto& epgData : epgDoc["result"].GetArray())
     {
       kodi::addon::PVREPGTag tag;
-      WaipuEPGEntry epgEntry;
 
       // generate a unique boadcast id
       string epg_bid = epgData["id"].GetString();
@@ -1025,31 +1024,30 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       int dirtyID = Utils::GetIDDirty(epg_bid);
       kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid dirty: %i;", dirtyID);
       tag.SetUniqueBroadcastId(dirtyID);
-      epgEntry.iUniqueBroadcastId = dirtyID;
 
       // channel ID
       tag.SetUniqueChannelId(myChannel.iUniqueId);
-      epgEntry.iUniqueChannelId = myChannel.iUniqueId;
 
-      // add streamUrlProvider if it is video on demand
+      /*// add streamUrlProvider if it is video on demand
       if (myChannel.tvfuse && epgData.HasMember("streamUrlProvider") && !epgData["streamUrlProvider"].IsNull())
       {
         string streamUrlProvider = epgData["streamUrlProvider"].GetString();
         kodi::Log(ADDON_LOG_DEBUG, "[epg] streamUrlProvider: %s;", streamUrlProvider.c_str());
-        epgEntry.streamUrlProvider = streamUrlProvider;
-      }
+      }*/
+
+      unsigned int flags = EPG_TAG_FLAG_UNDEFINED;
 
       // is recordable
       bool isRecordable = !epgData["recordingForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] recordable: %i;", isRecordable);
-      epgEntry.isRecordable = isRecordable;
+      if (isRecordable){flags |= EPG_TAG_FLAG_IS_RECORDABLE; }
 
       // instantRestartAllowed
       bool instantRestartAllowed = !epgData["instantRestartForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] instantRestartAllowed: %i;", instantRestartAllowed);
-      epgEntry.instantRestartAllowed = instantRestartAllowed;
+      if (isRecordable){flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED; }
 
-      m_epgEntries.push_back(epgEntry);
+      tag.SetFlags(flags);
 
       // set title
       tag.SetTitle(epgData["title"].GetString());
@@ -1073,8 +1071,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       }
 
       // tag.SetIconPath(myTag.strIconPath);
-
-      tag.SetFlags(EPG_TAG_FLAG_UNDEFINED);
 
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
@@ -1152,17 +1148,7 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool&
     return PVR_ERROR_NO_ERROR;
   }
 
-  for (const auto& epgEntry : m_epgEntries)
-  {
-    if (epgEntry.iUniqueBroadcastId != tag.GetUniqueBroadcastId())
-      continue;
-    if (epgEntry.iUniqueChannelId != tag.GetUniqueChannelId())
-      continue;
-    isRecordable = epgEntry.isRecordable;
-    return PVR_ERROR_NO_ERROR;
-  }
-
-  isRecordable = false;
+  isRecordable = (tag.GetFlags() & EPG_TAG_FLAG_IS_RECORDABLE);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1185,16 +1171,7 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   auto current_time = time(NULL);
   if (m_account_replay_allowed && current_time > tag.GetStartTime() && current_time < tag.GetEndTime())
   {
-      // tag is now running, check if epg tag allows replay
-      for (const auto& epgEntry : m_epgEntries)
-      {
-        if (epgEntry.iUniqueBroadcastId != tag.GetUniqueBroadcastId())
-          continue;
-        if (epgEntry.iUniqueChannelId != tag.GetUniqueChannelId())
-          continue;
-        isPlayable = epgEntry.instantRestartAllowed;
-        return PVR_ERROR_NO_ERROR;
-      }
+      isPlayable = (tag.GetFlags() & EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED);
   }
 
   return PVR_ERROR_NO_ERROR;
