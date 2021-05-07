@@ -113,3 +113,11 @@ msgstr ""
 msgctxt "#30033"
 msgid "Required username and password not available"
 msgstr ""
+
+msgctxt "#30034"
+msgid "Refresh Token"
+msgstr ""
+
+msgctxt "#30035"
+msgid "Misc"
+msgstr ""

@@ -113,3 +113,11 @@ msgstr "Ungültige Zugangsdaten"
 msgctxt "#30033"
 msgid "Required username and password not available"
 msgstr "Benötigter Benutzername mit Password nicht vorhanden"
+
+msgctxt "#30034"
+msgid "Refresh Token"
+msgstr "Refresh Token"
+
+msgctxt "#30035"
+msgid "Misc"
+msgstr "Misc"
