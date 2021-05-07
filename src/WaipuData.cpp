@@ -1040,12 +1040,12 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       // is recordable
       bool isRecordable = !epgData["recordingForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] recordable: %i;", isRecordable);
-      if (isRecordable){flags |= EPG_TAG_FLAG_IS_RECORDABLE; }
+      if (isRecordable){flags |= EPG_TAG_FLAG_IS_RECORDABLE_WAIPU; }
 
       // instantRestartAllowed
       bool instantRestartAllowed = !epgData["instantRestartForbidden"].GetBool();
       kodi::Log(ADDON_LOG_DEBUG, "[epg] instantRestartAllowed: %i;", instantRestartAllowed);
-      if (isRecordable){flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED; }
+      if (isRecordable){flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU; }
 
       tag.SetFlags(flags);
 
@@ -1148,7 +1148,7 @@ PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool&
     return PVR_ERROR_NO_ERROR;
   }
 
-  isRecordable = (tag.GetFlags() & EPG_TAG_FLAG_IS_RECORDABLE);
+  isRecordable = (tag.GetFlags() & EPG_TAG_FLAG_IS_RECORDABLE_WAIPU);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1171,7 +1171,7 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   auto current_time = time(NULL);
   if (m_account_replay_allowed && current_time > tag.GetStartTime() && current_time < tag.GetEndTime())
   {
-      isPlayable = (tag.GetFlags() & EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED);
+      isPlayable = (tag.GetFlags() & EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU);
   }
 
   return PVR_ERROR_NO_ERROR;
