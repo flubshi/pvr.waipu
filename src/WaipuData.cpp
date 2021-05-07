@@ -218,8 +218,7 @@ bool WaipuData::WaipuLogin()
     // get API by login user/pw
     dataStream << "username=" << Utils::UrlEncode(m_username)
                << "&password=" << Utils::UrlEncode(m_password) << "&grant_type=password";
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw): %s;",
-              dataStream.str().c_str());
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw)");
   }
   string jsonString;
   // curl request
