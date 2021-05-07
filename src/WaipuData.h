@@ -49,8 +49,8 @@ enum class WAIPU_LOGIN_STATUS
   UNKNOWN
 };
 
-static const unsigned int EPG_TAG_FLAG_IS_RECORDABLE = (1 << 28);
-static const unsigned int EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED = (1 << 29);
+static const unsigned int EPG_TAG_FLAG_IS_RECORDABLE_WAIPU = (1 << 28);
+static const unsigned int EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU = (1 << 29);
 
 class ATTRIBUTE_HIDDEN WaipuData : public kodi::addon::CAddonBase,
                                    public kodi::addon::CInstancePVRClient
