@@ -276,7 +276,12 @@ bool WaipuData::WaipuLogin()
 
     m_apiToken.accessToken = doc["access_token"].GetString();
     kodi::Log(ADDON_LOG_DEBUG, "[login check] accessToken: %s;", m_apiToken.accessToken.c_str());
-    m_apiToken.refreshToken = doc["refresh_token"].GetString();
+    string refresh_token = doc["refresh_token"].GetString();
+    if (!refresh_token.empty())
+    {
+      m_apiToken.refreshToken = refresh_token;
+      kodi::SetSettingString("refresh_token", refresh_token);
+    }
     kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", m_apiToken.refreshToken.c_str());
     m_apiToken.expires = currTime + doc["expires_in"].GetUint64();
     kodi::Log(ADDON_LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
@@ -509,6 +514,7 @@ void WaipuData::ReadSettings(void)
   m_password = kodi::GetSettingString("password");
   m_protocol = kodi::GetSettingString("protocol", "auto");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
+  m_apiToken.refreshToken = kodi::GetSettingString("refresh_token", "");
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
 }
@@ -523,6 +529,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_username = username;
       m_login_failed_counter = 0;
+      kodi::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -534,6 +541,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_login_failed_counter = 0;
       m_password = password;
+      kodi::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -555,6 +563,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_login_failed_counter = 0;
       m_provider = tmpProvider;
+      kodi::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }else if (settingName.rfind("streaming_capabilities_", 0) == 0)

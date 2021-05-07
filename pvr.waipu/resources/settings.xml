@@ -66,7 +66,7 @@
 				</setting>
 			</group>
 		</category>
-		<category id="misc" label="30005" help="">
+		<category id="streaming" label="30005" help="">
 			<group id="4" label="30012">
 	         <setting id="streaming_capabilities_video_sdpalp25" type="boolean" label="30014" help="">
 	            <level>2</level>
@@ -115,7 +115,7 @@
                <default>false</default>
                <control type="toggle"/>
             </setting>
-         </group>
+			</group>
 			<group id="3" label="30011">
 				<setting id="protocol" type="string" label="30004" help="">
 					<level>2</level>
@@ -129,6 +129,20 @@
 						<allowempty>false</allowempty>
 					</constraints>
 					<control type="spinner" format="string" />
+				</setting>
+			</group>
+		</category>
+		<category id="misc" label="30035" help="">
+			<group id="6">
+				<setting id="refresh_token" type="string" label="30034" help="">
+					<level>3</level>
+					<default />
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>30034</heading>
+					</control>
 				</setting>
 			</group>
 		</category>
