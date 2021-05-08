@@ -1055,8 +1055,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       kodi::Log(ADDON_LOG_DEBUG, "[epg] instantRestartAllowed: %i;", instantRestartAllowed);
       if (isRecordable){flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU; }
 
-      tag.SetFlags(flags);
-
       // set title
       tag.SetTitle(epgData["title"].GetString());
       kodi::Log(ADDON_LOG_DEBUG, "[epg] title: %s;", epgData["title"].GetString());
@@ -1085,6 +1083,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       {
         tag.SetSeriesNumber(
             Utils::stoiDefault(epgData["season"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE));
+        flags |= EPG_TAG_FLAG_IS_SERIES;
       }
       else
       {
@@ -1100,7 +1099,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       {
         tag.SetEpisodeNumber(EPG_TAG_INVALID_SERIES_EPISODE);
       }
-      tag.SetEpisodePartNumber(EPG_TAG_INVALID_SERIES_EPISODE);
 
       // episodeName
       if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
@@ -1132,6 +1130,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
         }
       }
 
+      tag.SetFlags(flags);
       results.Add(tag);
     }
   }
@@ -1526,11 +1525,9 @@ void WaipuData::AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int 
 
 PVR_ERROR WaipuData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types)
 {
-  //AddTimerType(types, 1, PVR_TIMER_TYPE_ATTRIBUTE_NONE);
-  AddTimerType(types, 1,
-               PVR_TIMER_TYPE_SUPPORTS_READONLY_DELETE | PVR_TIMER_TYPE_SUPPORTS_CHANNELS |
-                   PVR_TIMER_TYPE_SUPPORTS_START_TIME | PVR_TIMER_TYPE_SUPPORTS_END_TIME);
-  //AddTimerType(types, 2, PVR_TIMER_TYPE_IS_MANUAL);
+  AddTimerType(types, 1, PVR_TIMER_TYPE_REQUIRES_EPG_TAG_ON_CREATE);
+  AddTimerType(types, 2, PVR_TIMER_TYPE_REQUIRES_EPG_SERIES_ON_CREATE | PVR_TIMER_TYPE_IS_REPEATING );
+
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -1565,6 +1562,8 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   int recordings_count = 0;
   int timers_count = 0;
 
+  std::list<int> timerGroups;
+
   for (const auto& timer : timersDoc["result"].GetArray())
   {
     // skip not FINISHED entries
@@ -1588,13 +1587,15 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
       tag.SetState(PVR_TIMER_STATE_RECORDING);
     }
     tag.SetLifetime(0);
-    tag.SetTimerType(1); // not the best way to do it...
 
-    // set recording id
-    string rec_id = timer["id"].GetString();
-    tag.SetClientIndex(Utils::stoiDefault(rec_id, 0));
-    tag.SetEPGUid(Utils::stoiDefault(rec_id, 0));
+    const Value& epgData = timer["epgData"];
 
+    // set recording title
+    string rec_title = epgData["title"].GetString();
+    kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
+    tag.SetTitle(rec_title);
+
+    int tag_channel;
     // channelid
     if (timer.HasMember("channelId") && !timer["channelId"].IsNull())
     {
@@ -1604,17 +1605,39 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
         WaipuChannel& myChannel = m_channels.at(iChannelPtr);
         if (myChannel.waipuID != channel_name)
           continue;
-        tag.SetClientChannelUid(myChannel.iUniqueId);
+        tag_channel = myChannel.iUniqueId;
+        tag.SetClientChannelUid(tag_channel);
         break;
       }
     }
 
-    const Value& epgData = timer["epgData"];
+    if (timer.HasMember("recordingGroup"))
+    {
 
-    // set recording title
-    string rec_title = epgData["title"].GetString();
-    kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
-    tag.SetTitle(rec_title);
+	int group = timer["recordingGroup"].GetInt();
+	tag.SetRecordingGroup(group);
+	if (std::find(timerGroups.begin(), timerGroups.end(), group) == timerGroups.end())
+	{
+	  // add group
+	  kodi::addon::PVRTimer tagGroup;
+	  tagGroup.SetTimerType(2);
+	  tagGroup.SetTitle(rec_title);
+	  tagGroup.SetClientIndex(group);
+	  tagGroup.SetClientChannelUid(tag_channel);
+	  tag.SetRecordingGroup(group);
+	  kodi::Log(ADDON_LOG_DEBUG, "[add timer group] group: %i;", group);
+
+	  results.Add(tagGroup);
+	  timerGroups.push_back(group);
+	}
+    }
+
+    tag.SetTimerType(1);
+
+    // set recording id
+    string rec_id = timer["id"].GetString();
+    tag.SetClientIndex(Utils::stoiDefault(rec_id, 0));
+    tag.SetEPGUid(Utils::stoiDefault(rec_id, 0));
 
     // get recording time
     if (timer.HasMember("startTime") && !timer["startTime"].IsNull())
@@ -1662,13 +1685,30 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
 {
   if (ApiLogin())
   {
-    int timer_id = timer.GetClientIndex();
-    string request_data = "{\"ids\":[\"" + to_string(timer_id) + "\"]}";
-    kodi::Log(ADDON_LOG_DEBUG, "[delete timer] req: %s;", request_data.c_str());
-    string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),{{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[delete timer] response: %s;", deleted.c_str());
-    kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-    return PVR_ERROR_NO_ERROR;
+    if (timer.GetTimerType() == 1)
+    {
+      // single tag
+      int timer_id = timer.GetClientIndex();
+      string request_data = "{\"ids\":[\"" + to_string(timer_id) + "\"]}";
+      kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
+      string deleted = HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),{{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
+      kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
+      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+      return PVR_ERROR_NO_ERROR;
+    }else{
+      // delete record series
+      int groupID = timer.GetClientIndex();
+      string request_data = "{\"serialRecordings\":[{\"id\":" + to_string(groupID) + ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":false,\"deleteRunningRecordingss\":false}]}";
+      kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID, request_data.c_str());
+      string deleted = HttpPost("https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),{{"Content-Type", "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
+      kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Deleted");
+      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+      return PVR_ERROR_NO_ERROR;
+    }
   }
   return PVR_ERROR_FAILED;
 }
@@ -1683,17 +1723,36 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
 
   if (ApiLogin())
   {
-    // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
     for (const auto& channel : m_channels)
     {
       if (channel.iUniqueId != timer.GetClientChannelUid())
         continue;
-      string postData = "{\"programId\":\"_" + to_string(timer.GetEPGUid()) +
-                        "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
-      string recordResp = HttpPost("https://recording.waipu.tv/api/recordings", postData, {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[add timer] response: %s;", recordResp.c_str());
-      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-      return PVR_ERROR_NO_ERROR;
+
+      if (timer.GetTimerType() == 1)
+      {
+        // record single element
+        kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+        // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
+        string postData = "{\"programId\":\"_" + to_string(timer.GetEPGUid()) +
+                          "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
+        string recordResp = HttpPost("https://recording.waipu.tv/api/recordings", postData, {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
+        kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
+        kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
+        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+        return PVR_ERROR_NO_ERROR;
+      }else{
+        // record series
+        kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+        // {"title":"Das A-Team","channel":"RTLNITRO"}
+        string postData = "{\"title\": \"" + timer.GetTitle() +
+                          "\",\"channel\":\"" + channel.waipuID + "\"" + "}";
+        string recordResp = HttpPost("https://recording-scheduler.waipu.tv/api/serials", postData, {{"Content-Type", "application/vnd.waipu.recording-scheduler-serials-v1+json"}});
+        kodi::Log(ADDON_LOG_DEBUG, "[add timer] repeating response: %s;", recordResp.c_str());
+        kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Created");
+        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+        return PVR_ERROR_NO_ERROR;
+      }
     }
   }
   return PVR_ERROR_FAILED;
