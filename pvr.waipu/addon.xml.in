@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="2.8.3"
+  version="2.8.4"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -29,6 +29,7 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 2.8.4 Implement series recording
 - 2.8.3 Store refresh token; do not log password
 - 2.8.2 Fix replay and recordable state
 - 2.8.1 Fix EPG tag playback
@@ -36,7 +37,6 @@
 - 2.7.0 Add DASH/HLS autoselect feature
 - 2.6.1 Fix infinite login lock
 - 2.6.0 Implement DeviceCapabilities API; Allow resolution by addon settings
-- 2.5.1 Update addon depends versions and remove script.module.requests
     </news>
   </extension>
 </addon>
