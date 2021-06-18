@@ -8,6 +8,7 @@
 #include "kodi/General.h"
 
 #include <algorithm>
+#include <chrono>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -210,3 +211,39 @@ std::string Utils::ReplaceAll(std::string str,
   }
   return str;
 }
+
+
+std::string Utils::GenerateUuid()
+{
+  // taken from pvr.dvblink
+  using namespace std::chrono;
+
+  std::string uuid;
+  int64_t seed_value =
+      duration_cast<milliseconds>(
+          time_point_cast<milliseconds>(high_resolution_clock::now()).time_since_epoch())
+          .count();
+  seed_value = seed_value % 1000000000;
+  srand((unsigned int)seed_value);
+
+  //fill in uuid string from a template
+  std::string template_str = "xxxx-xx-xx-xx-xxxxxx";
+  for (size_t i = 0; i < template_str.size(); i++)
+  {
+    if (template_str[i] != '-')
+    {
+      double a1 = rand();
+      double a3 = RAND_MAX;
+      unsigned char ch = (unsigned char)(a1 * 255 / a3);
+      char buf[16];
+      sprintf(buf, "%02x", ch);
+      uuid += buf;
+    }
+    else
+    {
+      uuid += '-';
+    }
+  }
+  return uuid;
+}
+

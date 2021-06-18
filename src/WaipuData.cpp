@@ -210,14 +210,17 @@ bool WaipuData::WaipuLogin()
     // Since the refresh token is valid for a long time, we do not check expiration for now
     // refresh API token
     dataStream << "refresh_token=" << Utils::UrlEncode(m_apiToken.refreshToken)
-               << "&grant_type=refresh_token";
+               << "&grant_type=refresh_token"
+               << "&waipu_device_id=" << m_device_id;
     kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", dataStream.str().c_str());
   }
   else
   {
     // get API by login user/pw
     dataStream << "username=" << Utils::UrlEncode(m_username)
-               << "&password=" << Utils::UrlEncode(m_password) << "&grant_type=password";
+               << "&password=" << Utils::UrlEncode(m_password)
+               << "&grant_type=password"
+               << "&waipu_device_id=" << m_device_id;
     kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw)");
   }
   string jsonString;
@@ -515,6 +518,13 @@ void WaipuData::ReadSettings(void)
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
   m_apiToken.refreshToken = kodi::GetSettingString("refresh_token", "");
 
+  m_device_id = kodi::GetSettingString("device_id");
+  if (m_device_id.empty())
+  {
+    m_device_id = Utils::GenerateUuid();
+    kodi::SetSettingString("device_id", m_device_id);
+  }
+
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
 }
 
@@ -532,7 +542,6 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       return ADDON_STATUS_NEED_RESTART;
     }
   }
-
   else if (settingName == "password")
   {
     std::string password = settingValue.GetString();
