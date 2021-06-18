@@ -59,7 +59,6 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
     curl.AddHeader(header.first, header.second);
   }
 
-  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
 
   return HttpRequestToCurl(curl, action, url, postData, statusCode);
@@ -224,7 +223,6 @@ bool WaipuData::WaipuLogin()
   // curl request
   Curl curl;
   int statusCode = 0;
-  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("Authorization", "Basic YW5kcm9pZENsaWVudDpzdXBlclNlY3JldA==");
   curl.AddHeader("Content-Type", "application/x-www-form-urlencoded");
   jsonString = HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token",
@@ -310,7 +308,6 @@ bool WaipuData::O2Login()
   // curl request
   Curl curl;
   int statusCode = 0;
-  //curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   curl.AddHeader("authority", "o2api.waipu.tv");
   string respForm =
       HttpRequestToCurl(curl, "GET",
