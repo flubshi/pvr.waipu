@@ -144,6 +144,16 @@
 						<heading>30034</heading>
 					</control>
 				</setting>
+				<setting id="device_id" type="string" label="30036" help="">
+					<level>3</level>
+					<default />
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="edit" format="string">
+						<heading>30036</heading>
+					</control>
+				</setting>
 			</group>
 		</category>
 	</section>

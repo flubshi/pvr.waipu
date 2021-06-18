@@ -121,3 +121,7 @@ msgstr "Refresh Token"
 msgctxt "#30035"
 msgid "Misc"
 msgstr "Misc"
+
+msgctxt "#30036"
+msgid "Device ID"
+msgstr "Device ID"
