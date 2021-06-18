@@ -59,7 +59,7 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
     curl.AddHeader(header.first, header.second);
   }
 
-  curl.AddHeader("Authorization", "Bearer " + m_apiToken.accessToken);
+  curl.AddHeader("Authorization", "Bearer " + m_accessToken.getToken());
 
   return HttpRequestToCurl(curl, action, url, postData, statusCode);
 }
@@ -133,56 +133,46 @@ bool WaipuData::ApiLogin()
 
 bool WaipuData::ParseAccessToken(void)
 {
-  std::vector<std::string> jwt_arr = Utils::SplitString(m_apiToken.accessToken, '.', 3);
-  if (jwt_arr.size() == 3)
+  if(!m_accessToken.isInitialized() || m_accessToken.isExpired())
   {
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] middle: %s", jwt_arr.at(1).c_str());
-    string jwt_payload = base64_decode(jwt_arr.at(1));
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] payload: %s", jwt_payload.c_str());
-
-    Document jwt_doc;
-    jwt_doc.Parse(jwt_payload.c_str());
-
-    if (jwt_doc.HasParseError())
-    {
-      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
-      kodi::Log(ADDON_LOG_ERROR, "[jwt_doc] ERROR: error while parsing json");
-      return false;
-    }
-
-    m_userhandle = jwt_doc["userHandle"].GetString();
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.c_str());
-    // generate the license
-    string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
-                           "\"userId\" : \"" +
-                           m_userhandle + "\"}";
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
-    m_license = base64_encode(license_plain.c_str(), license_plain.length());
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
-    // get user channels
-    m_user_channels_sd.clear();
-    m_user_channels_hd.clear();
-    for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["SD"].GetArray())
-    {
-      string user_channel_s = user_channel.GetString();
-      kodi::Log(ADDON_LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
-      m_user_channels_sd.push_back(user_channel_s);
-    }
-    for (const auto& user_channel : jwt_doc["userAssets"]["channels"]["HD"].GetArray())
-    {
-      string user_channel_s = user_channel.GetString();
-      m_user_channels_hd.push_back(user_channel_s);
-      kodi::Log(ADDON_LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
-    }
-    if(jwt_doc["userAssets"].HasMember("instantRestart")){
-	m_account_replay_allowed = jwt_doc["userAssets"]["instantRestart"].GetBool();
-	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
-    }
-    if(jwt_doc["userAssets"].HasMember("hoursRecording")){
-	m_account_hours_recording = jwt_doc["userAssets"]["hoursRecording"].GetInt();
-	kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
-    }
+    m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+    kodi::Log(ADDON_LOG_ERROR, "[jwt_doc] ERROR: error while parsing json (error/expired)");
+    return false;
   }
+
+  m_userhandle = m_accessToken.parsedToken["userHandle"].GetString();
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.c_str());
+  // generate the license
+  string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
+                         "\"userId\" : \"" +
+                         m_userhandle + "\"}";
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
+  m_license = base64_encode(license_plain.c_str(), license_plain.length());
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
+  // get user channels
+  m_user_channels_sd.clear();
+  m_user_channels_hd.clear();
+  for (const auto& user_channel : m_accessToken.parsedToken["userAssets"]["channels"]["SD"].GetArray())
+  {
+    string user_channel_s = user_channel.GetString();
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
+    m_user_channels_sd.push_back(user_channel_s);
+  }
+  for (const auto& user_channel : m_accessToken.parsedToken["userAssets"]["channels"]["HD"].GetArray())
+  {
+    string user_channel_s = user_channel.GetString();
+    m_user_channels_hd.push_back(user_channel_s);
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
+  }
+  if(m_accessToken.parsedToken["userAssets"].HasMember("instantRestart")){
+    m_account_replay_allowed = m_accessToken.parsedToken["userAssets"]["instantRestart"].GetBool();
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
+  }
+  if(m_accessToken.parsedToken["userAssets"].HasMember("hoursRecording")){
+    m_account_hours_recording = m_accessToken.parsedToken["userAssets"]["hoursRecording"].GetInt();
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
+  }
+
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
 }
@@ -195,8 +185,8 @@ bool WaipuData::WaipuLogin()
   time_t currTime;
   time(&currTime);
   kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_apiToken.expires);
-  if (!m_apiToken.accessToken.empty() && (m_apiToken.expires - 20 * 60) > currTime)
+  kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
+  if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
   {
     // API token exists and is valid, more than x in future
     kodi::Log(ADDON_LOG_DEBUG, "[login check] old token still valid");
@@ -204,11 +194,11 @@ bool WaipuData::WaipuLogin()
   }
 
   ostringstream dataStream;
-  if (!m_apiToken.refreshToken.empty())
+  if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
   {
     // Since the refresh token is valid for a long time, we do not check expiration for now
     // refresh API token
-    dataStream << "refresh_token=" << Utils::UrlEncode(m_apiToken.refreshToken)
+    dataStream << "refresh_token=" << Utils::UrlEncode(m_refreshToken.getToken())
                << "&grant_type=refresh_token"
                << "&waipu_device_id=" << m_device_id;
     kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", dataStream.str().c_str());
@@ -243,6 +233,11 @@ bool WaipuData::WaipuLogin()
   }
   else if (statusCode == 401)
   {
+    if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
+    {
+      // we used invalid refresh token, delete it
+	m_refreshToken = JWT();
+    }
     // invalid credentials
     m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
     return false;
@@ -274,17 +269,15 @@ bool WaipuData::WaipuLogin()
       return false;
     }
 
-    m_apiToken.accessToken = doc["access_token"].GetString();
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] accessToken: %s;", m_apiToken.accessToken.c_str());
+    m_accessToken = JWT(doc["access_token"].GetString());
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] accessToken: %s;", m_accessToken.getToken().c_str());
     string refresh_token = doc["refresh_token"].GetString();
     if (!refresh_token.empty())
     {
-      m_apiToken.refreshToken = refresh_token;
+      m_refreshToken = JWT(refresh_token);
       kodi::SetSettingString("refresh_token", refresh_token);
+      kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", refresh_token);
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", m_apiToken.refreshToken.c_str());
-    m_apiToken.expires = currTime + doc["expires_in"].GetUint64();
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
 
     return ParseAccessToken();
   }
@@ -299,7 +292,7 @@ bool WaipuData::O2Login()
   time_t currTime;
   time(&currTime);
 
-  if (!m_apiToken.accessToken.empty() && (m_apiToken.expires - 10 * 60) > currTime)
+  if (m_accessToken.isInitialized() && !m_accessToken.isExpired(10 * 60))
   {
     // API token exists and is valid, more than x in future
     kodi::Log(ADDON_LOG_DEBUG, "[login check] old token still valid");
@@ -380,12 +373,12 @@ bool WaipuData::O2Login()
     return false;
   }
 
-  m_apiToken.accessToken = cookie;
+  m_accessToken = JWT(cookie);
   kodi::Log(ADDON_LOG_DEBUG, "[login O2] access_token: %s;", cookie.c_str());
-  m_apiToken.refreshToken = "";
+  m_refreshToken = JWT();
   kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: empty");
-  m_apiToken.expires = currTime + 3600; // expires after 1h; TODO: find real value
-  kodi::Log(ADDON_LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
+  //m_apiToken.expires = currTime + 3600; // expires after 1h; TODO: find real value
+  //kodi::Log(ADDON_LOG_DEBUG, "[login check] expires: %i;", m_apiToken.expires);
 
   return ParseAccessToken();
 }
@@ -394,11 +387,8 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 {
   kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
 
-  time_t currTime;
-  time(&currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[device token] current time %i", currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[device token] expire  time %i", m_deviceCapabilitiesToken.expires);
-  if (!m_deviceCapabilitiesToken.token.empty() && (m_deviceCapabilitiesToken.expires - 5 * 60) > currTime)
+  kodi::Log(ADDON_LOG_DEBUG, "[device token] expire time %i", m_deviceCapabilitiesToken.getExp());
+  if (m_deviceCapabilitiesToken.isInitialized() && !m_deviceCapabilitiesToken.isExpired(5*60))
   {
     // device token exists and is valid, more than x in future
     kodi::Log(ADDON_LOG_DEBUG, "[device token] old token still valid, no need to refresh");
@@ -442,15 +432,8 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   if(deviceTokenDoc.HasMember("token"))
   {
-    m_deviceCapabilitiesToken.token = deviceTokenDoc["token"].GetString();
-    kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s", m_deviceCapabilitiesToken.token.c_str());
-
-    if(deviceTokenDoc.HasMember("expiresIn")){
-	m_deviceCapabilitiesToken.expires = currTime + deviceTokenDoc["expiresIn"].GetUint64();
-	kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] expires: %i;", m_deviceCapabilitiesToken.expires);
-    }else{
-	m_apiToken.expires = currTime + 5 * 60;
-    }
+    m_deviceCapabilitiesToken = JWT(deviceTokenDoc["token"].GetString());
+    kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s", m_deviceCapabilitiesToken.getToken().c_str());
     return true;
   }
 
@@ -513,7 +496,7 @@ void WaipuData::ReadSettings(void)
   m_password = kodi::GetSettingString("password");
   m_protocol = kodi::GetSettingString("protocol", "auto");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
-  m_apiToken.refreshToken = kodi::GetSettingString("refresh_token", "");
+  m_refreshToken = kodi::GetSettingString("refresh_token", "");
 
   m_device_id = kodi::GetSettingString("device_id");
   if (m_device_id.empty())
@@ -575,7 +558,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
   {
     // settings name begins with "streaming_capabilities_"
     // reset capabilities to force refresh
-    m_deviceCapabilitiesToken.token = "";
+    m_deviceCapabilitiesToken = JWT();
   }
 
   return ADDON_STATUS_OK;
@@ -920,7 +903,7 @@ string WaipuData::GetChannelStreamUrl(int uniqueId, const string& protocol, cons
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
 
-      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", m_deviceCapabilitiesToken.token.c_str()}});
+      string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}});
 
       Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
