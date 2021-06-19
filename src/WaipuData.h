@@ -28,11 +28,6 @@
 #include <map>
 #include <vector>
 
-/**
- * User Agent for HTTP Requests
- * Let's try to be honest, otherwise we have to fallback to "waipu-2.29.2-c0f220b-9446 (Android 8.1.0)"
- */
-static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
 
 enum WAIPU_PROVIDER
