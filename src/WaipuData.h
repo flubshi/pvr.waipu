@@ -24,6 +24,7 @@
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "kodi/addon-instance/PVR.h"
+#include "JWT.h"
 
 #include <map>
 #include <vector>
@@ -102,18 +103,6 @@ public:
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
-  struct WaipuApiToken
-  {
-    std::string accessToken;
-    std::string refreshToken;
-    time_t expires;
-  };
-
-  struct WaipuDeviceToken
-  {
-    std::string token;
-    time_t expires;
-  };
 
   struct WaipuChannel
   {
@@ -141,8 +130,10 @@ private:
   std::vector<WaipuChannel> m_channels;
   std::vector<WaipuChannelGroup> m_channelGroups;
 
-  WaipuApiToken m_apiToken;
-  WaipuDeviceToken m_deviceCapabilitiesToken;
+  JWT m_accessToken;
+  JWT m_refreshToken;
+  JWT m_deviceCapabilitiesToken;
+
   std::string m_license;
   int m_recordings_count = 0;
   int m_timers_count = 0;
