@@ -140,6 +140,7 @@ private:
   std::string m_password;
   std::string m_userhandle = "";
   std::string m_protocol;
+  std::string m_device_id;
   WAIPU_PROVIDER m_provider;
 
   std::vector<WaipuChannel> m_channels;
