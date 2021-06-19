@@ -24,15 +24,11 @@
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "kodi/addon-instance/PVR.h"
+#include "JWT.h"
 
 #include <map>
 #include <vector>
 
-/**
- * User Agent for HTTP Requests
- * Let's try to be honest, otherwise we have to fallback to "waipu-2.29.2-c0f220b-9446 (Android 8.1.0)"
- */
-static const std::string WAIPU_USER_AGENT = "kodi plugin for waipu (pvr.waipu)";
 static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
 
 enum WAIPU_PROVIDER
@@ -107,18 +103,6 @@ public:
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
-  struct WaipuApiToken
-  {
-    std::string accessToken;
-    std::string refreshToken;
-    time_t expires;
-  };
-
-  struct WaipuDeviceToken
-  {
-    std::string token;
-    time_t expires;
-  };
 
   struct WaipuChannel
   {
@@ -140,13 +124,16 @@ private:
   std::string m_password;
   std::string m_userhandle = "";
   std::string m_protocol;
+  std::string m_device_id;
   WAIPU_PROVIDER m_provider;
 
   std::vector<WaipuChannel> m_channels;
   std::vector<WaipuChannelGroup> m_channelGroups;
 
-  WaipuApiToken m_apiToken;
-  WaipuDeviceToken m_deviceCapabilitiesToken;
+  JWT m_accessToken;
+  JWT m_refreshToken;
+  JWT m_deviceCapabilitiesToken;
+
   std::string m_license;
   int m_recordings_count = 0;
   int m_timers_count = 0;
