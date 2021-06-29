@@ -276,7 +276,7 @@ bool WaipuData::WaipuLogin()
     {
       m_refreshToken = JWT(refresh_token);
       kodi::SetSettingString("refresh_token", refresh_token);
-      kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", refresh_token);
+      kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", refresh_token.c_str());
     }
 
     return ParseAccessToken();
