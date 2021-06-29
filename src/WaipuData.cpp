@@ -236,7 +236,7 @@ bool WaipuData::WaipuLogin()
     if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
     {
       // we used invalid refresh token, delete it
-	m_refreshToken = JWT();
+      m_refreshToken = JWT();
     }
     // invalid credentials
     m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
@@ -496,13 +496,15 @@ void WaipuData::ReadSettings(void)
   m_password = kodi::GetSettingString("password");
   m_protocol = kodi::GetSettingString("protocol", "auto");
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
-  m_refreshToken = kodi::GetSettingString("refresh_token", "");
+  m_refreshToken = JWT(kodi::GetSettingString("refresh_token", ""));
 
   m_device_id = kodi::GetSettingString("device_id_uuid4");
   if (m_device_id.empty())
   {
     m_device_id = Utils::GenerateUuid();
     kodi::SetSettingString("device_id_uuid4", m_device_id);
+    // new device id -> force new login
+    m_refreshToken = JWT();
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
