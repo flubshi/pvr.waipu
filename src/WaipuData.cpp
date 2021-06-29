@@ -498,11 +498,11 @@ void WaipuData::ReadSettings(void)
   m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
   m_refreshToken = kodi::GetSettingString("refresh_token", "");
 
-  m_device_id = kodi::GetSettingString("device_id");
+  m_device_id = kodi::GetSettingString("device_id_uuid4");
   if (m_device_id.empty())
   {
     m_device_id = Utils::GenerateUuid();
-    kodi::SetSettingString("device_id", m_device_id);
+    kodi::SetSettingString("device_id_uuid4", m_device_id);
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "End Readsettings");
