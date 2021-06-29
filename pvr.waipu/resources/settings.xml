@@ -144,7 +144,7 @@
 						<heading>30034</heading>
 					</control>
 				</setting>
-				<setting id="device_id" type="string" label="30036" help="">
+				<setting id="device_id_uuid4" type="string" label="30036" help="">
 					<level>3</level>
 					<default />
 					<constraints>
