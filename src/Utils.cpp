@@ -227,21 +227,21 @@ std::string Utils::GenerateUuid()
   srand((unsigned int)seed_value);
 
   //fill in uuid string from a template
-  std::string template_str = "xxxx-xx-xx-xx-xxxxxx";
+  std::string template_str = "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx";
   for (size_t i = 0; i < template_str.size(); i++)
   {
-    if (template_str[i] != '-')
+    if (template_str[i] == 'x')
     {
       double a1 = rand();
       double a3 = RAND_MAX;
-      unsigned char ch = (unsigned char)(a1 * 255 / a3);
-      char buf[16];
-      sprintf(buf, "%02x", ch);
+      unsigned char ch = (unsigned char)(a1 * 15 / a3);
+      char buf[8];
+      sprintf(buf, "%x", ch);
       uuid += buf;
     }
     else
     {
-      uuid += '-';
+      uuid += template_str[i];
     }
   }
   return uuid;
