@@ -212,6 +212,13 @@ std::string Utils::ReplaceAll(std::string str,
   return str;
 }
 
+std::string Utils::Replace(std::string str, const std::string& from, const std::string& to) {
+  // taken from: https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string
+  size_t start_pos = str.find(from);
+  if(start_pos != std::string::npos)
+    str.replace(start_pos, from.length(), to);
+  return str;
+}
 
 std::string Utils::GenerateUuid()
 {
