@@ -61,6 +61,10 @@ string WaipuData::HttpRequest(const string& action, const string& url, const str
 
   curl.AddHeader("Authorization", "Bearer " + m_accessToken.getToken());
 
+
+  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  kodi::Log(ADDON_LOG_DEBUG, "HTTP User-Agent: %s.", WAIPU_USER_AGENT.c_str());
+
   return HttpRequestToCurl(curl, action, url, postData, statusCode);
 }
 
@@ -445,6 +449,10 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 ADDON_STATUS WaipuData::Create()
 {
   kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
+
+  // set User-Agent
+  std::string ua = kodi::network::GetUserAgent();
+  WAIPU_USER_AGENT = Utils::Replace(ua, " ", std::string(" pvr.waipu/").append(STR(IPTV_VERSION)).append(" "));
 
   ReadSettings();
 

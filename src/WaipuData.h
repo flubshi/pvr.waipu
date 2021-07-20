@@ -24,11 +24,14 @@
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "kodi/addon-instance/PVR.h"
+#include "kodi/Network.h"
 #include "JWT.h"
 
 #include <map>
 #include <vector>
 
+// User Agent for HTTP Requests
+static std::string WAIPU_USER_AGENT = "Kodi/pvr.waipu - UA will be initialized on start";
 static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
 
 enum WAIPU_PROVIDER
