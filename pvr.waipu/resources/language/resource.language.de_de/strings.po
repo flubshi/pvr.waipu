@@ -10,6 +10,14 @@ msgstr ""
 "Language: de_DE\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+msgctxt "Addon Summary"
+msgid "waipu.tv PVR Client"
+msgstr "waipu.tv PVR Client"
+
+msgctxt "Addon Description"
+msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
+msgstr "waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt."
+
 msgctxt "#30001"
 msgid "General"
 msgstr "Allgemein"
