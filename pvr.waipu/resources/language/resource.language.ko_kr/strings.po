@@ -4,11 +4,16 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2021-09-06 13:30+0000\n"
+"Last-Translator: Minho Park <parkmino@gmail.com>\n"
+"Language-Team: Korean <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ko_kr/>\n"
 "Language: ko_kr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 4.8\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -20,116 +25,116 @@ msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "일반"
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr ""
+msgstr "메일"
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "비밀번호"
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr ""
+msgstr "프로토콜"
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr ""
+msgstr "스트리밍"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr ""
+msgstr "InputStream 도우미 정보"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr ""
+msgstr "Widevine CDM 라이브러리 (재)설치..."
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr ""
+msgstr "공급자"
 
 msgctxt "#30009"
 msgid "Waipu.tv"
-msgstr ""
+msgstr "Waipu.tv"
 
 msgctxt "#30010"
 msgid "O2 TV (beta)"
-msgstr ""
+msgstr "O2 TV (베타)"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr ""
+msgstr "스트리밍 프로토콜"
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr ""
+msgstr "비디오 해상도"
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr ""
+msgstr "오디오 코덱"
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr ""
+msgstr "SD-PALp25: h264; 720x540; 25fps"
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr ""
+msgstr "SD-PALp50: h264; 720x540; 50fps"
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr ""
+msgstr "HD-720p25: h264; 1280x720; 25fps"
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr ""
+msgstr "HD-720p50: h264; 1280x720; 50fps"
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr ""
+msgstr "HD-1080p25: h264; 1920x1080; 25fps"
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr ""
+msgstr "HD-1080p50: h264; 1920x1080; 50fps"
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr ""
+msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr ""
+msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr ""
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr ""
+msgstr "오류: 로그인할 수 없습니다. 자격 증명을 확인하십시오!"
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr ""
+msgstr "네트워크 연결 없음"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr ""
+msgstr "잘못된 로그인 자격 증명"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr ""
+msgstr "필수 사용자 이름과 비밀번호를 사용할 수 없음"
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr ""
+msgstr "토큰 새로 고침"
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "기타"
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr ""
+msgstr "장치 ID"
