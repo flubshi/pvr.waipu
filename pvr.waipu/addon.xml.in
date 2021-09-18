@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="2.9.4"
+  version="19.0.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -12,10 +12,6 @@
     point="kodi.pvrclient"
     library_@PLATFORM@="@LIBRARY_FILENAME@"/>
   <extension point="xbmc.addon.metadata">
-    <summary lang="de_DE">waipu.tv PVR Client</summary>
-    <summary lang="en_GB">waipu.tv PVR Client</summary>
-    <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
-    <description lang="en_GB">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
     <platform>@PLATFORM@</platform>
     <license>GNU General Public License. Version 2, June 1991</license>
     <forum></forum>
@@ -29,6 +25,16 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 19.0.0
+  - Translations updates from Weblate
+    - ko_kr
+    - Changed to allow also addon.xml content update by Weblate
+  - Cleanup and improve Debian packaging
+  - Minor cleanup on addon.xml (change en_US to en_GB)
+  - Changed test builds to 'Kodi 19 Matrix'
+  - Increased version to 19.0.0
+    - With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
+      This done to know easier to which Kodi the addon works.
 - 2.9.4 Set PVR Addon User-Agent
 - 2.9.3 Release bump
 - 2.9.2 Improve internal login handling
@@ -40,5 +46,9 @@
 - 2.8.1 Fix EPG tag playback
 - 2.8.0 Add EPG eit categories (color EPG)
     </news>
+    <summary lang="de_DE">waipu.tv PVR Client</summary>
+    <summary lang="en_GB">waipu.tv PVR Client</summary>
+    <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
+    <description lang="en_GB">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
   </extension>
 </addon>

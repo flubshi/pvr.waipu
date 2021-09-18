@@ -4,55 +4,55 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
-"Language: de_DE\n"
+"Language: vi_vn\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr "waipu.tv PVR Client"
+msgstr ""
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr "waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt."
+msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr "Allgemein"
+msgstr ""
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr "E-Mail"
+msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr "Passwort"
+msgstr ""
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr "Protokoll"
+msgstr ""
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr "Streaming"
+msgstr ""
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr "InputStream Helper Informationen"
+msgstr ""
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr "Widevine CDM Bibliothek (erneut) installieren..."
+msgstr ""
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr "Anbieter"
+msgstr ""
 
 msgctxt "#30009"
 msgid "Waipu.tv"
-msgstr "Waipu.tv"
+msgstr ""
 
 msgctxt "#30010"
 msgid "O2 TV (beta)"
@@ -60,80 +60,76 @@ msgstr ""
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr "Streaming Protokoll"
+msgstr ""
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr "Video Auflösung"
+msgstr ""
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr "Audio Codecs"
+msgstr ""
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr "SD-PALp25: h264; 720x540; 25fps"
+msgstr ""
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr "SD-PALp50: h264; 720x540; 50fps"
+msgstr ""
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr "HD-720p25: h264; 1280x720; 25fps"
+msgstr ""
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr "HD-720p50: h264; 1280x720; 50fps"
+msgstr ""
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr "HD-1080p25: h264; 1920x1080; 25fps"
+msgstr ""
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr "HD-1080p50: h264; 1920x1080; 50fps"
+msgstr ""
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
+msgstr ""
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
+msgstr ""
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr "AAC-LC: 128kBit, 48kHz"
+msgstr ""
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr "Fehler: Login nicht möglich. Ungültiger Account!"
+msgstr ""
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr "Keine Netzwerkverbindung"
+msgstr ""
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr "Ungültige Zugangsdaten"
+msgstr ""
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr "Benötigter Benutzername mit Password nicht vorhanden"
+msgstr ""
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr "Refresh Token"
+msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr "Misc"
+msgstr ""
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr "Device ID"
-
-#~ msgctxt "#30010"
-#~ msgid "O2 TV"
-#~ msgstr "O2 TV (beta)"
+msgstr ""
