@@ -10,6 +10,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=(n == 1) ? 0 : ((n == 2) ? 1 : ((n > 10 && n % 10 == 0) ? 2 : 3));\n"
 
+msgctxt "Addon Summary"
+msgid "waipu.tv PVR Client"
+msgstr ""
+
+msgctxt "Addon Description"
+msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
+msgstr ""
+
 msgctxt "#30001"
 msgid "General"
 msgstr ""
