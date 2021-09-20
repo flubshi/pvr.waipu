@@ -579,6 +579,7 @@ PVR_ERROR WaipuData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsEPG(true);
   capabilities.SetSupportsTV(true);
   capabilities.SetSupportsRecordings(true);
+  capabilities.SetSupportsRecordingsDelete(true);
   capabilities.SetSupportsTimers(true);
   capabilities.SetSupportsChannelGroups(true);
 
