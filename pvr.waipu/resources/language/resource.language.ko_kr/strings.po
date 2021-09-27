@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2021-09-06 13:30+0000\n"
+"PO-Revision-Date: 2021-09-27 20:30+0000\n"
 "Last-Translator: Minho Park <parkmino@gmail.com>\n"
 "Language-Team: Korean <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ko_kr/>\n"
 "Language: ko_kr\n"
@@ -17,11 +17,11 @@ msgstr ""
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr ""
+msgstr "waipu.tv PVR 클라이언트"
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr ""
+msgstr "waipu.tv PVR 클라이언트. 참고: 이것은 공식 waipu 플러그인이 아니며 Exaring AG 또는 waipu.tv와 관련이 없습니다. 자원 봉사자에 의해 개발되었습니다."
 
 msgctxt "#30001"
 msgid "General"
