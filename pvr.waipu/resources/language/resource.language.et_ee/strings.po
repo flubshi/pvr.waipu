@@ -4,11 +4,16 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2021-09-27 20:30+0000\n"
+"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"Language-Team: Estonian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/et_ee/>\n"
 "Language: et_ee\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.8\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -20,7 +25,7 @@ msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "Üldine"
 
 msgctxt "#30002"
 msgid "Mail"
@@ -28,11 +33,11 @@ msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "Salasõna"
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr ""
+msgstr "Protokoll"
 
 msgctxt "#30005"
 msgid "Streaming"
@@ -48,7 +53,7 @@ msgstr ""
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr ""
+msgstr "Teenusepakkuja"
 
 msgctxt "#30009"
 msgid "Waipu.tv"
@@ -128,7 +133,7 @@ msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "Muud"
 
 msgctxt "#30036"
 msgid "Device ID"
