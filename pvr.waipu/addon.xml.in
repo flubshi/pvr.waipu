@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="19.0.1"
+  version="19.0.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -25,6 +25,7 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 19.0.2 Translations updates from Weblate
 - 19.0.1 Translations updates from Weblate
 - 19.0.0
   - Translations updates from Weblate
@@ -43,7 +44,6 @@
 - 2.9.0 Internal session handling changes, support device_id
 - 2.8.4 Implement series recording
 - 2.8.3 Store refresh token; do not log password
-- 2.8.2 Fix replay and recordable state
     </news>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
     <summary lang="en_GB">waipu.tv PVR Client</summary>
