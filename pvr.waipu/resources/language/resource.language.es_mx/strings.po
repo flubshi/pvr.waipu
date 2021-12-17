@@ -4,132 +4,137 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2021-12-15 05:13+0000\n"
+"Last-Translator: Edson Armando <edsonarmando78@outlook.com>\n"
+"Language-Team: Spanish (Mexico) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/es_mx/>\n"
 "Language: es_mx\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.9.1\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr ""
+msgstr "Cliente PVR de waipu.tv"
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr ""
+msgstr "Cliente PVR de waipu.tv. Nota: Este no es un complemento oficial de waipu y no está relacionado a Exaring AG o waipu.tv. Ha sido desarrollado por voluntarios."
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "General"
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr ""
+msgstr "Correo"
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "Contraseña"
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr ""
+msgstr "Protocolo"
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr ""
+msgstr "Transmisión"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr ""
+msgstr "Información de InputStream Helper"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr ""
+msgstr "(Re)instalar la librería Widevine CDM..."
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr ""
+msgstr "Proveedor"
 
 msgctxt "#30009"
 msgid "Waipu.tv"
-msgstr ""
+msgstr "Waipu.tv"
 
 msgctxt "#30010"
 msgid "O2 TV (beta)"
-msgstr ""
+msgstr "O2 TV (beta)"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr ""
+msgstr "Protocolo de transmisión"
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr ""
+msgstr "Resolución de video"
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr ""
+msgstr "Códecs de audio"
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr ""
+msgstr "SD-PALp25: h264; 720x540; 25fps"
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr ""
+msgstr "SD-PALp50: h264; 720x540; 50fps"
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr ""
+msgstr "HD-720p25: h264; 1280x720; 25fps"
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr ""
+msgstr "HD-720p50: h264; 1280x720; 50fps"
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr ""
+msgstr "HD-1080p25: h264; 1920x1080; 25fps"
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr ""
+msgstr "HD-1080p50: h264; 1920x1080; 50fps"
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr ""
+msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr ""
+msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr ""
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr ""
+msgstr "Error: No se puede iniciar sesión. ¡Verifica tus credenciales!"
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr ""
+msgstr "No hay conexión a internet"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr ""
+msgstr "Credenciales de inicio de sesión inválidas"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr ""
+msgstr "Nombre de usuario y contraseña requeridos no disponibles"
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr ""
+msgstr "Actualizar token"
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "Misceláneo"
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr ""
+msgstr "ID de dispositivo"
