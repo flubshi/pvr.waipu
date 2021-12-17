@@ -241,6 +241,8 @@ bool WaipuData::WaipuLogin()
     {
       // we used invalid refresh token, delete it
       m_refreshToken = JWT();
+      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+      return false;
     }
     // invalid credentials
     m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
