@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2021-09-27 20:30+0000\n"
+"PO-Revision-Date: 2021-10-31 00:30+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Danish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/da_dk/>\n"
 "Language: da_dk\n"
@@ -17,11 +17,11 @@ msgstr ""
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr ""
+msgstr "waipu.tv PVR-klient"
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr ""
+msgstr "waipu.tv PVR-klient. Bemærk: Dette er ikke et officielt waipu-plugin og er ikke relateret til Exaring AG eller waipu.tv. Det er udviklet af frivillige."
 
 msgctxt "#30001"
 msgid "General"
@@ -33,7 +33,7 @@ msgstr "Mail"
 
 msgctxt "#30003"
 msgid "Password"
-msgstr "Kodeord"
+msgstr "Adgangskode"
 
 msgctxt "#30004"
 msgid "Protocol"
@@ -45,11 +45,11 @@ msgstr "Streaming"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr ""
+msgstr "Hjælpeoplysninger om InputStream"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr ""
+msgstr "(Gen)installer Widevine CDM bibliotek..."
 
 msgctxt "#30008"
 msgid "Provider"
@@ -65,7 +65,7 @@ msgstr "O2 TV (beta)"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr ""
+msgstr "Protokol til streaming"
 
 msgctxt "#30012"
 msgid "Video Resolution"
@@ -113,23 +113,23 @@ msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr ""
+msgstr "Fejl: Login ikke muligt. Tjek legitimationsoplysninger!"
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr ""
+msgstr "Ingen netværksforbindelse"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr ""
+msgstr "Ugyldige loginoplysninger"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr ""
+msgstr "Påkrævet brugernavn og adgangskode er ikke tilgængelig"
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr ""
+msgstr "Opdater token"
 
 msgctxt "#30035"
 msgid "Misc"
