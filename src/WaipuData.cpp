@@ -121,7 +121,7 @@ bool WaipuData::ApiLogin()
   if(login_result){
       // login okay, reset counter
       m_login_failed_counter = 0;
-  }else{
+  }else if (m_login_status != WAIPU_LOGIN_STATUS::NO_NETWORK) {
       if(m_login_failed_counter == WAIPU_LOGIN_FAILED_LOCK_LIMIT)
 	{
 	  time_t currTime;
