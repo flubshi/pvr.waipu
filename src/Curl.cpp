@@ -7,13 +7,11 @@
 
 #include <utility>
 
-using namespace std;
-
 Curl::Curl() = default;
 
 Curl::~Curl() = default;
 
-string Curl::GetCookie(const string& name)
+std::string Curl::GetCookie(const std::string& name)
 {
   for (const auto& cookie : cookies)
   {
@@ -25,7 +23,7 @@ string Curl::GetCookie(const string& name)
 
 void Curl::SetCookie(const std::string& host, const std::string& name, const std::string& value)
 {
-  for (list<Cookie>::iterator i = cookies.begin(); i != cookies.end(); ++i)
+  for (std::list<Cookie>::iterator i = cookies.begin(); i != cookies.end(); ++i)
   {
     if (i->host == host && i->name == name)
     {
@@ -40,12 +38,12 @@ void Curl::SetCookie(const std::string& host, const std::string& name, const std
   cookies.push_back(cookie);
 }
 
-void Curl::AddHeader(const string& name, const string& value)
+void Curl::AddHeader(const std::string& name, const std::string& value)
 {
   headers[name] = value;
 }
 
-void Curl::AddOption(const string& name, const string& value)
+void Curl::AddOption(const std::string& name, const std::string& value)
 {
   options[name] = value;
 }
@@ -55,22 +53,22 @@ void Curl::ResetHeaders()
   headers.clear();
 }
 
-string Curl::Delete(const string& url, const string& postData, int& statusCode)
+std::string Curl::Delete(const std::string& url, const std::string& postData, int& statusCode)
 {
   return Request("DELETE", url, postData, statusCode);
 }
 
-string Curl::Get(const string& url, int& statusCode)
+std::string Curl::Get(const std::string& url, int& statusCode)
 {
   return Request("GET", url, "", statusCode);
 }
 
-string Curl::Post(const string& url, const string& postData, int& statusCode)
+std::string Curl::Post(const std::string& url, const std::string& postData, int& statusCode)
 {
   return Request("POST", url, postData, statusCode);
 }
 
-void Curl::ParseCookies(kodi::vfs::CFile* file, const string& host)
+void Curl::ParseCookies(kodi::vfs::CFile* file, const std::string& host)
 {
   int numValues;
   const std::vector<std::string> cookies =
@@ -80,7 +78,7 @@ void Curl::ParseCookies(kodi::vfs::CFile* file, const string& host)
     std::string::size_type paramPos = cookie.find(';');
     if (paramPos != std::string::npos)
       cookie.resize(paramPos);
-    vector<string> parts = Utils::SplitString(cookie, '=', 2);
+    std::vector<std::string> parts = Utils::SplitString(cookie, '=', 2);
     if (parts.size() != 2)
     {
       continue;
@@ -90,23 +88,23 @@ void Curl::ParseCookies(kodi::vfs::CFile* file, const string& host)
   }
 }
 
-string Curl::ParseHostname(const string& url)
+std::string Curl::ParseHostname(const std::string& url)
 {
   size_t pos = url.find_first_of(":");
-  if (pos == string::npos)
+  if (pos == std::string::npos)
     return "";
-  string host = url.substr(pos + 3);
+  std::string host = url.substr(pos + 3);
 
   size_t pos_end = host.find_first_of("://");
-  if (pos_end == string::npos)
+  if (pos_end == std::string::npos)
     return host;
   host = host.substr(0, pos_end);
   return host;
 }
 
-kodi::vfs::CFile* Curl::PrepareRequest(const string& action,
-                                       const string& url,
-                                       const string& postData)
+kodi::vfs::CFile* Curl::PrepareRequest(const std::string& action,
+                                       const std::string& url,
+                                       const std::string& postData)
 {
   kodi::vfs::CFile* file = new kodi::vfs::CFile;
   if (!file->CURLCreate(url))
@@ -121,7 +119,7 @@ kodi::vfs::CFile* Curl::PrepareRequest(const string& action,
 
   if (!postData.empty())
   {
-    string base64 = Base64Encode((const unsigned char*)postData.c_str(), postData.size(), false);
+      std::string base64 = Base64Encode((const unsigned char*)postData.c_str(), postData.size(), false);
     file->CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "postdata", base64.c_str());
   }
 
@@ -135,9 +133,9 @@ kodi::vfs::CFile* Curl::PrepareRequest(const string& action,
     file->CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, entry.first.c_str(), entry.second.c_str());
   }
 
-  string host = ParseHostname(url);
+  std::string host = ParseHostname(url);
   kodi::Log(ADDON_LOG_DEBUG, "Add cookies for host: %s.", host.c_str());
-  string cookie_s = "";
+  std::string cookie_s = "";
   for (auto& cookie : cookies)
   {
     if (cookie.host != host)
@@ -153,9 +151,9 @@ kodi::vfs::CFile* Curl::PrepareRequest(const string& action,
 }
 
 
-string Curl::Request(const string& action,
-                     const string& url,
-                     const string& postData,
+std::string Curl::Request(const std::string& action,
+                     const std::string& url,
+                     const std::string& postData,
                      int& statusCode)
 {
   int remaining_redirects = redirectLimit;
@@ -182,7 +180,7 @@ string Curl::Request(const string& action,
 
     // get the real statusCode
     std::string tmpRespLine = file->GetPropertyValue(ADDON_FILE_PROPERTY_RESPONSE_PROTOCOL, "");
-    vector<string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
+    std::vector<std::string> resp_protocol_parts = Utils::SplitString(tmpRespLine, ' ', 3);
     if (resp_protocol_parts.size() >= 2)
     {
       statusCode = Utils::stoiDefault(resp_protocol_parts[1].c_str(), -1);
@@ -208,7 +206,7 @@ string Curl::Request(const string& action,
   static const unsigned int CHUNKSIZE = 16384;
   char buf[CHUNKSIZE + 1];
   ssize_t nbRead;
-  string body;
+  std::string body;
   while ((nbRead = file->Read(buf, CHUNKSIZE)) > 0 && ~nbRead)
   {
     buf[nbRead] = 0x0;
