@@ -23,6 +23,7 @@
 #include "Base64.h"
 #include "Utils.h"
 #include "kodi/General.h"
+#include "kodi/tools/StringUtils.h"
 
 #include <chrono>
 #include <vector>
@@ -32,7 +33,7 @@ JWT::JWT(std::string token)
 {
   if (token.empty()){ return; };
   strToken = token;
-  std::vector<std::string> jwt_arr = Utils::SplitString(strToken, '.', 3);
+  std::vector<std::string> jwt_arr = kodi::tools::StringUtils::Split(strToken, ".", 3);
   if (jwt_arr.size() == 3)
   {
     kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] middle: %s", jwt_arr.at(1).c_str());

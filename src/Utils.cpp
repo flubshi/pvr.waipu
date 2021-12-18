@@ -6,6 +6,7 @@
 
 #include "kodi/Filesystem.h"
 #include "kodi/General.h"
+#include "kodi/tools/StringUtils.h"
 
 #include <algorithm>
 #include <chrono>
@@ -40,46 +41,6 @@ std::string Utils::UrlEncode(const std::string& value)
   }
 
   return escaped.str();
-}
-
-double Utils::StringToDouble(const std::string& value)
-{
-  std::istringstream iss(value);
-  double result;
-
-  iss >> result;
-
-  return result;
-}
-
-int Utils::StringToInt(const std::string& value)
-{
-  return (int)StringToDouble(value);
-}
-
-std::vector<std::string> Utils::SplitString(const std::string& str, const char& delim, int maxParts)
-{
-  typedef std::string::const_iterator iter;
-  iter beg = str.begin();
-  std::vector<std::string> tokens;
-
-  while (beg != str.end())
-  {
-    if (maxParts == 1)
-    {
-      tokens.emplace_back(beg, str.end());
-      break;
-    }
-    maxParts--;
-    iter temp = find(beg, str.end(), delim);
-    if (beg != str.end())
-      tokens.emplace_back(beg, temp);
-    beg = temp;
-    while ((beg != str.end()) && (*beg == delim))
-      beg++;
-  }
-
-  return tokens;
 }
 
 std::string Utils::ReadFile(const std::string& path)
@@ -140,79 +101,42 @@ std::string Utils::TimeToString(const time_t time)
   return time_str;
 }
 
-std::string Utils::ltrim(std::string str, const std::string chars)
-{
-  str.erase(0, str.find_first_not_of(chars));
-  return str;
-}
-
-std::string Utils::rtrim(std::string str, const std::string chars )
-{
-   str.erase( str.find_last_not_of( chars ) + 1 );
-   return str;
-}
-
 int Utils::GetIDDirty(std::string str)
 {
   // str= "_1035245078" or = "misc-rand-int-whatever"
   if (str.rfind("_", 0) == 0)
   {
     // str starts with _
-    return stoi(ltrim(str));
+    return StringToInt(kodi::tools::StringUtils::TrimLeft(str,"\t\n\v\f\r _"), 1);
   }
-  // dirty shit begins here:
   return rand() % 99999 + 1;
 }
 
-int Utils::GetChannelId(const char* strChannelName)
+int Utils::Hash(const std::string& str)
 {
-  int iId = 0;
-  int c;
-  while ((c = *strChannelName++))
-    iId = ((iId << 5) + iId) + c; /* iId * 33 + c */
-  return abs(iId);
+  const char* s = str.c_str();
+
+  int hash = 0;
+  while (*s)
+    hash = ((hash << 5) + hash) + *s++;
+
+  return std::abs(hash);
 }
 
-int Utils::stoiDefault(std::string str, int i)
+int Utils::StringToInt(std::string str, int defaultValue)
 {
   try
   {
-    return stoi(str);
+    return std::stoi(str);
   }
   catch (std::exception& e)
   {
-    return i;
+    return defaultValue;
   }
-}
-
-bool Utils::ends_with(std::string const& haystack, std::string const& end)
-{
-  if (haystack.length() >= end.length())
-  {
-    return (0 == haystack.compare(haystack.length() - end.length(), end.length(), end));
-  }
-  else
-  {
-    return false;
-  }
-}
-
-
-std::string Utils::ReplaceAll(std::string str,
-                              const std::string& search,
-                              const std::string& replace)
-{
-  // taken from: https://stackoverflow.com/questions/2896600/how-to-replace-all-occurrences-of-a-character-in-string
-  size_t start_pos = 0;
-  while ((start_pos = str.find(search, start_pos)) != std::string::npos)
-  {
-    str.replace(start_pos, search.length(), replace);
-    start_pos += replace.length();
-  }
-  return str;
 }
 
 std::string Utils::Replace(std::string str, const std::string& from, const std::string& to) {
+  // replaces the first occurrence
   // taken from: https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string
   size_t start_pos = str.find(from);
   if(start_pos != std::string::npos)
@@ -220,7 +144,7 @@ std::string Utils::Replace(std::string str, const std::string& from, const std::
   return str;
 }
 
-std::string Utils::GenerateUuid()
+std::string Utils::CreateUUID()
 {
   // taken from pvr.dvblink
   using namespace std::chrono;

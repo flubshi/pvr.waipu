@@ -23,6 +23,7 @@
 
 #include "Base64.h"
 #include "Utils.h"
+#include "kodi/tools/StringUtils.h"
 #include "kodi/General.h"
 #include "rapidjson/document.h"
 
@@ -335,7 +336,7 @@ bool WaipuData::O2Login()
       std::string input_name = match.str(1);
       std::string input_value = match.str(2);
       // we need to dirty HTML-decode &#x3d; to = for base64 padding:
-      input_value = Utils::ReplaceAll(input_value, "&#x3d;", "=");
+      input_value = kodi::tools::StringUtils::Replace(input_value, "&#x3d;", "=");
 
       kodi::Log(ADDON_LOG_DEBUG, "[form input] %s -> %s;", input_name.c_str(), input_value.c_str());
 
@@ -450,6 +451,7 @@ ADDON_STATUS WaipuData::Create()
 
   // set User-Agent
   std::string ua = kodi::network::GetUserAgent();
+  // use our replace, since kodi utils replaces all occurrences
   WAIPU_USER_AGENT = Utils::Replace(ua, " ", std::string(" pvr.waipu/").append(STR(IPTV_VERSION)).append(" "));
 
   ReadSettings();
@@ -507,7 +509,7 @@ void WaipuData::ReadSettings(void)
   m_device_id = kodi::GetSettingString("device_id_uuid4");
   if (m_device_id.empty())
   {
-    m_device_id = Utils::GenerateUuid();
+    m_device_id = Utils::CreateUUID();
     kodi::SetSettingString("device_id_uuid4", m_device_id);
     // new device id -> force new login
     m_refreshToken = JWT();
@@ -746,7 +748,7 @@ bool WaipuData::LoadChannelData(void)
     waipu_channel.waipuID = waipuid; // waipu[id]
     kodi::Log(ADDON_LOG_DEBUG, "[channel] waipuid: %s;", waipu_channel.waipuID.c_str());
 
-    int uniqueId = Utils::GetChannelId(waipuid.c_str());
+    int uniqueId = Utils::Hash(waipuid);
     waipu_channel.iUniqueId = uniqueId;
     kodi::Log(ADDON_LOG_DEBUG, "[channel] id: %i;", uniqueId);
 
@@ -1080,7 +1082,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
       {
         tag.SetSeriesNumber(
-            Utils::stoiDefault(epgData["season"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE));
+            Utils::StringToInt(epgData["season"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE));
         flags |= EPG_TAG_FLAG_IS_SERIES;
       }
       else
@@ -1091,7 +1093,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       if (epgData.HasMember("episode") && epgData["episode"].IsString())
       {
         tag.SetEpisodeNumber(
-            Utils::stoiDefault(epgData["episode"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE));
+            Utils::StringToInt(epgData["episode"].GetString(), EPG_TAG_INVALID_SERIES_EPISODE));
       }
       else
       {
@@ -1107,7 +1109,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       // year
       if (epgData.HasMember("year") && !epgData["year"].IsNull())
       {
-        tag.SetYear(Utils::stoiDefault(epgData["year"].GetString(), 1970));
+        tag.SetYear(Utils::StringToInt(epgData["year"].GetString(), 1970));
       }
 
       // genre
@@ -1345,14 +1347,14 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     if (epgData.HasMember("duration") && !epgData["duration"].IsNull())
     {
       std::string rec_dur = epgData["duration"].GetString();
-      tag.SetDuration(Utils::stoiDefault(rec_dur, 0) * 60);
+      tag.SetDuration(Utils::StringToInt(rec_dur, 0) * 60);
     }
 
     // iSeriesNumber
     if (epgData.HasMember("season") && !epgData["season"].IsNull())
     {
       tag.SetSeriesNumber(
-          Utils::stoiDefault(epgData["season"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
+          Utils::StringToInt(epgData["season"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
     }
     else
     {
@@ -1363,7 +1365,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     if (epgData.HasMember("episode") && !epgData["episode"].IsNull())
     {
       tag.SetEpisodeNumber(
-          Utils::stoiDefault(epgData["episode"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
+          Utils::StringToInt(epgData["episode"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
     }
     else
     {
@@ -1381,7 +1383,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     if (epgData.HasMember("year") && !epgData["year"].IsNull())
     {
       std::string rec_year = epgData["year"].GetString();
-      tag.SetYear(Utils::stoiDefault(rec_year, 1970));
+      tag.SetYear(Utils::StringToInt(rec_year, 1970));
     }
 
     // get recording time
@@ -1634,8 +1636,8 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
     // set recording id
     std::string rec_id = timer["id"].GetString();
-    tag.SetClientIndex(Utils::stoiDefault(rec_id, 0));
-    tag.SetEPGUid(Utils::stoiDefault(rec_id, 0));
+    tag.SetClientIndex(Utils::StringToInt(rec_id, 0));
+    tag.SetEPGUid(Utils::StringToInt(rec_id, 0));
 
     // get recording time
     if (timer.HasMember("startTime") && !timer["startTime"].IsNull())
