@@ -134,7 +134,7 @@ bool WaipuData::ApiLogin()
   return login_result;
 }
 
-bool WaipuData::ParseAccessToken(void)
+bool WaipuData::ParseAccessToken()
 {
   if(!m_accessToken.isInitialized() || m_accessToken.isExpired())
   {
@@ -496,7 +496,7 @@ ADDON_STATUS WaipuData::Create()
   return curStatus;
 }
 
-void WaipuData::ReadSettings(void)
+void WaipuData::ReadSettings()
 {
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
 
@@ -604,7 +604,7 @@ PVR_ERROR WaipuData::GetConnectionString(std::string& connection)
   return PVR_ERROR_NO_ERROR;
 }
 
-std::string WaipuData::GetLicense(void)
+std::string WaipuData::GetLicense()
 {
   // ensure that userHandle is valid
   ApiLogin();
@@ -658,7 +658,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   }
 }
 
-bool WaipuData::LoadChannelData(void)
+bool WaipuData::LoadChannelData()
 {
   if (!ApiLogin())
   {
@@ -666,13 +666,14 @@ bool WaipuData::LoadChannelData(void)
     return false;
   }
 
-  kodi::Log(ADDON_LOG_DEBUG, "[load data] Login valid -> GET CHANNELS");
+  kodi::Log(ADDON_LOG_DEBUG, "[load data] Get channels");
 
   std::string jsonChannels = HttpGet("https://epg.waipu.tv/api/channels");
   if (jsonChannels.size() == 0)
   {
     kodi::Log(ADDON_LOG_ERROR, "[channels] ERROR - empty response");
-    return PVR_ERROR_SERVER_ERROR;
+    m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+    return false;
   }
   jsonChannels = "{\"result\": " + jsonChannels + "}";
   kodi::Log(ADDON_LOG_DEBUG, "[channels] length: %i;", jsonChannels.length());
@@ -687,7 +688,7 @@ bool WaipuData::LoadChannelData(void)
   if (channelsDoc.GetParseError())
   {
     kodi::Log(ADDON_LOG_ERROR, "[LoadChannelData] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
+    return false;
   }
   kodi::Log(ADDON_LOG_DEBUG, "[channels] iterate channels");
   kodi::Log(ADDON_LOG_DEBUG, "[channels] size: %i;", channelsDoc["result"].Size());
