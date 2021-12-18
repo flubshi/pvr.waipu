@@ -68,7 +68,6 @@ public:
   PVR_ERROR GetCapabilities(kodi::addon::PVRCapabilities& capabilities) override;
   PVR_ERROR GetBackendName(std::string& name) override;
   PVR_ERROR GetBackendVersion(std::string& version) override;
-  PVR_ERROR GetConnectionString(std::string& connection) override;
 
   PVR_ERROR GetChannelsAmount(int& amount) override;
   PVR_ERROR GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results) override;

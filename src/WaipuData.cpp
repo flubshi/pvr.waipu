@@ -597,12 +597,6 @@ PVR_ERROR WaipuData::GetBackendVersion(std::string& version)
   return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR WaipuData::GetConnectionString(std::string& connection)
-{
-  connection = "connected";
-  return PVR_ERROR_NO_ERROR;
-}
-
 std::string WaipuData::GetLicense()
 {
   // ensure that userHandle is valid
