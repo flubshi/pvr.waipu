@@ -15,23 +15,12 @@ class Utils
 public:
   static std::string GetFilePath(std::string strPath, bool bUserPath = true);
   static std::string UrlEncode(const std::string& string);
-  static double StringToDouble(const std::string& value);
-  static int StringToInt(const std::string& value);
   static std::string ReadFile(const std::string& path);
-  static std::vector<std::string> SplitString(const std::string& str,
-                                              const char& delim,
-                                              int maxParts = 0);
   static time_t StringToTime(std::string timeString);
   static std::string TimeToString(time_t time);
-  static std::string ltrim(std::string str, const std::string chars = "\t\n\v\f\r _");
-  static std::string rtrim(std::string str, const std::string chars = "\t\n\v\f\r ");
   static int GetIDDirty(std::string str);
-  static int GetChannelId(const char* strChannelName);
-  static int stoiDefault(std::string str, int i);
-  static bool ends_with(std::string const& haystack, std::string const& end);
-  static std::string ReplaceAll(std::string str,
-                                const std::string& search,
-                                const std::string& replace);
+  static int Hash(const std::string& str);
+  static int StringToInt(std::string str, int defaultValue);
   static std::string Replace(std::string str, const std::string& from, const std::string& to);
-  static std::string GenerateUuid();
+  static std::string CreateUUID();
 };
