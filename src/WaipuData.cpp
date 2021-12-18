@@ -30,7 +30,6 @@
 #include <ctime>
 #include <regex>
 
-using namespace rapidjson;
 
 // BEGIN CURL helpers from zattoo addon:
 std::string WaipuData::HttpGet(const std::string& url, const std::map<std::string,std::string>& headers)
@@ -248,7 +247,7 @@ bool WaipuData::WaipuLogin()
 
   if (!jsonString.empty())
   {
-    Document doc;
+    rapidjson::Document doc;
     doc.Parse(jsonString.c_str());
     if (doc.GetParseError())
     {
@@ -425,7 +424,7 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   std::string deviceToken = "";
 
-  Document deviceTokenDoc;
+  rapidjson::Document deviceTokenDoc;
   deviceTokenDoc.Parse(jsonDeviceToken.c_str());
   if (deviceTokenDoc.GetParseError())
   {
@@ -680,7 +679,7 @@ bool WaipuData::LoadChannelData(void)
 
   // parse channels
   kodi::Log(ADDON_LOG_DEBUG, "[channels] parse channels");
-  Document channelsDoc;
+  rapidjson::Document channelsDoc;
   channelsDoc.Parse(jsonChannels.c_str());
   if (channelsDoc.GetParseError())
   {
@@ -914,7 +913,7 @@ std::string WaipuData::GetChannelStreamUrl(int uniqueId, const std::string& prot
 
       std::string jsonStreamURL = HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData, {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"}, {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}});
 
-      Document streamURLDoc;
+      rapidjson::Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
       if (streamURLDoc.GetParseError())
       {
@@ -1009,7 +1008,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     }
     jsonEpg = "{\"result\": " + jsonEpg + "}";
 
-    Document epgDoc;
+    rapidjson::Document epgDoc;
     epgDoc.Parse(jsonEpg.c_str());
     if (epgDoc.GetParseError())
     {
@@ -1223,7 +1222,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
       }
       jsonEpg = "{\"result\": " + jsonEpg + "}";
 
-      Document epgDoc;
+      rapidjson::Document epgDoc;
       epgDoc.Parse(jsonEpg.c_str());
 
       if (epgDoc.GetParseError() || epgDoc["result"].Size() == 0 || !epgDoc["result"][0].HasMember("streamUrlProvider") || epgDoc["result"][0]["streamUrlProvider"].IsNull())
@@ -1243,7 +1242,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
         std::string tag_resp = HttpGet(url);
         kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
 
-        Document tagDoc;
+        rapidjson::Document tagDoc;
         tagDoc.Parse(tag_resp.c_str());
         if (tagDoc.GetParseError())
         {
@@ -1284,7 +1283,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
 
   jsonRecordings = "{\"result\": " + jsonRecordings + "}";
 
-  Document recordingsDoc;
+  rapidjson::Document recordingsDoc;
   recordingsDoc.Parse(jsonRecordings.c_str());
   if (recordingsDoc.GetParseError())
   {
@@ -1323,7 +1322,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
       tag.SetPlayCount(0);
     }
 
-    const Value& epgData = recording["epgData"];
+    const rapidjson::Value& epgData = recording["epgData"];
 
     // set recording title
     std::string rec_title = epgData["title"].GetString();
@@ -1444,7 +1443,7 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   std::string rec_resp = HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id);
   kodi::Log(ADDON_LOG_DEBUG, "recording resp -> %s", rec_resp.c_str());
 
-  Document recordingDoc;
+  rapidjson::Document recordingDoc;
   recordingDoc.Parse(rec_resp.c_str());
   if (recordingDoc.GetParseError())
   {
@@ -1547,7 +1546,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
   jsonRecordings = "{\"result\": " + jsonRecordings + "}";
 
-  Document timersDoc;
+  rapidjson::Document timersDoc;
   timersDoc.Parse(jsonRecordings.c_str());
   if (timersDoc.GetParseError())
   {
@@ -1586,7 +1585,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     }
     tag.SetLifetime(0);
 
-    const Value& epgData = timer["epgData"];
+    const rapidjson::Value& epgData = timer["epgData"];
 
     // set recording title
     std::string rec_title = epgData["title"].GetString();
