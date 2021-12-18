@@ -151,8 +151,8 @@ private:
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
 
-  void ReadSettings(void);
-  bool ParseAccessToken(void);
+  void ReadSettings();
+  bool ParseAccessToken();
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
 
@@ -160,7 +160,7 @@ private:
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
-  std::string GetLicense(void);
+  std::string GetLicense();
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
                            bool realtime, bool playTimeshiftBuffer, const std::string& protocol);
@@ -174,6 +174,6 @@ private:
   bool ApiLogin();
   bool WaipuLogin();
   bool O2Login();
-  bool LoadChannelData(void);
-  bool RefreshDeviceCapabiltiesToken(void);
+  bool LoadChannelData();
+  bool RefreshDeviceCapabiltiesToken();
 };
