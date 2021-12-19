@@ -155,7 +155,7 @@ private:
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
 
-  std::string GetChannelStreamUrl(int uniqueId, const std::string& protocol, const std::string& startTime);
+  std::string GetChannelStreamURL(int uniqueId, const std::string& protocol, const std::string& startTime);
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
