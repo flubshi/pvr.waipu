@@ -1555,7 +1555,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   int recordings_count = 0;
   int timers_count = 0;
 
-  std::list<int> timerGroups;
+  std::vector<int> timerGroups;
 
   for (const auto& timer : timersDoc["result"].GetArray())
   {
