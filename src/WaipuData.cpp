@@ -84,7 +84,12 @@ std::string WaipuData::HttpRequestToCurl(
   {
     content = curl.Get(url, statusCode);
   }
-  return content;
+  if (statusCode == 200)
+    return content;
+
+  kodi::Log(ADDON_LOG_ERROR, "[Http-GET-Request] error. status: %i, body: %s", statusCode,
+            content.c_str());
+  return "";
 }
 // END CURL helpers from zattoo addon
 

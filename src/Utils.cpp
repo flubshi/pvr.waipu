@@ -94,10 +94,10 @@ time_t Utils::StringToTime(std::string timeString)
 
 std::string Utils::TimeToString(const time_t time)
 {
-  char time_str[100];
+  char time_str[21] = "";
   std::tm* pstm = std::localtime(&time);
   // 2019-01-20T23:59:59
-  std::strftime(time_str, 32, "%Y-%m-%dT%H:%M:%S", pstm);
+  std::strftime(time_str, sizeof(time_str), "%Y-%m-%dT%H:%M:%S", pstm);
   return time_str;
 }
 
