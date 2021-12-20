@@ -84,7 +84,7 @@ std::string WaipuData::HttpRequestToCurl(
   {
     content = curl.Get(url, statusCode);
   }
-  if (statusCode == 200)
+  if (statusCode >= 200 && statusCode < 300)
     return content;
 
   kodi::Log(ADDON_LOG_ERROR, "[Http-GET-Request] error. status: %i, body: %s", statusCode,
