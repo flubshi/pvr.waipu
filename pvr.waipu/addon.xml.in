@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="20.1.1"
+  version="20.2.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -25,25 +25,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 20.2.0
+  - improve behaviour on network failures
+  - improve login failure handling
+  - improve memory leak
 - 20.1.1 Update language files from weblate
 - 20.1.0 Kodi PVR API to 8.0.0
-- 20.0.1 Translations updates from Weblate
-- 20.0.0
-  - Translations updates from Weblate
-    - ko_kr
-    - Changed to allow also addon.xml content update by Weblate
-  - Cleanup and improve Debian packaging
-  - Minor cleanup on addon.xml (change en_US to en_GB)
-  - Changed test builds to 'Kodi 20 Nexus'
-  - Increased version to 20.0.0
-    - With start of Kodi 20 Nexus, takes addon as major the same version number as Kodi.
-      This done to know easier to which Kodi the addon works.
-- 2.9.4 Set PVR Addon User-Agent
-- 2.9.2 Improve internal login handling
-- 2.9.1 Use UUIDv4 for device id
-- 2.9.0 Internal session handling changes, support device_id
-- 2.8.4 Implement series recording
-- 2.8.3 Store refresh token; do not log password
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
