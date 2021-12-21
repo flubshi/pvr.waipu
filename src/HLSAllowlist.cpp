@@ -20,6 +20,7 @@
  */
 
 #include "HLSAllowlist.h"
+#include "kodi/tools/StringUtils.h"
 
 #include <kodi/Filesystem.h>
 
@@ -57,7 +58,7 @@ void HLSAllowlist::LoadHLSAllowlist()
     std::string line;
     while (file.ReadLine(line))
     {
-      line = Utils::rtrim(line);
+      line = kodi::tools::StringUtils::TrimRight(line);
       m_hls_allowed.push_back(line);
       kodi::Log(ADDON_LOG_DEBUG, "%s: Add channel to hls allowlist '%s'",
                 __FUNCTION__, line.c_str());
