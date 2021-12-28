@@ -343,7 +343,7 @@ bool WaipuData::O2Login()
       std::string input_name = match.str(1);
       std::string input_value = match.str(2);
       // we need to dirty HTML-decode &#x3d; to = for base64 padding:
-      input_value = kodi::tools::StringUtils::Replace(input_value, "&#x3d;", "=");
+      kodi::tools::StringUtils::Replace(input_value, "&#x3d;", "=");
 
       kodi::Log(ADDON_LOG_DEBUG, "[form input] %s -> %s;", input_name.c_str(), input_value.c_str());
 
