@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="19.1.0"
+  version="19.1.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -25,12 +25,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 19.1.1 Fix error in O2 login
 - 19.1.0
   - improve behaviour on network failures
   - improve login failure handling
   - fix memory leak
 - 19.0.2 Translations updates from Weblate
-- 19.0.1 Translations updates from Weblate
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
