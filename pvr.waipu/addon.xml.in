@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="20.2.0"
+  version="20.2.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -25,12 +25,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 20.2.1 Fix error in O2 login
 - 20.2.0
   - improve behaviour on network failures
   - improve login failure handling
   - improve memory leak
 - 20.1.1 Update language files from weblate
-- 20.1.0 Kodi PVR API to 8.0.0
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
