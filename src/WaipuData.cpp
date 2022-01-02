@@ -285,7 +285,7 @@ bool WaipuData::WaipuLogin()
     if (!refresh_token.empty())
     {
       m_refreshToken = JWT(refresh_token);
-      kodi::SetSettingString("refresh_token", refresh_token);
+      kodi::addon::SetSettingString("refresh_token", refresh_token);
       kodi::Log(ADDON_LOG_DEBUG, "[login check] refreshToken: %s;", refresh_token.c_str());
     }
 
@@ -412,7 +412,7 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
   std::string appVersion;
   GetBackendVersion(appVersion);
 
-  bool cap_audio_aac = kodi::GetSettingBoolean("streaming_capabilities_audio_aac",false);
+  bool cap_audio_aac = kodi::addon::GetSettingBoolean("streaming_capabilities_audio_aac", false);
 
   std::string capabilitesData = "{\"type\": \"receiver\", \"model\": \"Kodi 19\", \"manufacturer\": \"Team Kodi\", \"platform\": \"Kodi 19-pvr.waipu\", \"appVersion\": \""+appVersion+"\", \"capabilities\": {\"audio\": {\"aac\": "+(cap_audio_aac ? "true" : "false")+"},\"video\": { ";
 
@@ -420,7 +420,8 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
   bool first = true;
   for (const std::string& cap_option : video_cap_options)
   {
-    bool cap_value = kodi::GetSettingBoolean("streaming_capabilities_video_"+cap_option, false);
+    bool cap_value =
+        kodi::addon::GetSettingBoolean("streaming_capabilities_video_" + cap_option, false);
     capabilitesData += std::string(first ? "" : ",")+ "\""+cap_option+"\": " + (cap_value ? "true" : "false");
     first = false;
   }
@@ -476,12 +477,12 @@ ADDON_STATUS WaipuData::Create()
       break;
     case WAIPU_LOGIN_STATUS::NO_NETWORK:
       kodi::Log(ADDON_LOG_ERROR, "[load data] Network issue");
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30031));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30031));
       curStatus = ADDON_STATUS_NEED_RESTART;
       break;
     case WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS:
       kodi::Log(ADDON_LOG_ERROR, "[load data] Login invalid");
-      kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30032));
+      kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30032));
       curStatus = ADDON_STATUS_NEED_SETTINGS;
       break;
     case WAIPU_LOGIN_STATUS::UNKNOWN:
@@ -496,7 +497,7 @@ ADDON_STATUS WaipuData::Create()
   }
   else
   {
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::GetLocalizedString(30033));
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30033));
     curStatus = ADDON_STATUS_NEED_SETTINGS;
   }
 
@@ -507,17 +508,17 @@ void WaipuData::ReadSettings()
 {
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
 
-  m_username = kodi::GetSettingString("username");
-  m_password = kodi::GetSettingString("password");
-  m_protocol = kodi::GetSettingString("protocol", "auto");
-  m_provider = kodi::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
-  m_refreshToken = JWT(kodi::GetSettingString("refresh_token", ""));
+  m_username = kodi::addon::GetSettingString("username");
+  m_password = kodi::addon::GetSettingString("password");
+  m_protocol = kodi::addon::GetSettingString("protocol", "auto");
+  m_provider = kodi::addon::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
+  m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
 
-  m_device_id = kodi::GetSettingString("device_id_uuid4");
+  m_device_id = kodi::addon::GetSettingString("device_id_uuid4");
   if (m_device_id.empty())
   {
     m_device_id = Utils::CreateUUID();
-    kodi::SetSettingString("device_id_uuid4", m_device_id);
+    kodi::addon::SetSettingString("device_id_uuid4", m_device_id);
     // new device id -> force new login
     m_refreshToken = JWT();
   }
@@ -526,7 +527,7 @@ void WaipuData::ReadSettings()
 }
 
 ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
-                                   const kodi::CSettingValue& settingValue)
+                                   const kodi::addon::CSettingValue& settingValue)
 {
   if (settingName == "username")
   {
@@ -535,7 +536,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_username = username;
       m_login_failed_counter = 0;
-      kodi::SetSettingString("refresh_token", "");
+      kodi::addon::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -546,7 +547,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_login_failed_counter = 0;
       m_password = password;
-      kodi::SetSettingString("refresh_token", "");
+      kodi::addon::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -568,7 +569,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     {
       m_login_failed_counter = 0;
       m_provider = tmpProvider;
-      kodi::SetSettingString("refresh_token", "");
+      kodi::addon::SetSettingString("refresh_token", "");
       return ADDON_STATUS_NEED_RESTART;
     }
   }else if (settingName.rfind("streaming_capabilities_", 0) == 0)

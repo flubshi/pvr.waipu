@@ -51,8 +51,8 @@ enum class WAIPU_LOGIN_STATUS
 static const unsigned int EPG_TAG_FLAG_IS_RECORDABLE_WAIPU = (1 << 28);
 static const unsigned int EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU = (1 << 29);
 
-class ATTRIBUTE_HIDDEN WaipuData : public kodi::addon::CAddonBase,
-                                   public kodi::addon::CInstancePVRClient
+class ATTR_DLL_LOCAL WaipuData : public kodi::addon::CAddonBase,
+                                 public kodi::addon::CInstancePVRClient
 {
 public:
   WaipuData() = default;
@@ -63,7 +63,7 @@ public:
 
   ADDON_STATUS Create() override;
   ADDON_STATUS SetSetting(const std::string& settingName,
-                          const kodi::CSettingValue& settingValue) override;
+                          const kodi::addon::CSettingValue& settingValue) override;
 
   PVR_ERROR GetCapabilities(kodi::addon::PVRCapabilities& capabilities) override;
   PVR_ERROR GetBackendName(std::string& name) override;
