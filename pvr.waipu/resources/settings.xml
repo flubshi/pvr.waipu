@@ -3,6 +3,19 @@
 	<section id="pvr.waipu">
 		<category id="credentials" label="30001" help="">
 			<group id="1" label="">
+			    <setting id="provider_select" type="integer" label="30008"
+               help="">
+               <level>0</level>
+               <default>0</default>
+               <constraints>
+                  <options>
+                     <option label="30009">0</option>
+                     <option label="30010">1</option>
+                     <option label="30038">2</option>
+                  </options>
+               </constraints>
+               <control type="spinner" format="string" />
+            </setting>
 				<setting id="username" type="string" label="30002" help="">
 					<level>0</level>
 					<default />
@@ -12,6 +25,9 @@
 					<control type="edit" format="string">
 						<heading>30002</heading>
 					</control>
+					<dependencies>
+                 <dependency type="visible" setting="provider_select">0</dependency>
+               </dependencies>
 				</setting>
 				<setting id="password" type="string" label="30003" help="">
 					<level>0</level>
@@ -23,19 +39,18 @@
 						<heading>30003</heading>
 						<hidden>true</hidden>
 					</control>
+					<dependencies>
+                 <dependency type="visible" setting="provider_select">0</dependency>
+               </dependencies>
 				</setting>
-				<setting id="provider_select" type="integer" label="30008"
-					help="">
-					<level>0</level>
-					<default>0</default>
-					<constraints>
-						<options>
-							<option label="30009">0</option>
-							<option label="30010">1</option>
-						</options>
-					</constraints>
-					<control type="spinner" format="string" />
-				</setting>
+				<setting id="refresh_reset" type="boolean" label="30037" help="">
+               <level>0</level>
+               <default>false</default>
+               <control type="toggle"/>
+               <dependencies>
+                 <dependency type="visible" operator="gt" setting="provider_select">0</dependency>
+               </dependencies>
+            </setting>
 			</group>
 			<group id="2" label="">
 				<setting id="install_widevine" type="string" label="30007"
@@ -143,6 +158,7 @@
 					<control type="edit" format="string">
 						<heading>30034</heading>
 					</control>
+					<enable>false</enable>
 				</setting>
 				<setting id="device_id_uuid4" type="string" label="30036" help="">
 					<level>3</level>

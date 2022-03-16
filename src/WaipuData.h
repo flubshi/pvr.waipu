@@ -27,6 +27,7 @@
 #include "kodi/Network.h"
 #include "JWT.h"
 
+#include <mutex>
 #include <map>
 #include <vector>
 
@@ -37,7 +38,8 @@ static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
 enum WAIPU_PROVIDER
 {
   WAIPU_PROVIDER_WAIPU = 0,
-  WAIPU_PROVIDER_O2
+  WAIPU_PROVIDER_O2 = 1,
+  WAIPU_PROVIDER_WAIPU_DEVICE = 2
 };
 
 enum class WAIPU_LOGIN_STATUS
@@ -122,6 +124,7 @@ private:
     std::vector<WaipuChannel> channels;
   };
 
+  static std::mutex mutex;
   std::string m_username;
   std::string m_password;
   std::string m_userhandle = "";
@@ -160,6 +163,8 @@ private:
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
   std::string GetLicense();
+  const std::map<std::string,std::string> GetOAuthDeviceCode(const std::string& tenant);
+  const std::map<std::string,std::string> CheckOAuthState(const std::string& device_code);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
                            bool realtime, bool playTimeshiftBuffer, const std::string& protocol);
@@ -172,7 +177,8 @@ private:
       Curl& curl, const std::string& action, const std::string& url, const std::string& postData, int& statusCode);
   bool ApiLogin();
   bool WaipuLogin();
-  bool O2Login();
+  bool DeviceLogin(const std::string& tenant);
+  bool OAuthRequest(const std::string& postData);
   bool LoadChannelData();
   bool RefreshDeviceCapabiltiesToken();
 };
