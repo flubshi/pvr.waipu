@@ -4,11 +4,16 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2022-03-09 13:59+0000\n"
+"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"Language-Team: French (France) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/fr_fr/>\n"
 "Language: fr_fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: Weblate 4.11.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -20,7 +25,7 @@ msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "Général"
 
 msgctxt "#30002"
 msgid "Mail"
@@ -28,7 +33,7 @@ msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "Mot de passe"
 
 msgctxt "#30004"
 msgid "Protocol"
@@ -36,7 +41,7 @@ msgstr ""
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr ""
+msgstr "Diffusion par flux"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
@@ -128,8 +133,8 @@ msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "Divers"
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr ""
+msgstr "ID de dispositif"
