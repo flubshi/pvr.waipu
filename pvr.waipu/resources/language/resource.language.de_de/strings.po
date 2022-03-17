@@ -148,13 +148,13 @@ msgid "Waipu.tv (Device Login)"
 msgstr "Waipu.tv (Geräteanmeldung)"
 
 msgctxt "#30039"
-msgid "Öffne:"
+msgid "Go to:"
 msgstr ""
 
 msgctxt "#30040"
-msgid "Anmelden"
+msgid "Login"
 msgstr ""
 
 msgctxt "#30041"
-msgid "Verwende den Code:"
+msgid "Use Code:"
 msgstr ""
