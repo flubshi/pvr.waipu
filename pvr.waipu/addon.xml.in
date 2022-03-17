@@ -37,11 +37,13 @@
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
     <summary lang="en_GB">waipu.tv PVR Client</summary>
+    <summary lang="es_ES">Cliente PVR waipu.tv</summary>
     <summary lang="es_MX">Cliente PVR de waipu.tv</summary>
     <summary lang="ko_KR">waipu.tv PVR 클라이언트</summary>
     <description lang="da_DK">waipu.tv PVR-klient. Bemærk: Dette er ikke et officielt waipu-plugin og er ikke relateret til Exaring AG eller waipu.tv. Det er udviklet af frivillige.</description>
     <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
     <description lang="en_GB">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
+    <description lang="es_ES">Cliente PVR waipu.tv. Nota: Este no es un plugin oficial de waipu y no está relacionado con Exaring AG o waipu.tv. Esta desarrollado por voluntarios.</description>
     <description lang="es_MX">Cliente PVR de waipu.tv. Nota: Este no es un complemento oficial de waipu y no está relacionado a Exaring AG o waipu.tv. Ha sido desarrollado por voluntarios.</description>
     <description lang="ko_KR">waipu.tv PVR 클라이언트. 참고: 이것은 공식 waipu 플러그인이 아니며 Exaring AG 또는 waipu.tv와 관련이 없습니다. 자원 봉사자에 의해 개발되었습니다.</description>
   </extension>
