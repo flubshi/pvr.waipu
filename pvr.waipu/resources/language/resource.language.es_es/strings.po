@@ -158,11 +158,3 @@ msgstr ""
 msgctxt "#30041"
 msgid "Use Code:"
 msgstr ""
-
-#~ msgctxt "#30009"
-#~ msgid "Waipu.tv"
-#~ msgstr "Waipu.tv"
-
-#~ msgctxt "#30010"
-#~ msgid "O2 TV (beta)"
-#~ msgstr "O2 TV (beta)"
