@@ -57,11 +57,11 @@ msgstr "Leverandør"
 
 msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
-msgstr ""
+msgstr "Waipu.tv (legitimationsoplysninger)"
 
 msgctxt "#30010"
 msgid "O2 TV"
-msgstr ""
+msgstr "O2 TV"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
@@ -141,20 +141,28 @@ msgstr "Enheds-ID"
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr ""
+msgstr "Nulstil login"
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
-msgstr ""
+msgstr "Waipu.tv (enhedslogin)"
 
 msgctxt "#30039"
 msgid "Go to:"
-msgstr ""
+msgstr "Gå til:"
 
 msgctxt "#30040"
 msgid "Login"
-msgstr ""
+msgstr "Login"
 
 msgctxt "#30041"
 msgid "Use Code:"
-msgstr ""
+msgstr "Brug kode:"
+
+#~ msgctxt "#30009"
+#~ msgid "Waipu.tv"
+#~ msgstr "Waipu.tv"
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV (beta)"
+#~ msgstr "O2 TV (beta)"
