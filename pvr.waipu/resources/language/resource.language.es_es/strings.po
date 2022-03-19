@@ -57,11 +57,11 @@ msgstr "Proveedor"
 
 msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
-msgstr ""
+msgstr "Waipu.tv (Credenciales)"
 
 msgctxt "#30010"
 msgid "O2 TV"
-msgstr ""
+msgstr "O2 TV"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
@@ -141,20 +141,28 @@ msgstr "ID Dispositivo"
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr ""
+msgstr "Restablecer Inicio de Sesión"
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
-msgstr ""
+msgstr "Waipu.tv (Inicio de Sesión)"
 
 msgctxt "#30039"
 msgid "Go to:"
-msgstr ""
+msgstr "Ir a:"
 
 msgctxt "#30040"
 msgid "Login"
-msgstr ""
+msgstr "Inicio de sesión"
 
 msgctxt "#30041"
 msgid "Use Code:"
-msgstr ""
+msgstr "Usar Código:"
+
+#~ msgctxt "#30009"
+#~ msgid "Waipu.tv"
+#~ msgstr "Waipu.tv"
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV (beta)"
+#~ msgstr "O2 TV (beta)"
