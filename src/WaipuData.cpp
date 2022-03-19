@@ -401,9 +401,9 @@ bool WaipuData::DeviceLogin(const std::string& tenant)
   kodi::Log(ADDON_LOG_DEBUG, "Create Login Progress");
   kodi::gui::dialogs::CProgress *progress = new kodi::gui::dialogs::CProgress;
   progress->SetHeading("pvr.waipu - "+tenant+" Login");
-  progress->SetLine(1, "1) "+kodi::addon::GetLocalizedString(30039)+" "+deviceCodeMap.find("verification_uri")->second);
-  progress->SetLine(2, "2) "+kodi::addon::GetLocalizedString(30040));
-  progress->SetLine(3, "3) "+kodi::addon::GetLocalizedString(30041)+" "+deviceCodeMap.find("user_code")->second);
+  progress->SetLine(1, "1) "+kodi::GetLocalizedString(30039)+" "+deviceCodeMap.find("verification_uri")->second);
+  progress->SetLine(2, "2) "+kodi::GetLocalizedString(30040));
+  progress->SetLine(3, "3) "+kodi::GetLocalizedString(30041)+" "+deviceCodeMap.find("user_code")->second);
   progress->SetCanCancel(true);
   progress->ShowProgressBar(true);
   progress->Open();
