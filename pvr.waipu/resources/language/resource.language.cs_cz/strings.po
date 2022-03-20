@@ -4,11 +4,16 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2022-03-06 18:03+0000\n"
+"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"Language-Team: Czech <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/cs_cz/>\n"
 "Language: cs_cz\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Weblate 4.11.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -20,7 +25,7 @@ msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "Obecné"
 
 msgctxt "#30002"
 msgid "Mail"
@@ -28,7 +33,7 @@ msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "Heslo"
 
 msgctxt "#30004"
 msgid "Protocol"
@@ -36,7 +41,7 @@ msgstr ""
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr ""
+msgstr "Streamování"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
@@ -51,11 +56,11 @@ msgid "Provider"
 msgstr ""
 
 msgctxt "#30009"
-msgid "Waipu.tv"
+msgid "Waipu.tv (Credentials)"
 msgstr ""
 
 msgctxt "#30010"
-msgid "O2 TV (beta)"
+msgid "O2 TV"
 msgstr ""
 
 msgctxt "#30011"
@@ -128,8 +133,28 @@ msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "Různé"
 
 msgctxt "#30036"
 msgid "Device ID"
+msgstr "Identif. zařízení"
+
+msgctxt "#30037"
+msgid "Reset Login"
+msgstr ""
+
+msgctxt "#30038"
+msgid "Waipu.tv (Device Login)"
+msgstr ""
+
+msgctxt "#30039"
+msgid "Go to:"
+msgstr ""
+
+msgctxt "#30040"
+msgid "Login"
+msgstr ""
+
+msgctxt "#30041"
+msgid "Use Code:"
 msgstr ""
