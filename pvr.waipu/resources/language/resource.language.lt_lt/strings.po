@@ -4,11 +4,16 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
+"Report-Msgid-Bugs-To: translations@kodi.tv\n"
+"PO-Revision-Date: 2022-03-27 01:17+0000\n"
+"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"Language-Team: Lithuanian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/lt_lt/>\n"
 "Language: lt_lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n % 10 == 1 && (n % 100 < 11 || n % 100 > 19)) ? 0 : ((n % 10 >= 2 && n % 10 <= 9 && (n % 100 < 11 || n % 100 > 19)) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Weblate 4.11.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -20,7 +25,7 @@ msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr ""
+msgstr "Pagrindinis"
 
 msgctxt "#30002"
 msgid "Mail"
@@ -28,7 +33,7 @@ msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr ""
+msgstr "Slaptažodis"
 
 msgctxt "#30004"
 msgid "Protocol"
