@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2022-03-27 01:17+0000\n"
+"PO-Revision-Date: 2022-04-09 10:15+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Lithuanian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/lt_lt/>\n"
 "Language: lt_lt\n"
@@ -41,7 +41,7 @@ msgstr ""
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr ""
+msgstr "Transliuojama"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
@@ -133,11 +133,11 @@ msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr ""
+msgstr "Įvairūs"
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr ""
+msgstr "Įrenginio ID"
 
 msgctxt "#30037"
 msgid "Reset Login"
@@ -153,7 +153,7 @@ msgstr ""
 
 msgctxt "#30040"
 msgid "Login"
-msgstr ""
+msgstr "Prisijungimo vardas"
 
 msgctxt "#30041"
 msgid "Use Code:"
