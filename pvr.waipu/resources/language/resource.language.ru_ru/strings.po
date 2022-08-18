@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2022-03-06 18:03+0000\n"
+"PO-Revision-Date: 2022-04-09 10:15+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Russian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ru_ru/>\n"
 "Language: ru_ru\n"
@@ -153,7 +153,7 @@ msgstr ""
 
 msgctxt "#30040"
 msgid "Login"
-msgstr ""
+msgstr "Логин"
 
 msgctxt "#30041"
 msgid "Use Code:"
