@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="19.2.1"
+  version="19.3.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -25,11 +25,8 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+- 19.3.0 Update translations; Implement EPG Tag preview images
 - 19.2.1 Update translations from weblate; Update eit Categories
-- 19.2.0
-  - Implement OAuth device login
-  - Translations updates from Weblate
-- 19.1.1 Fix error in O2 login
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
