@@ -1146,7 +1146,13 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
         kodi::Log(ADDON_LOG_DEBUG, "[epg] description: %s;", epgData["description"].GetString());
       }
 
-      // tag.SetIconPath(myTag.strIconPath);
+      // epg preview image
+      if(epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() && epgData["previewImages"].Size() > 0){
+          std::string tmp_img = epgData["previewImages"][0].GetString();
+          tmp_img += "?width=480&height=270";
+          tag.SetIconPath(tmp_img);
+          kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
+      }
 
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
