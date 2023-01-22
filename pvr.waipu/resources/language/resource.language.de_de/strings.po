@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2022-03-19 06:52+0000\n"
+"PO-Revision-Date: 2022-08-27 23:45+0000\n"
 "Last-Translator: Kai Sommerfeld <kai.sommerfeld@gmx.com>\n"
 "Language-Team: German <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/de_de/>\n"
 "Language: de_de\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.11.2\n"
+"X-Generator: Weblate 4.14\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -49,7 +49,7 @@ msgstr "InputStream Helper-Informationen"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr "Widevine CDM Bibliothek (erneut) installieren..."
+msgstr "Widevine CDM-Bibliothek (erneut) installieren ..."
 
 msgctxt "#30008"
 msgid "Provider"
@@ -65,11 +65,11 @@ msgstr "O2 TV"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr "Streaming Protokoll"
+msgstr "Streamingprotokoll"
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr "Video Auflösung"
+msgstr "Videoauflösung"
 
 msgctxt "#30013"
 msgid "Audio Codecs"
@@ -113,7 +113,7 @@ msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr "Fehler: Login nicht möglich. Ungültiger Account!"
+msgstr "Fehler: Anmeldung nicht möglich. Zugangsdaten überprüfen!"
 
 msgctxt "#30031"
 msgid "No network connection"
@@ -141,7 +141,7 @@ msgstr "Device ID"
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr "Login zurücksetzen"
+msgstr "Anmeldedaten zurücksetzen"
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
