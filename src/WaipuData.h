@@ -20,15 +20,15 @@
  *
  */
 
-#include "categories.h"
 #include "Curl.h"
 #include "HLSAllowlist.h"
-#include "kodi/addon-instance/PVR.h"
-#include "kodi/Network.h"
 #include "JWT.h"
+#include "categories.h"
+#include "kodi/Network.h"
+#include "kodi/addon-instance/PVR.h"
 
-#include <mutex>
 #include <map>
+#include <mutex>
 #include <vector>
 
 // User Agent for HTTP Requests
@@ -107,7 +107,6 @@ public:
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
-
   struct WaipuChannel
   {
     int iUniqueId;
@@ -158,23 +157,38 @@ private:
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
 
-  std::string GetChannelStreamURL(int uniqueId, const std::string& protocol, const std::string& startTime);
+  std::string GetChannelStreamURL(int uniqueId,
+                                  const std::string& protocol,
+                                  const std::string& startTime);
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
   std::string GetLicense();
-  const std::map<std::string,std::string> GetOAuthDeviceCode(const std::string& tenant);
-  const std::map<std::string,std::string> CheckOAuthState(const std::string& device_code);
+  const std::map<std::string, std::string> GetOAuthDeviceCode(const std::string& tenant);
+  const std::map<std::string, std::string> CheckOAuthState(const std::string& device_code);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
-                           bool realtime, bool playTimeshiftBuffer, const std::string& protocol);
+                           bool realtime,
+                           bool playTimeshiftBuffer,
+                           const std::string& protocol);
 
-  std::string HttpGet(const std::string& url, const std::map<std::string,std::string>& headers = {});
-  std::string HttpDelete(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpPost(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpRequestToCurl(
-      Curl& curl, const std::string& action, const std::string& url, const std::string& postData, int& statusCode);
+  std::string HttpGet(const std::string& url,
+                      const std::map<std::string, std::string>& headers = {});
+  std::string HttpDelete(const std::string& url,
+                         const std::string& postData,
+                         const std::map<std::string, std::string>& headers = {});
+  std::string HttpPost(const std::string& url,
+                       const std::string& postData,
+                       const std::map<std::string, std::string>& headers = {});
+  std::string HttpRequest(const std::string& action,
+                          const std::string& url,
+                          const std::string& postData,
+                          const std::map<std::string, std::string>& headers = {});
+  std::string HttpRequestToCurl(Curl& curl,
+                                const std::string& action,
+                                const std::string& url,
+                                const std::string& postData,
+                                int& statusCode);
   bool ApiLogin();
   bool WaipuLogin();
   bool DeviceLogin(const std::string& tenant);
