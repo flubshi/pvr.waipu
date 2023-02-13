@@ -20,11 +20,9 @@
  *
  */
 
-
 #include "rapidjson/document.h"
 
 #include <string>
-
 
 class JWT
 {
@@ -34,9 +32,9 @@ public:
 
   bool isExpired(int offset = 0) const;
 
-  std::string getToken(){ return strToken; };
-  int getExp(){ return exp; };
-  bool isInitialized(){ return initialized; };
+  std::string getToken() { return strToken; };
+  int getExp() { return exp; };
+  bool isInitialized() { return initialized; };
   rapidjson::Document parsedToken; // bad, I know..
 
 private:
