@@ -123,7 +123,8 @@ void WaipuData::LoginThread()
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-    if (m_nextLoginAttempt > std::time(0) || m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
+    if (m_nextLoginAttempt > std::time(0) ||
+        m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
       continue;
 
     if (m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
@@ -154,7 +155,8 @@ void WaipuData::LoginThread()
       // login okay, reset counter
       m_login_failed_counter = 0;
 
-      kodi::addon::CInstancePVRClient::ConnectionStateChange("Connected", PVR_CONNECTION_STATE_CONNECTED, "");
+      kodi::addon::CInstancePVRClient::ConnectionStateChange("Connected",
+                                                             PVR_CONNECTION_STATE_CONNECTED, "");
       m_nextLoginAttempt = std::time(0) + 60;
 
       if (previousStatus != m_login_status)
@@ -167,7 +169,8 @@ void WaipuData::LoginThread()
       continue;
     }
 
-    kodi::addon::CInstancePVRClient::ConnectionStateChange("Connecting", PVR_CONNECTION_STATE_CONNECTING, "");
+    kodi::addon::CInstancePVRClient::ConnectionStateChange("Connecting",
+                                                           PVR_CONNECTION_STATE_CONNECTING, "");
 
     if (m_login_status == WAIPU_LOGIN_STATUS::NO_NETWORK)
       continue;
@@ -1428,156 +1431,117 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
 
   m_active_recordings_update = true;
 
-  std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
-                                       {{"Accept", "application/vnd.waipu.recordings-v2+json"}});
-  kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", jsonRecordings.c_str());
-
-  jsonRecordings = "{\"result\": " + jsonRecordings + "}";
-
-  rapidjson::Document recordingsDoc;
-  recordingsDoc.Parse(jsonRecordings.c_str());
-  if (recordingsDoc.GetParseError())
   {
-    kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
+    std::string json = HttpGet("https://recording.waipu.tv/api/recordings",
+                               {{"Accept", "application/vnd.waipu.recordings-v2+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+
+    rapidjson::Document doc;
+    doc.Parse(json.c_str());
+    if (doc.HasParseError())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
+      return PVR_ERROR_SERVER_ERROR;
+    }
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.Size());
+
+    int recordings_count = 0;
+
+    for (const auto& recording : doc.GetArray())
+    {
+      // skip not FINISHED entries
+      std::string status = recording["status"].GetString();
+      if (status != "FINISHED")
+        continue;
+
+      kodi::addon::PVRRecording tag;
+
+      tag.SetIsDeleted(false);
+      tag.SetRecordingId(recording["id"].GetString());
+      tag.SetPlayCount(recording.HasMember("watched") && recording["watched"].GetBool());
+
+      const rapidjson::Value& epgData = recording["epgData"];
+
+      const std::string rec_title = epgData["title"].GetString();
+      tag.SetTitle(rec_title);
+      tag.SetDirectory(rec_title);
+
+      if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() &&
+          epgData["previewImages"].Size() > 0)
+      {
+        std::string rec_img =
+            std::string(epgData["previewImages"][0].GetString()) + "?width=256&height=256";
+        tag.SetIconPath(rec_img);
+        tag.SetThumbnailPath(rec_img);
+      }
+
+      if (epgData.HasMember("duration") && !epgData["duration"].IsNull())
+        tag.SetDuration(Utils::StringToInt(epgData["duration"].GetString(), 0) * 60);
+
+      if (epgData.HasMember("season") && !epgData["season"].IsNull())
+        tag.SetSeriesNumber(Utils::StringToInt(epgData["season"].GetString(),
+                                               PVR_RECORDING_INVALID_SERIES_EPISODE));
+
+      if (epgData.HasMember("episode") && !epgData["episode"].IsNull())
+        tag.SetEpisodeNumber(Utils::StringToInt(epgData["episode"].GetString(),
+                                                PVR_RECORDING_INVALID_SERIES_EPISODE));
+
+      if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
+        tag.SetEpisodeName(epgData["episodeTitle"].GetString());
+
+      if (epgData.HasMember("year") && !epgData["year"].IsNull())
+        tag.SetYear(Utils::StringToInt(epgData["year"].GetString(), 1970));
+
+      if (recording.HasMember("startTime") && !recording["startTime"].IsNull())
+        tag.SetRecordingTime(Utils::StringToTime(recording["startTime"].GetString()));
+
+      if (epgData.HasMember("description") && !epgData["description"].IsNull())
+        tag.SetPlot(epgData["description"].GetString());
+
+      if (epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull())
+      {
+        std::string genreStr = epgData["genreDisplayName"].GetString();
+        int genre = m_categories.Category(genreStr);
+        if (genre)
+        {
+          tag.SetGenreSubType(genre & 0x0F);
+          tag.SetGenreType(genre & 0xF0);
+        }
+        else
+        {
+          tag.SetGenreType(EPG_GENRE_USE_STRING);
+          tag.SetGenreSubType(0); /* not supported */
+          tag.SetGenreDescription(genreStr);
+        }
+      }
+
+      // epg mapping
+      if (epgData.HasMember("id") && !epgData["id"].IsNull())
+      {
+        std::string epg_id = epgData["id"].GetString();
+        int dirtyID = Utils::GetIDDirty(epg_id);
+        tag.SetEPGEventId(dirtyID);
+      }
+
+      recordings_count++;
+      results.Add(tag);
+    }
+    m_recordings_count = recordings_count;
   }
-  kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
 
-  kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", recordingsDoc["result"].Size());
-
-  int recordings_count = 0;
-
-  for (const auto& recording : recordingsDoc["result"].GetArray())
   {
-    // skip not FINISHED entries
-    std::string status = recording["status"].GetString();
-    if (status != "FINISHED")
-      continue;
-
-    // new tag
-    kodi::addon::PVRRecording tag;
-
-    tag.SetIsDeleted(false);
-
-    // set recording id
-    std::string rec_id = recording["id"].GetString();
-    tag.SetRecordingId(rec_id);
-
-    // playcount
-    if (recording.HasMember("watched") && recording["watched"].GetBool())
+    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/summary",
+                               {{"Accept", "application/vnd.waipu.recording-summary-v2+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings summary] %s", json.c_str());
+    rapidjson::Document doc;
+    doc.Parse(json.c_str());
+    if (!doc.HasParseError() && doc.HasMember("finishedRecordingsSeconds"))
     {
-      tag.SetPlayCount(1);
+      m_finishedRecordingsSeconds = doc["finishedRecordingsSeconds"].GetInt();
     }
-    else
-    {
-      tag.SetPlayCount(0);
-    }
-
-    const rapidjson::Value& epgData = recording["epgData"];
-
-    // set recording title
-    const std::string rec_title = epgData["title"].GetString();
-    tag.SetTitle(rec_title);
-    // set folder; test
-    tag.SetDirectory(rec_title);
-
-    // set image
-    if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() &&
-        epgData["previewImages"].Size() > 0)
-    {
-      std::string rec_img = epgData["previewImages"][0].GetString();
-      rec_img = rec_img + "?width=256&height=256";
-      tag.SetIconPath(rec_img);
-      tag.SetThumbnailPath(rec_img);
-    }
-
-    // duration
-    if (epgData.HasMember("duration") && !epgData["duration"].IsNull())
-    {
-      const std::string rec_dur = epgData["duration"].GetString();
-      tag.SetDuration(Utils::StringToInt(rec_dur, 0) * 60);
-    }
-
-    // iSeriesNumber
-    if (epgData.HasMember("season") && !epgData["season"].IsNull())
-    {
-      tag.SetSeriesNumber(
-          Utils::StringToInt(epgData["season"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
-    }
-    else
-    {
-      tag.SetSeriesNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
-    }
-
-    // episodeNumber
-    if (epgData.HasMember("episode") && !epgData["episode"].IsNull())
-    {
-      tag.SetEpisodeNumber(
-          Utils::StringToInt(epgData["episode"].GetString(), PVR_RECORDING_INVALID_SERIES_EPISODE));
-    }
-    else
-    {
-      tag.SetEpisodeNumber(PVR_RECORDING_INVALID_SERIES_EPISODE);
-    }
-
-    // episodeName
-    if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
-    {
-      std::string rec_episodename = epgData["episodeTitle"].GetString();
-      tag.SetEpisodeName(rec_episodename);
-    }
-
-    // year
-    if (epgData.HasMember("year") && !epgData["year"].IsNull())
-    {
-      const std::string rec_year = epgData["year"].GetString();
-      tag.SetYear(Utils::StringToInt(rec_year, 1970));
-    }
-
-    // get recording time
-    if (recording.HasMember("startTime") && !recording["startTime"].IsNull())
-    {
-      const std::string recordingTime = recording["startTime"].GetString();
-      tag.SetRecordingTime(Utils::StringToTime(recordingTime));
-    }
-
-    // get plot
-    if (epgData.HasMember("description") && !epgData["description"].IsNull())
-    {
-      const std::string rec_plot = epgData["description"].GetString();
-      tag.SetPlot(rec_plot);
-    }
-
-    // genre
-    if (epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull())
-    {
-      std::string genreStr = epgData["genreDisplayName"].GetString();
-      int genre = m_categories.Category(genreStr);
-      if (genre)
-      {
-        tag.SetGenreSubType(genre & 0x0F);
-        tag.SetGenreType(genre & 0xF0);
-      }
-      else
-      {
-        tag.SetGenreType(EPG_GENRE_USE_STRING);
-        tag.SetGenreSubType(0); /* not supported */
-        tag.SetGenreDescription(genreStr);
-      }
-    }
-
-    // epg mapping
-    if (epgData.HasMember("id") && !epgData["id"].IsNull())
-    {
-      std::string epg_id = epgData["id"].GetString();
-      int dirtyID = Utils::GetIDDirty(epg_id);
-      tag.SetEPGEventId(dirtyID);
-    }
-
-    ++recordings_count;
-    results.Add(tag);
   }
-  m_recordings_count = recordings_count;
+
   m_active_recordings_update = false;
 
   return PVR_ERROR_NO_ERROR;
@@ -1851,7 +1815,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
     std::string deleted =
         HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
-                    {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+                   {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
@@ -1863,14 +1827,14 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     // delete record series
     int groupID = timer.GetClientIndex();
     std::string request_data = "{\"serialRecordings\":[{\"id\":" + std::to_string(groupID) +
-                                ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":"
-                                "false,\"deleteRunningRecordingss\":false}]}";
+                               ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":"
+                               "false,\"deleteRunningRecordingss\":false}]}";
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID,
               request_data.c_str());
-    std::string deleted = HttpPost(
-        "https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),
-        {{"Content-Type",
-          "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
+    std::string deleted =
+        HttpPost("https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),
+                 {{"Content-Type",
+                   "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Deleted");
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
@@ -1959,16 +1923,19 @@ ADDON_STATUS WaipuData::Create()
   m_loginThreadRunning = true;
   m_loginThread = std::thread([&] { LoginThread(); });
 
-  kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing", PVR_CONNECTION_STATE_CONNECTING, "");
+  kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing",
+                                                         PVR_CONNECTION_STATE_CONNECTING, "");
 
   return ADDON_STATUS_OK;
 }
 
 PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
 {
-  ApiLogin();
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   total = m_account_hours_recording * 1024 * 1024;
-  used = 0;
+  used = m_finishedRecordingsSeconds > 0 ? m_finishedRecordingsSeconds * 1024 * 1024 / 3600 : 0;
   return PVR_ERROR_NO_ERROR;
 }
 
