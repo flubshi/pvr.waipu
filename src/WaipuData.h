@@ -30,6 +30,7 @@
 #include <map>
 #include <mutex>
 #include <vector>
+#include <thread>
 
 // User Agent for HTTP Requests
 static std::string WAIPU_USER_AGENT = "Kodi/pvr.waipu - UA will be initialized on start";
@@ -60,6 +61,8 @@ public:
   WaipuData() = default;
   WaipuData(const WaipuData&) = delete;
   WaipuData(WaipuData&&) = delete;
+  ~WaipuData();
+
   WaipuData& operator=(const WaipuData&) = delete;
   WaipuData& operator=(WaipuData&&) = delete;
 
@@ -107,6 +110,12 @@ public:
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
+  bool m_isConnected = false;
+  std::atomic<bool> m_loginThreadRunning = {false};
+  std::thread m_loginThread;
+  void LoginThread();
+  int m_nextLoginAttempt = 0;
+
   struct WaipuChannel
   {
     int iUniqueId;
