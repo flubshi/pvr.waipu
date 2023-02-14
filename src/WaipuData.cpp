@@ -111,58 +111,70 @@ std::string WaipuData::HttpRequestToCurl(Curl& curl,
 // returns true if m_apiToken contains valid session
 bool WaipuData::ApiLogin()
 {
-  if (m_login_failed_counter > WAIPU_LOGIN_FAILED_LOCK_LIMIT)
+  return m_login_status == WAIPU_LOGIN_STATUS::OK;
+}
+
+void WaipuData::LoginThread()
+{
+  while (true)
   {
-    // more than x consecutive failed login attempts
-    // check time limit
-    time_t currTime;
-    time(&currTime);
-    if (m_login_failed_locktime + 3 * 60 < currTime)
+    if (!m_loginThreadRunning)
+      return;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    if (m_nextLoginAttempt > std::time(0) || m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
+      continue;
+
+    if (m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
     {
       kodi::Log(ADDON_LOG_ERROR, "[API LOGIN] Reset login lock due to timer");
       m_login_failed_counter = 0;
     }
+
+    auto previousStatus = m_login_status;
+    bool login_result;
+    if (m_provider == WAIPU_PROVIDER_WAIPU)
+    {
+      login_result = WaipuLogin();
+    }
+    else if (m_provider == WAIPU_PROVIDER_O2)
+    {
+      login_result = DeviceLogin("o2");
+    }
     else
     {
-      // block login attempt
-      kodi::Log(ADDON_LOG_ERROR, "[API LOGIN] Locked due to invalid attempts");
-      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
-      return false;
+      // waipu oauth device workflow
+      login_result = DeviceLogin("waipu");
     }
-  }
 
-  bool login_result;
-  if (m_provider == WAIPU_PROVIDER_WAIPU)
-  {
-    login_result = WaipuLogin();
-  }
-  else if (m_provider == WAIPU_PROVIDER_O2)
-  {
-    login_result = DeviceLogin("o2");
-  }
-  else
-  {
-    // waipu oauth device workflow
-    login_result = DeviceLogin("waipu");
-  }
-  if (login_result)
-  {
-    // login okay, reset counter
-    m_login_failed_counter = 0;
-  }
-  else if (m_login_status != WAIPU_LOGIN_STATUS::NO_NETWORK)
-  {
-    if (m_login_failed_counter == WAIPU_LOGIN_FAILED_LOCK_LIMIT)
+    m_nextLoginAttempt = std::time(0) + 1;
+    if (login_result)
     {
-      time_t currTime;
-      time(&currTime);
-      m_login_failed_locktime = currTime;
-    }
-    // login failed, increase counter
-    m_login_failed_counter = m_login_failed_counter + 1;
-  }
+      // login okay, reset counter
+      m_login_failed_counter = 0;
 
-  return login_result;
+      kodi::addon::CInstancePVRClient::ConnectionStateChange("Connected", PVR_CONNECTION_STATE_CONNECTED, "");
+      m_nextLoginAttempt = std::time(0) + 60;
+
+      if (previousStatus != m_login_status)
+      {
+        kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+      }
+
+      continue;
+    }
+
+    kodi::addon::CInstancePVRClient::ConnectionStateChange("Connecting", PVR_CONNECTION_STATE_CONNECTING, "");
+
+    if (m_login_status == WAIPU_LOGIN_STATUS::NO_NETWORK)
+      continue;
+
+    if (++m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
+      m_nextLoginAttempt = std::time(0) + 180;
+  }
 }
 
 bool WaipuData::ParseAccessToken()
@@ -400,7 +412,6 @@ bool WaipuData::DeviceLogin(const std::string& tenant)
   time(&currTime);
   kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", currTime);
   kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
-  std::lock_guard<std::mutex> lock(mutex);
   if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
   {
     // API token exists and is valid, more than x in future
@@ -475,7 +486,6 @@ bool WaipuData::WaipuLogin()
   time(&currTime);
   kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", currTime);
   kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
-  std::lock_guard<std::mutex> lock(mutex);
   if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
   {
     // API token exists and is valid, more than x in future
@@ -572,29 +582,6 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] unknown error :(");
   return false;
-}
-
-ADDON_STATUS WaipuData::Create()
-{
-  kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
-
-  // set User-Agent
-  std::string ua = kodi::network::GetUserAgent();
-  // use our replace, since kodi utils replaces all occurrences
-  WAIPU_USER_AGENT =
-      Utils::Replace(ua, " ", std::string(" pvr.waipu/").append(STR(IPTV_VERSION)).append(" "));
-
-  ReadSettings();
-
-  if (m_provider == WAIPU_PROVIDER_WAIPU && (m_username.empty() || m_password.empty()))
-  {
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30033));
-    return ADDON_STATUS_NEED_SETTINGS;
-  }
-  kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
-  kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-  return ADDON_STATUS_OK;
 }
 
 void WaipuData::ReadSettings()
@@ -932,6 +919,9 @@ bool WaipuData::LoadChannelData()
 
 PVR_ERROR WaipuData::GetChannelsAmount(int& amount)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   LoadChannelData();
 
@@ -941,6 +931,9 @@ PVR_ERROR WaipuData::GetChannelsAmount(int& amount)
 
 PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   LoadChannelData();
 
@@ -1056,6 +1049,9 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
 
 PVR_ERROR WaipuData::GetChannelGroupsAmount(int& amount)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   LoadChannelData();
   amount = static_cast<int>(m_channelGroups.size());
   return PVR_ERROR_NO_ERROR;
@@ -1063,6 +1059,9 @@ PVR_ERROR WaipuData::GetChannelGroupsAmount(int& amount)
 
 PVR_ERROR WaipuData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsResultSet& results)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   LoadChannelData();
   std::vector<WaipuChannelGroup>::iterator it;
   for (it = m_channelGroups.begin(); it != m_channelGroups.end(); ++it)
@@ -1109,9 +1108,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
                                       kodi::addon::PVREPGTagsResultSet& results)
 {
   if (!ApiLogin())
-  {
     return PVR_ERROR_SERVER_ERROR;
-  }
+
   LoadChannelData();
 
   for (const auto& channel : m_channels)
@@ -1416,6 +1414,9 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
 
 PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   amount = m_recordings_count;
   return PVR_ERROR_NO_ERROR;
 }
@@ -1423,9 +1424,8 @@ PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
   if (!ApiLogin())
-  {
     return PVR_ERROR_SERVER_ERROR;
-  }
+
   m_active_recordings_update = true;
 
   std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
@@ -1686,6 +1686,9 @@ PVR_ERROR WaipuData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types
 
 PVR_ERROR WaipuData::GetTimersAmount(int& amount)
 {
+  if (!ApiLogin())
+    return PVR_ERROR_SERVER_ERROR;
+
   amount = m_timers_count;
   return PVR_ERROR_NO_ERROR;
 }
@@ -1693,9 +1696,8 @@ PVR_ERROR WaipuData::GetTimersAmount(int& amount)
 PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
   if (!ApiLogin())
-  {
     return PVR_ERROR_SERVER_ERROR;
-  }
+
   LoadChannelData();
 
   std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
@@ -1837,45 +1839,44 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
 PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
 {
-  if (ApiLogin())
+  if (!ApiLogin())
+    return PVR_ERROR_FAILED;
+
+  LoadChannelData();
+  if (timer.GetTimerType() == 1)
   {
-    LoadChannelData();
-    if (timer.GetTimerType() == 1)
-    {
-      // single tag
-      int timer_id = timer.GetClientIndex();
-      std::string request_data = "{\"ids\":[\"" + std::to_string(timer_id) + "\"]}";
-      kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
-      std::string deleted =
-          HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
-                     {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
-      kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
-      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-      return PVR_ERROR_NO_ERROR;
-    }
-    else
-    {
-      // delete record series
-      int groupID = timer.GetClientIndex();
-      std::string request_data = "{\"serialRecordings\":[{\"id\":" + std::to_string(groupID) +
-                                 ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":"
-                                 "false,\"deleteRunningRecordingss\":false}]}";
-      kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID,
-                request_data.c_str());
-      std::string deleted = HttpPost(
-          "https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),
-          {{"Content-Type",
-            "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
-      kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Deleted");
-      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-      return PVR_ERROR_NO_ERROR;
-    }
+    // single tag
+    int timer_id = timer.GetClientIndex();
+    std::string request_data = "{\"ids\":[\"" + std::to_string(timer_id) + "\"]}";
+    kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
+    std::string deleted =
+        HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
+                    {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
+    kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
+    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+    kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+    return PVR_ERROR_NO_ERROR;
   }
-  return PVR_ERROR_FAILED;
+  else
+  {
+    // delete record series
+    int groupID = timer.GetClientIndex();
+    std::string request_data = "{\"serialRecordings\":[{\"id\":" + std::to_string(groupID) +
+                                ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":"
+                                "false,\"deleteRunningRecordingss\":false}]}";
+    kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID,
+              request_data.c_str());
+    std::string deleted = HttpPost(
+        "https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),
+        {{"Content-Type",
+          "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
+    kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Deleted");
+    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+    kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+    return PVR_ERROR_NO_ERROR;
+  }
 }
 
 PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
@@ -1928,6 +1929,39 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
     }
   }
   return PVR_ERROR_FAILED;
+}
+
+WaipuData::~WaipuData()
+{
+  m_loginThreadRunning = false;
+  if (m_loginThread.joinable())
+    m_loginThread.join();
+}
+
+ADDON_STATUS WaipuData::Create()
+{
+  kodi::Log(ADDON_LOG_DEBUG, "%s - Creating the waipu.tv PVR add-on", __FUNCTION__);
+
+  // set User-Agent
+  std::string ua = kodi::network::GetUserAgent();
+  // use our replace, since kodi utils replaces all occurrences
+  WAIPU_USER_AGENT =
+      Utils::Replace(ua, " ", std::string(" pvr.waipu/").append(STR(IPTV_VERSION)).append(" "));
+
+  ReadSettings();
+
+  if (m_provider == WAIPU_PROVIDER_WAIPU && (m_username.empty() || m_password.empty()))
+  {
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30033));
+    return ADDON_STATUS_NEED_SETTINGS;
+  }
+
+  m_loginThreadRunning = true;
+  m_loginThread = std::thread([&] { LoginThread(); });
+
+  kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing", PVR_CONNECTION_STATE_CONNECTING, "");
+
+  return ADDON_STATUS_OK;
 }
 
 PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
