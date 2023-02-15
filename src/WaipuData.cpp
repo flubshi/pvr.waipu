@@ -109,9 +109,50 @@ std::string WaipuData::HttpRequestToCurl(Curl& curl,
 // END CURL helpers from zattoo addon
 
 // returns true if m_apiToken contains valid session
-bool WaipuData::ApiLogin()
+bool WaipuData::IsConnected()
 {
   return m_login_status == WAIPU_LOGIN_STATUS::OK;
+}
+
+WAIPU_LOGIN_STATUS WaipuData::Login()
+{
+  kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", std::time(0));
+  kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
+  if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
+  {
+    // API token exists and is valid, more than x in future
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] old token still valid");
+    return WAIPU_LOGIN_STATUS::OK;
+  }
+
+  if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
+  {
+    // Since the refresh token is valid for a long time, we do not check expiration for now
+    // refresh API token
+    std::string req = "refresh_token=" + Utils::UrlEncode(m_refreshToken.getToken()) +
+                      "&grant_type=refresh_token" + "&waipu_device_id=" + m_device_id;
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", req.c_str());
+    return OAuthRequest(req);
+  }
+
+  if (m_provider == WAIPU_PROVIDER_WAIPU)
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] WAIPU.TV LOGIN...");
+
+    // get API by login user/pw
+    std::string req = "username=" + Utils::UrlEncode(m_username) +
+                      "&password=" + Utils::UrlEncode(m_password) + "&grant_type=password" +
+                      "&waipu_device_id=" + m_device_id;
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw)");
+    return OAuthRequest(req);
+  }
+  else if (m_provider == WAIPU_PROVIDER_O2)
+  {
+    return DeviceLogin("o2");
+  }
+
+  // waipu oauth device workflow
+  return DeviceLogin("waipu");
 }
 
 void WaipuData::LoginThread()
@@ -134,23 +175,10 @@ void WaipuData::LoginThread()
     }
 
     auto previousStatus = m_login_status;
-    bool login_result;
-    if (m_provider == WAIPU_PROVIDER_WAIPU)
-    {
-      login_result = WaipuLogin();
-    }
-    else if (m_provider == WAIPU_PROVIDER_O2)
-    {
-      login_result = DeviceLogin("o2");
-    }
-    else
-    {
-      // waipu oauth device workflow
-      login_result = DeviceLogin("waipu");
-    }
+    m_login_status = Login();
 
     m_nextLoginAttempt = std::time(0) + 1;
-    if (login_result)
+    if (m_login_status == WAIPU_LOGIN_STATUS::OK)
     {
       // login okay, reset counter
       m_login_failed_counter = 0;
@@ -327,7 +355,7 @@ const std::map<std::string, std::string> WaipuData::CheckOAuthState(const std::s
   return result;
 }
 
-bool WaipuData::OAuthRequest(const std::string& postData)
+WAIPU_LOGIN_STATUS WaipuData::OAuthRequest(const std::string& postData)
 {
   kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] Body: %s;", postData.c_str());
   std::string jsonString;
@@ -343,12 +371,11 @@ bool WaipuData::OAuthRequest(const std::string& postData)
   kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] Login-response: (HTTP %i) %s;", statusCode,
             jsonString.c_str());
 
-  if (jsonString.empty() && statusCode == -1)
+  if (statusCode == -1)
   {
     // no network connection?
-    m_login_status = WAIPU_LOGIN_STATUS::NO_NETWORK;
     kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] no network connection");
-    return false;
+    return WAIPU_LOGIN_STATUS::NO_NETWORK;
   }
   else if (statusCode == 401)
   {
@@ -356,88 +383,62 @@ bool WaipuData::OAuthRequest(const std::string& postData)
     {
       // we used invalid refresh token, delete it
       m_refreshToken = JWT();
-      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
-      return false;
+      return WAIPU_LOGIN_STATUS::UNKNOWN;
     }
     // invalid credentials
-    m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
-    return false;
+    return WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
   }
 
-  if (!jsonString.empty())
-  {
-    rapidjson::Document doc;
-    doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] ERROR: error while parsing json");
-      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
-      return false;
-    }
+  if (jsonString.empty())
+    return WAIPU_LOGIN_STATUS::UNKNOWN;
 
-    if (doc.HasMember("error") && doc["error"] == "invalid_request")
+  rapidjson::Document doc;
+  doc.Parse(jsonString.c_str());
+  if (doc.HasParseError())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] ERROR: error while parsing json");
+    return WAIPU_LOGIN_STATUS::UNKNOWN;
+  }
+
+  if (doc.HasMember("error"))
+  {
+    if (doc["error"] == "invalid_request")
     {
       kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] ERROR: invalid credentials?");
-      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
-      return false;
-    }
-    else if (doc.HasMember("error"))
-    {
-      // unhandled error -> handle if known
-      std::string err = doc["error"].GetString();
-      kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] ERROR: (%s)", err.c_str());
-      m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
-      return false;
+      return WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
     }
 
-    m_accessToken = JWT(doc["access_token"].GetString());
-    kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] accessToken: %s;", m_accessToken.getToken().c_str());
-    std::string refresh_token = doc["refresh_token"].GetString();
-    if (!refresh_token.empty())
-    {
-      m_refreshToken = JWT(refresh_token);
-      kodi::addon::SetSettingString("refresh_token", refresh_token);
-      kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] refreshToken: %s;", refresh_token.c_str());
-    }
-
-    return ParseAccessToken();
+    // unhandled error -> handle if known
+    std::string err = doc["error"].GetString();
+    kodi::Log(ADDON_LOG_ERROR, "[OAuthRequest] ERROR: (%s)", err.c_str());
+    return WAIPU_LOGIN_STATUS::UNKNOWN;
   }
-  // no valid session?
-  m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
-  return false;
+
+  m_accessToken = JWT(doc["access_token"].GetString());
+  kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] accessToken: %s;", m_accessToken.getToken().c_str());
+  std::string refresh_token = doc["refresh_token"].GetString();
+  if (!refresh_token.empty())
+  {
+    m_refreshToken = JWT(refresh_token);
+    kodi::addon::SetSettingString("refresh_token", refresh_token);
+    kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] refreshToken: %s;", refresh_token.c_str());
+  }
+
+  return ParseAccessToken() ? WAIPU_LOGIN_STATUS::OK : WAIPU_LOGIN_STATUS::UNKNOWN;
 }
 
-bool WaipuData::DeviceLogin(const std::string& tenant)
+WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
 {
+  WAIPU_LOGIN_STATUS ret = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
+
   kodi::Log(ADDON_LOG_DEBUG, "[DeviceLogin] waipu.tv DeviceLogin, tenant '%s' ...", tenant.c_str());
-
-  time_t currTime;
-  time(&currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
-  if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
-  {
-    // API token exists and is valid, more than x in future
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] old token still valid");
-    return true;
-  }
-
-  if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
-  {
-    // Since the refresh token is valid for a long time, we do not check expiration for now
-    // refresh API token
-    std::string req = "refresh_token=" + Utils::UrlEncode(m_refreshToken.getToken()) +
-                      "&grant_type=refresh_token" + "&waipu_device_id=" + m_device_id;
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", req.c_str());
-    return OAuthRequest(req);
-  }
 
   const std::map<std::string, std::string> deviceCodeMap = GetOAuthDeviceCode(tenant);
   if (!deviceCodeMap.count("verification_uri") || !deviceCodeMap.count("user_code") ||
       !deviceCodeMap.count("device_code"))
   {
     kodi::Log(ADDON_LOG_DEBUG, "OAuth missing response");
-    return false;
+    return ret;
   }
   std::string code_req =
       "device_code=" + deviceCodeMap.find("device_code")->second +
@@ -456,11 +457,11 @@ bool WaipuData::DeviceLogin(const std::string& tenant)
   for (unsigned int i = 0; i < 100; i += 1)
   {
     progress->SetPercentage(i);
-    if (OAuthRequest(code_req))
+    if (OAuthRequest(code_req) == WAIPU_LOGIN_STATUS::OK)
     {
-      delete progress;
+      ret = WAIPU_LOGIN_STATUS::OK;
       kodi::Log(ADDON_LOG_DEBUG, "OAuth success!");
-      return true;
+      break;
     }
 
     kodi::Log(ADDON_LOG_DEBUG, "OAuth pending");
@@ -468,52 +469,17 @@ bool WaipuData::DeviceLogin(const std::string& tenant)
     if (progress->IsCanceled())
     {
       progress->Abort();
-      delete progress;
-      m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
+      ret = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
       kodi::Log(ADDON_LOG_DEBUG, "OAuth login canceled");
-      return false;
+      break;
     }
     std::this_thread::sleep_for(std::chrono::seconds(3));
   }
-  m_login_status = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
+
   progress->Abort();
   delete progress;
-  return false;
-}
 
-bool WaipuData::WaipuLogin()
-{
-  kodi::Log(ADDON_LOG_DEBUG, "[login check] WAIPU.TV LOGIN...");
-
-  time_t currTime;
-  time(&currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[token] current time %i", currTime);
-  kodi::Log(ADDON_LOG_DEBUG, "[token] expire  time %i", m_accessToken.getExp());
-  if (m_accessToken.isInitialized() && !m_accessToken.isExpired(20 * 60))
-  {
-    // API token exists and is valid, more than x in future
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] old token still valid");
-    return true;
-  }
-
-  if (m_refreshToken.isInitialized() && !m_refreshToken.isExpired())
-  {
-    // Since the refresh token is valid for a long time, we do not check expiration for now
-    // refresh API token
-    std::string req = "refresh_token=" + Utils::UrlEncode(m_refreshToken.getToken()) +
-                      "&grant_type=refresh_token" + "&waipu_device_id=" + m_device_id;
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", req.c_str());
-    return OAuthRequest(req);
-  }
-  else
-  {
-    // get API by login user/pw
-    std::string req = "username=" + Utils::UrlEncode(m_username) +
-                      "&password=" + Utils::UrlEncode(m_password) + "&grant_type=password" +
-                      "&waipu_device_id=" + m_device_id;
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw)");
-    return OAuthRequest(req);
-  }
+  return ret;
 }
 
 bool WaipuData::RefreshDeviceCapabiltiesToken()
@@ -698,8 +664,6 @@ PVR_ERROR WaipuData::GetBackendVersion(std::string& version)
 
 std::string WaipuData::GetLicense()
 {
-  // ensure that userHandle is valid
-  ApiLogin();
   return m_license;
 }
 
@@ -757,11 +721,10 @@ bool WaipuData::LoadChannelData()
   if (m_channels.size() > 0)
     return true;
 
-  if (!ApiLogin())
-  {
-    // no valid session
+  // no valid session
+  if (!IsConnected())
     return false;
-  }
+
   std::lock_guard<std::mutex> lock(mutex);
   kodi::Log(ADDON_LOG_DEBUG, "[load data] Get channels");
 
@@ -922,7 +885,7 @@ bool WaipuData::LoadChannelData()
 
 PVR_ERROR WaipuData::GetChannelsAmount(int& amount)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
@@ -934,7 +897,7 @@ PVR_ERROR WaipuData::GetChannelsAmount(int& amount)
 
 PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& results)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
@@ -998,19 +961,18 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
                                            const std::string& protocol,
                                            const std::string& startTime)
 {
+  if (!IsConnected())
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] No stream login");
+    return "";
+  }
+
   for (const auto& channel : m_channels)
   {
     if (channel.iUniqueId == uniqueId)
     {
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Get live URL for channel %s",
                 channel.strChannelName.c_str());
-
-      if (!ApiLogin())
-      {
-        // invalid
-        kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] No stream login");
-        return {};
-      }
 
       // ensure device token is fresh
       RefreshDeviceCapabiltiesToken();
@@ -1035,24 +997,24 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       if (streamURLDoc.GetParseError())
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
-        return {};
+        return "";
       }
 
       if (!streamURLDoc.HasMember("streamUrl"))
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
-        return {};
+        return "";
       }
 
       return streamURLDoc["streamUrl"].GetString();
     }
   }
-  return {};
+  return "";
 }
 
 PVR_ERROR WaipuData::GetChannelGroupsAmount(int& amount)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   LoadChannelData();
@@ -1062,7 +1024,7 @@ PVR_ERROR WaipuData::GetChannelGroupsAmount(int& amount)
 
 PVR_ERROR WaipuData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsResultSet& results)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   LoadChannelData();
@@ -1110,7 +1072,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
                                       time_t end,
                                       kodi::addon::PVREPGTagsResultSet& results)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   LoadChannelData();
@@ -1348,9 +1310,6 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
 
 std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol)
 {
-  ApiLogin();
-  LoadChannelData();
-
   for (const auto& channel : m_channels)
   {
     if (channel.iUniqueId == tag.GetUniqueChannelId())
@@ -1366,7 +1325,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
       if (jsonEpg.empty())
       {
         kodi::Log(ADDON_LOG_ERROR, "[epg-single-tag] empty server response");
-        return {};
+        return "";
       }
       jsonEpg = "{\"result\": " + jsonEpg + "}";
 
@@ -1398,7 +1357,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
         if (tagDoc.GetParseError())
         {
           kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
-          return {};
+          return "";
         }
         kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
         // check if streams there
@@ -1412,12 +1371,12 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
     }
   }
   kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] channel or tag not found!");
-  return {};
+  return "";
 }
 
 PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   amount = m_recordings_count;
@@ -1426,7 +1385,7 @@ PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   m_active_recordings_update = true;
@@ -1550,8 +1509,6 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
 std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recording,
                                        const std::string& protocol)
 {
-  ApiLogin();
-
   std::string recording_id = recording.GetRecordingId();
   kodi::Log(ADDON_LOG_DEBUG, "play recording -> %s", recording_id.c_str());
 
@@ -1563,14 +1520,14 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   if (recordingDoc.GetParseError())
   {
     kodi::Log(ADDON_LOG_ERROR, "[getRecordingURL] ERROR: error while parsing json");
-    return {};
+    return "";
   }
   kodi::Log(ADDON_LOG_DEBUG, "[recording] streams");
   // check if streams there
   if (!recordingDoc.HasMember("streamingDetails") ||
       !recordingDoc["streamingDetails"].HasMember("streams"))
   {
-    return {};
+    return "";
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;",
@@ -1589,24 +1546,23 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
       return href;
     }
   }
-  return {};
+  return "";
 }
 
 PVR_ERROR WaipuData::DeleteRecording(const kodi::addon::PVRRecording& recording)
 {
-  if (ApiLogin())
-  {
-    std::string recording_id = recording.GetRecordingId();
-    std::string request_data = "{\"ids\":[\"" + recording_id + "\"]}";
-    kodi::Log(ADDON_LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
-    std::string deleted =
-        HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
-                   {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
-    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-    return PVR_ERROR_NO_ERROR;
-  }
-  return PVR_ERROR_FAILED;
+  if (!IsConnected())
+    return PVR_ERROR_FAILED;
+
+  std::string recording_id = recording.GetRecordingId();
+  std::string request_data = "{\"ids\":[\"" + recording_id + "\"]}";
+  kodi::Log(ADDON_LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
+  std::string deleted =
+      HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
+                 {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+  kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
+  kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetRecordingStreamProperties(
@@ -1650,7 +1606,7 @@ PVR_ERROR WaipuData::GetTimerTypes(std::vector<kodi::addon::PVRTimerType>& types
 
 PVR_ERROR WaipuData::GetTimersAmount(int& amount)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   amount = m_timers_count;
@@ -1659,7 +1615,7 @@ PVR_ERROR WaipuData::GetTimersAmount(int& amount)
 
 PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   LoadChannelData();
@@ -1803,10 +1759,9 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
 PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_FAILED;
 
-  LoadChannelData();
   if (timer.GetTimerType() == 1)
   {
     // single tag
@@ -1845,54 +1800,49 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
 
 PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
 {
+  // we currently only support epg based
   if (timer.GetEPGUid() <= EPG_TAG_INVALID_UID)
-  {
-    // we currently only support epg based
     return PVR_ERROR_REJECTED;
-  }
 
-  if (ApiLogin())
+  if (!IsConnected())
+    return PVR_ERROR_FAILED;
+
+  for (const auto& channel : m_channels)
   {
-    LoadChannelData();
-    for (const auto& channel : m_channels)
-    {
-      if (channel.iUniqueId != timer.GetClientChannelUid())
-        continue;
+    if (channel.iUniqueId != timer.GetClientChannelUid())
+      continue;
 
-      if (timer.GetTimerType() == 1)
-      {
-        // record single element
-        kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
-        // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
-        std::string postData = "{\"programId\":\"_" + std::to_string(timer.GetEPGUid()) +
-                               "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
-        std::string recordResp =
-            HttpPost("https://recording.waipu.tv/api/recordings", postData,
-                     {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
-        kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
-        kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
-        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-        return PVR_ERROR_NO_ERROR;
-      }
-      else
-      {
-        // record series
-        kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
-        // {"title":"Das A-Team","channel":"RTLNITRO"}
-        std::string postData = "{\"title\": \"" + timer.GetTitle() + "\",\"channel\":\"" +
-                               channel.waipuID + "\"" + "}";
-        std::string recordResp = HttpPost(
-            "https://recording-scheduler.waipu.tv/api/serials", postData,
-            {{"Content-Type", "application/vnd.waipu.recording-scheduler-serials-v1+json"}});
-        kodi::Log(ADDON_LOG_DEBUG, "[add timer] repeating response: %s;", recordResp.c_str());
-        kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Created");
-        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-        return PVR_ERROR_NO_ERROR;
-      }
+    if (timer.GetTimerType() == 1)
+    {
+      // record single element
+      kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+      // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
+      std::string postData = "{\"programId\":\"_" + std::to_string(timer.GetEPGUid()) +
+                             "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
+      std::string recordResp =
+          HttpPost("https://recording.waipu.tv/api/recordings", postData,
+                   {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
+      kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
+      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+    }
+    else
+    {
+      // record series
+      kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+      // {"title":"Das A-Team","channel":"RTLNITRO"}
+      std::string postData =
+          "{\"title\": \"" + timer.GetTitle() + "\",\"channel\":\"" + channel.waipuID + "\"" + "}";
+      std::string recordResp =
+          HttpPost("https://recording-scheduler.waipu.tv/api/serials", postData,
+                   {{"Content-Type", "application/vnd.waipu.recording-scheduler-serials-v1+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[add timer] repeating response: %s;", recordResp.c_str());
+      kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Created");
+      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
     }
   }
-  return PVR_ERROR_FAILED;
+  return PVR_ERROR_NO_ERROR;
 }
 
 WaipuData::~WaipuData()
@@ -1931,11 +1881,12 @@ ADDON_STATUS WaipuData::Create()
 
 PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
 {
-  if (!ApiLogin())
+  if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
   total = m_account_hours_recording * 1024 * 1024;
   used = m_finishedRecordingsSeconds > 0 ? m_finishedRecordingsSeconds * 1024 * 1024 / 3600 : 0;
+
   return PVR_ERROR_NO_ERROR;
 }
 
