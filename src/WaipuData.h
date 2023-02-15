@@ -199,10 +199,10 @@ private:
                                 const std::string& url,
                                 const std::string& postData,
                                 int& statusCode);
-  bool ApiLogin();
-  bool WaipuLogin();
-  bool DeviceLogin(const std::string& tenant);
-  bool OAuthRequest(const std::string& postData);
+  bool IsConnected();
+  WAIPU_LOGIN_STATUS Login();
+  WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
+  WAIPU_LOGIN_STATUS OAuthRequest(const std::string& postData);
   bool LoadChannelData();
   bool RefreshDeviceCapabiltiesToken();
 };
