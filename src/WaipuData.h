@@ -27,6 +27,7 @@
 #include "kodi/Network.h"
 #include "kodi/addon-instance/PVR.h"
 
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <thread>
