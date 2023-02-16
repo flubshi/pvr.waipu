@@ -20,6 +20,7 @@
  */
 
 #include "JWT.h"
+
 #include "Base64.h"
 #include "Utils.h"
 #include "kodi/General.h"
@@ -28,10 +29,12 @@
 #include <chrono>
 #include <vector>
 
-
 JWT::JWT(std::string token)
 {
-  if (token.empty()){ return; };
+  if (token.empty())
+  {
+    return;
+  };
   strToken = token;
   std::vector<std::string> jwt_arr = kodi::tools::StringUtils::Split(strToken, ".", 3);
   if (jwt_arr.size() == 3)
@@ -51,7 +54,7 @@ JWT::JWT(std::string token)
   }
 
   // parse iat
-  if(!this->parsedToken.HasMember("iat") || !this->parsedToken["iat"].IsInt())
+  if (!this->parsedToken.HasMember("iat") || !this->parsedToken["iat"].IsInt())
   {
     kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'iat' missing");
     this->initialized = false;
@@ -60,7 +63,7 @@ JWT::JWT(std::string token)
   this->iat = this->parsedToken["iat"].GetInt();
 
   // parse exp
-  if(!this->parsedToken.HasMember("exp") || !this->parsedToken["exp"].IsInt())
+  if (!this->parsedToken.HasMember("exp") || !this->parsedToken["exp"].IsInt())
   {
     kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'exp' missing");
     this->initialized = false;
@@ -74,10 +77,9 @@ JWT::JWT(std::string token)
 bool JWT::isExpired(int offset) const
 {
   kodi::Log(ADDON_LOG_DEBUG, "[jwt isExpired] exp: %i", exp);
-  int currTime = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+  int currTime = std::chrono::duration_cast<std::chrono::seconds>(
+                     std::chrono::system_clock::now().time_since_epoch())
+                     .count();
   kodi::Log(ADDON_LOG_DEBUG, "[jwt isExpired] curr: %i", currTime);
   return (exp - offset) < currTime;
 }
-
-
-

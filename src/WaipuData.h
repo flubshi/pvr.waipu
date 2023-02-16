@@ -20,15 +20,17 @@
  *
  */
 
-#include "categories.h"
 #include "Curl.h"
 #include "HLSAllowlist.h"
-#include "kodi/addon-instance/PVR.h"
-#include "kodi/Network.h"
 #include "JWT.h"
+#include "categories.h"
+#include "kodi/Network.h"
+#include "kodi/addon-instance/PVR.h"
 
-#include <mutex>
+#include <atomic>
 #include <map>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 // User Agent for HTTP Requests
@@ -60,6 +62,8 @@ public:
   WaipuData() = default;
   WaipuData(const WaipuData&) = delete;
   WaipuData(WaipuData&&) = delete;
+  ~WaipuData();
+
   WaipuData& operator=(const WaipuData&) = delete;
   WaipuData& operator=(WaipuData&&) = delete;
 
@@ -107,6 +111,11 @@ public:
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
 
 private:
+  bool m_isConnected = false;
+  std::atomic<bool> m_loginThreadRunning = {false};
+  std::thread m_loginThread;
+  void LoginThread();
+  int m_nextLoginAttempt = 0;
 
   struct WaipuChannel
   {
@@ -147,6 +156,7 @@ private:
   bool m_active_recordings_update = false;
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
+  uint64_t m_finishedRecordingsSeconds = 0;
   std::vector<std::string> m_user_channels_sd;
   std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
@@ -158,27 +168,42 @@ private:
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
 
-  std::string GetChannelStreamURL(int uniqueId, const std::string& protocol, const std::string& startTime);
+  std::string GetChannelStreamURL(int uniqueId,
+                                  const std::string& protocol,
+                                  const std::string& startTime);
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
   std::string GetLicense();
-  const std::map<std::string,std::string> GetOAuthDeviceCode(const std::string& tenant);
-  const std::map<std::string,std::string> CheckOAuthState(const std::string& device_code);
+  const std::map<std::string, std::string> GetOAuthDeviceCode(const std::string& tenant);
+  const std::map<std::string, std::string> CheckOAuthState(const std::string& device_code);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
                            const std::string& url,
-                           bool realtime, bool playTimeshiftBuffer, const std::string& protocol);
+                           bool realtime,
+                           bool playTimeshiftBuffer,
+                           const std::string& protocol);
 
-  std::string HttpGet(const std::string& url, const std::map<std::string,std::string>& headers = {});
-  std::string HttpDelete(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpPost(const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpRequest(const std::string& action, const std::string& url, const std::string& postData, const std::map<std::string,std::string>& headers = {});
-  std::string HttpRequestToCurl(
-      Curl& curl, const std::string& action, const std::string& url, const std::string& postData, int& statusCode);
-  bool ApiLogin();
-  bool WaipuLogin();
-  bool DeviceLogin(const std::string& tenant);
-  bool OAuthRequest(const std::string& postData);
+  std::string HttpGet(const std::string& url,
+                      const std::map<std::string, std::string>& headers = {});
+  std::string HttpDelete(const std::string& url,
+                         const std::string& postData,
+                         const std::map<std::string, std::string>& headers = {});
+  std::string HttpPost(const std::string& url,
+                       const std::string& postData,
+                       const std::map<std::string, std::string>& headers = {});
+  std::string HttpRequest(const std::string& action,
+                          const std::string& url,
+                          const std::string& postData,
+                          const std::map<std::string, std::string>& headers = {});
+  std::string HttpRequestToCurl(Curl& curl,
+                                const std::string& action,
+                                const std::string& url,
+                                const std::string& postData,
+                                int& statusCode);
+  bool IsConnected();
+  WAIPU_LOGIN_STATUS Login();
+  WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
+  WAIPU_LOGIN_STATUS OAuthRequest(const std::string& postData);
   bool LoadChannelData();
   bool RefreshDeviceCapabiltiesToken();
 };

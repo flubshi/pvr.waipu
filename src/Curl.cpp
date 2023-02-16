@@ -4,7 +4,6 @@
 #include "Curl.h"
 
 #include "Utils.h"
-
 #include "kodi/tools/StringUtils.h"
 
 Curl::Curl() = default;
@@ -23,7 +22,8 @@ std::string Curl::GetCookie(const std::string& name)
 
 void Curl::SetCookie(const std::string& host, const std::string& name, const std::string& value)
 {
-  for(auto& cookie : m_cookies){
+  for (auto& cookie : m_cookies)
+  {
     if (cookie.host == host && cookie.name == name)
     {
       cookie.value = value;
@@ -148,11 +148,10 @@ kodi::vfs::CFile* Curl::PrepareRequest(const std::string& action,
   return file;
 }
 
-
 std::string Curl::Request(const std::string& action,
-                     const std::string& url,
-                     const std::string& postData,
-                     int& statusCode)
+                          const std::string& url,
+                          const std::string& postData,
+                          int& statusCode)
 {
   int remaining_redirects = m_redirectLimit;
   m_location = url;
@@ -177,8 +176,10 @@ std::string Curl::Request(const std::string& action,
     statusCode = 200;
 
     // get the real statusCode
-    const std::string tmpRespLine = file->GetPropertyValue(ADDON_FILE_PROPERTY_RESPONSE_PROTOCOL, "");
-    const std::vector<std::string> resp_protocol_parts = kodi::tools::StringUtils::Split(tmpRespLine, " ", 3);
+    const std::string tmpRespLine =
+        file->GetPropertyValue(ADDON_FILE_PROPERTY_RESPONSE_PROTOCOL, "");
+    const std::vector<std::string> resp_protocol_parts =
+        kodi::tools::StringUtils::Split(tmpRespLine, " ", 3);
 
     if (resp_protocol_parts.size() >= 2)
     {
@@ -217,7 +218,6 @@ std::string Curl::Request(const std::string& action,
   return body;
 }
 
-
 std::string Curl::Base64Encode(const std::string& str, bool urlEncode)
 {
   std::string ret;
@@ -227,8 +227,8 @@ std::string Curl::Base64Encode(const std::string& str, bool urlEncode)
 
   const char* to_base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-int len = str.size();
-int curr = 0;
+  int len = str.size();
+  int curr = 0;
   while (len)
   {
     i = len > 2 ? 3 : len;
