@@ -22,12 +22,14 @@
 // Code taken from pvr.zattoo
 
 #include "categories.h"
+
 #include <cstring>
 #include <iostream>
-#include <kodi/Filesystem.h>
 #include <regex>
 
-#define CATEGORIES_MAXLINESIZE    255
+#include <kodi/Filesystem.h>
+
+#define CATEGORIES_MAXLINESIZE 255
 
 #if defined(_WIN32) || defined(_WIN64)
 /* We are on Windows */
@@ -35,10 +37,9 @@
 #define strdup _strdup
 #endif
 
-Categories::Categories() :
-    m_categoriesById()
+Categories::Categories() : m_categoriesById()
 {
-  char *saveptr;
+  char* saveptr;
   LoadEITCategories();
   // Copy over
   CategoryByIdMap::const_iterator it;
@@ -47,8 +48,8 @@ Categories::Categories() :
     m_categoriesByName[it->second] = it->first;
     if (it->second.find("/") != std::string::npos)
     {
-      char *categories = strdup(it->second.c_str());
-      char *p = strtok_r(categories, "/", &saveptr);
+      char* categories = strdup(it->second.c_str());
+      char* p = strtok_r(categories, "/", &saveptr);
       while (p != nullptr)
       {
         std::string category = p;
@@ -70,28 +71,29 @@ std::string Categories::Category(int category) const
 
 int Categories::Category(const std::string& category)
 {
-  if (category.empty()) {
+  if (category.empty())
+  {
     return 0;
   }
   auto it = m_categoriesByName.find(category);
   if (it != m_categoriesByName.end())
     return it->second;
   kodi::Log(ADDON_LOG_INFO, "Missing category: %s", category.c_str());
-  m_categoriesByName[category]=0;
+  m_categoriesByName[category] = 0;
   return 0;
 }
 
 void Categories::LoadEITCategories()
 {
-  const char *filePath = "special://home/addons/pvr.waipu/resources/eit_categories.txt";
-  if (!kodi::vfs::FileExists(filePath, false)) {
+  const char* filePath = "special://home/addons/pvr.waipu/resources/eit_categories.txt";
+  if (!kodi::vfs::FileExists(filePath, false))
+  {
     filePath = "special://xbmc/addons/pvr.waipu/resources/eit_categories.txt";
   }
 
   if (kodi::vfs::FileExists(filePath, false))
   {
-    kodi::Log(ADDON_LOG_DEBUG, "%s: Loading EIT categories from file '%s'",
-        __FUNCTION__, filePath);
+    kodi::Log(ADDON_LOG_DEBUG, "%s: Loading EIT categories from file '%s'", __FUNCTION__, filePath);
     kodi::vfs::CFile file;
     if (!file.OpenFile(filePath, 0))
     {
@@ -110,8 +112,8 @@ void Categories::LoadEITCategories()
         std::string name = matches[2].str();
 
         m_categoriesById.insert(std::pair<int, std::string>(catId, name));
-        kodi::Log(ADDON_LOG_DEBUG, "%s: Add name [%s] for category %.2X",
-            __FUNCTION__, name.c_str(), catId);
+        kodi::Log(ADDON_LOG_DEBUG, "%s: Add name [%s] for category %.2X", __FUNCTION__,
+                  name.c_str(), catId);
       }
     }
   }
