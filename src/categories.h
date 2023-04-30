@@ -22,8 +22,8 @@
  */
 // Code taken from pvr.zattoo
 
-#include <string>
 #include <map>
+#include <string>
 
 typedef std::multimap<int, std::string> CategoryByIdMap;
 typedef std::map<std::string, int> CategoryByNameMap;

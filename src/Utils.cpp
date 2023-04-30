@@ -91,7 +91,6 @@ time_t Utils::StringToTime(std::string timeString)
   return ret;
 }
 
-
 std::string Utils::TimeToString(const time_t time)
 {
   char time_str[21] = "";
@@ -107,7 +106,7 @@ int Utils::GetIDDirty(std::string str)
   if (str.rfind("_", 0) == 0)
   {
     // str starts with _
-    return StringToInt(kodi::tools::StringUtils::TrimLeft(str,"\t\n\v\f\r _"), 1);
+    return StringToInt(kodi::tools::StringUtils::TrimLeft(str, "\t\n\v\f\r _"), 1);
   }
   return rand() % 99999 + 1;
 }
@@ -135,11 +134,12 @@ int Utils::StringToInt(std::string str, int defaultValue)
   }
 }
 
-std::string Utils::Replace(std::string str, const std::string& from, const std::string& to) {
+std::string Utils::Replace(std::string str, const std::string& from, const std::string& to)
+{
   // replaces the first occurrence
   // taken from: https://stackoverflow.com/questions/3418231/replace-part-of-a-string-with-another-string
   size_t start_pos = str.find(from);
-  if(start_pos != std::string::npos)
+  if (start_pos != std::string::npos)
     str.replace(start_pos, from.length(), to);
   return str;
 }

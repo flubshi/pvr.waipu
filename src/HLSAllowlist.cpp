@@ -20,34 +20,32 @@
  */
 
 #include "HLSAllowlist.h"
+
 #include "kodi/tools/StringUtils.h"
 
 #include <kodi/Filesystem.h>
-
 
 HLSAllowlist::HLSAllowlist() : m_hls_allowed()
 {
   LoadHLSAllowlist();
 }
 
-
 bool HLSAllowlist::contains(std::string channelid) const
 {
   return std::find(m_hls_allowed.begin(), m_hls_allowed.end(), channelid) != m_hls_allowed.end();
 }
 
-
 void HLSAllowlist::LoadHLSAllowlist()
 {
-  const char *filePath = "special://home/addons/pvr.waipu/resources/hls_allowlist.txt";
-  if (!kodi::vfs::FileExists(filePath, false)) {
+  const char* filePath = "special://home/addons/pvr.waipu/resources/hls_allowlist.txt";
+  if (!kodi::vfs::FileExists(filePath, false))
+  {
     filePath = "special://xbmc/addons/pvr.waipu/resources/hls_allowlist.txt";
   }
 
   if (kodi::vfs::FileExists(filePath, false))
   {
-    kodi::Log(ADDON_LOG_DEBUG, "%s: Loading hls allowlist from file '%s'",
-        __FUNCTION__, filePath);
+    kodi::Log(ADDON_LOG_DEBUG, "%s: Loading hls allowlist from file '%s'", __FUNCTION__, filePath);
     kodi::vfs::CFile file;
     if (!file.OpenFile(filePath, 0))
     {
@@ -60,8 +58,8 @@ void HLSAllowlist::LoadHLSAllowlist()
     {
       line = kodi::tools::StringUtils::TrimRight(line);
       m_hls_allowed.push_back(line);
-      kodi::Log(ADDON_LOG_DEBUG, "%s: Add channel to hls allowlist '%s'",
-                __FUNCTION__, line.c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "%s: Add channel to hls allowlist '%s'", __FUNCTION__,
+                line.c_str());
     }
   }
   else
