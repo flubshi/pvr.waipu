@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2023-02-11 10:41+0000\n"
+"PO-Revision-Date: 2023-03-27 07:16+0000\n"
 "Last-Translator: José Antonio Alvarado <jalvarado0.eses@gmail.com>\n"
 "Language-Team: Spanish (Spain) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/es_es/>\n"
 "Language: es_es\n"
@@ -41,7 +41,7 @@ msgstr "Protocolo"
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr "Transmisión"
+msgstr "Streaming"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
@@ -137,7 +137,7 @@ msgstr "Otros"
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr "ID Dispositivo"
+msgstr "Identificador de dispositivo"
 
 msgctxt "#30037"
 msgid "Reset Login"
