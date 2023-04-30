@@ -841,20 +841,30 @@ bool WaipuData::LoadChannelData()
       }
       kodi::Log(ADDON_LOG_DEBUG, "[channel] link: %s -> %s;", rel.c_str(), href.c_str());
     }
+
+    std::string channel_url = "";
     if (icon_hd.size() > 0 && isHD)
     {
-      waipu_channel.strIconPath = icon_hd + "?width=256&height=256";
+      channel_url = icon_hd + "?width=256&height=256";
     }
     else if (icon_sd.size() > 0)
     {
-      waipu_channel.strIconPath = icon_sd + "?width=256&height=256";
+      channel_url = icon_sd + "?width=256&height=256";
     }
     else if (icon.size() > 0)
     {
-      waipu_channel.strIconPath = icon + "?width=256&height=256";
+      channel_url = icon + "?width=256&height=256";
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] selected channel logo: %s",
-              waipu_channel.strIconPath.c_str());
+
+    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipu_channel.waipuID + ".png";
+    if (!kodi::vfs::FileExists(iconPath, true))
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[channel] download channel logo: %s -> %s", channel_url, iconPath);
+      Utils::FileDownload(channel_url, iconPath);
+    }
+    waipu_channel.strIconPath = iconPath;
+
+    kodi::Log(ADDON_LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
 
     bool isFav = channel["faved"].GetBool();
     if (isFav)
@@ -1168,6 +1178,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       }
 
       // epg preview image
+      /*
       if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() &&
           epgData["previewImages"].Size() > 0)
       {
@@ -1175,7 +1186,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
         tmp_img += "?width=480&height=270";
         tag.SetIconPath(tmp_img);
         kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
-      }
+        */
+
 
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
