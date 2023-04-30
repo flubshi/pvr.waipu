@@ -35,6 +35,7 @@
     <summary lang="en_GB">waipu.tv PVR Client</summary>
     <summary lang="es_ES">Cliente PVR waipu.tv</summary>
     <summary lang="es_MX">Cliente PVR de waipu.tv</summary>
+    <summary lang="fi_FI">waipu.tv PVR-pääte</summary>
     <summary lang="fr_FR">Client PVR waipu.tv</summary>
     <summary lang="hr_HR">waipu.tv PVR klijent</summary>
     <summary lang="it_IT">Client PVR di waipu.tv</summary>
@@ -45,6 +46,7 @@
     <description lang="en_GB">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
     <description lang="es_ES">Cliente PVR de waipu.tv. Nota: Este no es un complemento oficial de waipu y no está relacionado con Exaring AG o waipu.tv. Fue desarrollado por voluntarios.</description>
     <description lang="es_MX">Cliente PVR de waipu.tv. Nota: Este no es un complemento oficial de waipu y no está relacionado a Exaring AG o waipu.tv. Ha sido desarrollado por voluntarios.</description>
+    <description lang="fi_FI">waipu.tv PVR-pääte. Huomioi: Tämä ei ole virallinen waipu-lisäosa, eivätkä Exaring AG tai waipu.tv ole osallistuneet sen kehitykseen. Lisäosa on vapaaehtoisten kehittämä.</description>
     <description lang="fr_FR">Client PVR waipu.tv. Remarque : Il ne s&apos;agit pas d&apos;un plugin waipu officiel et n&apos;est pas lié à Exaring AG ou waipu.tv. Il a été développé par des bénévoles.</description>
     <description lang="hr_HR">waipu.tv PVR klijent. Napomena: Ovo nije služebeni waipu dodatak i nije povezan s Exaring AG ili waipu.tv. Razvijen je od strane dobrovoljaca.</description>
     <description lang="it_IT">Client PVR di waipu.tv. Nota: questo non è un add-on ufficiale waipu e non è correlato a Exaring AG o waipu.tv. È stato sviluppato da volontari.</description>
