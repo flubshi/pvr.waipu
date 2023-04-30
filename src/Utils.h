@@ -23,4 +23,5 @@ public:
   static int StringToInt(std::string str, int defaultValue);
   static std::string Replace(std::string str, const std::string& from, const std::string& to);
   static std::string CreateUUID();
+  static bool FileDownload(std::string url, std::string targetFile);
 };

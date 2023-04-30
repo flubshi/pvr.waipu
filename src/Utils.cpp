@@ -177,3 +177,26 @@ std::string Utils::CreateUUID()
   }
   return uuid;
 }
+
+bool Utils::FileDownload(std::string source, std::string target)
+{
+  kodi::vfs::CFile inputFile;
+  if (inputFile.OpenFile(source, ADDON_READ_NO_CACHE))
+  {
+    kodi::vfs::CFile outputFile;
+    if (outputFile.OpenFileForWrite(target, true))
+    {
+      char buffer[1024];
+      int bytesRead = 0;
+      while ((bytesRead = inputFile.Read(buffer, sizeof(buffer) - 1)) > 0)
+      {
+        outputFile.Write(buffer, bytesRead);
+      }
+      inputFile.Close();
+      outputFile.Close();
+      return true;
+    }
+  }
+  return false;
+}
+
