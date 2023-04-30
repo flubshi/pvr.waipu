@@ -859,7 +859,7 @@ bool WaipuData::LoadChannelData()
     std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipu_channel.waipuID + ".png";
     if (!kodi::vfs::FileExists(iconPath, true))
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[channel] download channel logo: %s -> %s", channel_url, iconPath);
+      kodi::Log(ADDON_LOG_DEBUG, "[channel] download channel logo: %s -> %s", channel_url.c_str(), iconPath.c_str());
       Utils::FileDownload(channel_url, iconPath);
     }
     waipu_channel.strIconPath = iconPath;
