@@ -159,6 +159,10 @@ msgctxt "#30041"
 msgid "Use Code:"
 msgstr "Usar Código:"
 
+msgctxt "#30042"
+msgid "EPG preview images"
+msgstr ""
+
 #~ msgctxt "#30009"
 #~ msgid "Waipu.tv"
 #~ msgstr "Waipu.tv"
