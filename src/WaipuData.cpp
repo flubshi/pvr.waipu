@@ -561,6 +561,7 @@ void WaipuData::ReadSettings()
   m_password = kodi::addon::GetSettingString("password");
   m_protocol = kodi::addon::GetSettingString("protocol", "auto");
   m_provider = kodi::addon::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
+  m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
 
   m_device_id = kodi::addon::GetSettingString("device_id_uuid4");
@@ -603,13 +604,15 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
 
   else if (settingName == "protocol")
   {
-    std::string protocol = settingValue.GetString();
-    if (protocol != m_protocol)
+     m_protocol = settingValue.GetString();
+     return ADDON_STATUS_OK;
+  }
+
+  else if (settingName == "epg_show_preview_images")
     {
-      m_protocol = protocol;
+      m_epg_show_preview_images = settingValue.GetBoolean();
       return ADDON_STATUS_OK;
     }
-  }
 
   else if (settingName == "provider_select")
   {
@@ -1178,14 +1181,15 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       }
 
       // epg preview image
-      /*if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() &&
-          epgData["previewImages"].Size() > 0)
+      if (m_epg_show_preview_images && epgData.HasMember("previewImages") &&
+	  epgData["previewImages"].IsArray() && epgData["previewImages"].Size() > 0)
       {
         std::string tmp_img = epgData["previewImages"][0].GetString();
         tmp_img += "?width=480&height=270";
         tag.SetIconPath(tmp_img);
         kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
-      }*/
+      }
+
 
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
