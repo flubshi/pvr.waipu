@@ -112,6 +112,7 @@ public:
 
 private:
   bool m_isConnected = false;
+  bool m_epg_show_preview_images = false;
   std::atomic<bool> m_loginThreadRunning = {false};
   std::thread m_loginThread;
   void LoginThread();
