@@ -44,6 +44,14 @@ enum WAIPU_PROVIDER
   WAIPU_PROVIDER_WAIPU_DEVICE = 2
 };
 
+enum WAIPU_CHANNEL_IMPORT_FILTER
+{
+  CHANNEL_FILTER_ALL_VISIBLE = 0,
+  CHANNEL_FILTER_ALL = 1,
+  CHANNEL_FILTER_FAVOURITES = 2,
+  CHANNEL_FILTER_LIVE = 3
+};
+
 enum class WAIPU_LOGIN_STATUS
 {
   OK,
@@ -117,6 +125,7 @@ private:
   std::thread m_loginThread;
   void LoginThread();
   int m_nextLoginAttempt = 0;
+  WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter = WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
 
   struct WaipuChannel
   {
