@@ -149,32 +149,46 @@
 		</category>
 		<category id="misc" label="30035" help="">
 			<group id="6">
-				<setting id="refresh_token" type="string" label="30034" help="">
-					<level>3</level>
-					<default />
-					<constraints>
-						<allowempty>true</allowempty>
-					</constraints>
-					<control type="edit" format="string">
-						<heading>30034</heading>
-					</control>
-					<enable>false</enable>
-					<visible>false</visible>
-				</setting>
-				<setting id="device_id_uuid4" type="string" label="30036" help="">
-					<level>3</level>
-					<default />
-					<constraints>
-						<allowempty>true</allowempty>
-					</constraints>
-					<control type="edit" format="string">
-						<heading>30036</heading>
-					</control>
-				</setting>
+             <setting id="channel_import_filter" type="integer" label="30043"
+               help="">
+               <level>0</level>
+               <default>0</default>
+               <constraints>
+                  <options>
+                     <option label="30044">0</option>
+                     <option label="30045">1</option>
+                     <option label="30046">2</option>
+                     <option label="30047">3</option>
+                  </options>
+               </constraints>
+               <control type="spinner" format="string" />
+            </setting>
 				<setting id="epg_show_preview_images" type="boolean" label="30042" help="">
                <level>3</level>
                <default>false</default>
                <control type="toggle"/>
+            </setting>
+            <setting id="refresh_token" type="string" label="30034" help="">
+               <level>3</level>
+               <default />
+               <constraints>
+                  <allowempty>true</allowempty>
+               </constraints>
+               <control type="edit" format="string">
+                  <heading>30034</heading>
+               </control>
+               <enable>false</enable>
+               <visible>false</visible>
+            </setting>
+            <setting id="device_id_uuid4" type="string" label="30036" help="">
+               <level>3</level>
+               <default />
+               <constraints>
+                  <allowempty>true</allowempty>
+               </constraints>
+               <control type="edit" format="string">
+                  <heading>30036</heading>
+               </control>
             </setting>
 			</group>
 		</category>
