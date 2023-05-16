@@ -162,3 +162,23 @@ msgstr "Code:"
 msgctxt "#30042"
 msgid "EPG preview images"
 msgstr ""
+
+msgctxt "#30043"
+msgid "Import Channels"
+msgstr ""
+
+msgctxt "#30044"
+msgid "All visible"
+msgstr ""
+
+msgctxt "#30045"
+msgid "All"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Favourites"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Live TV"
+msgstr ""
