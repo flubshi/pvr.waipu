@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2023-04-02 02:16+0000\n"
+"PO-Revision-Date: 2023-05-09 23:16+0000\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/it_it/>\n"
 "Language: it_it\n"
@@ -161,4 +161,24 @@ msgstr "Usa il codice:"
 
 msgctxt "#30042"
 msgid "EPG preview images"
+msgstr "Anteprima immagini EPG"
+
+msgctxt "#30043"
+msgid "Import Channels"
+msgstr ""
+
+msgctxt "#30044"
+msgid "All visible"
+msgstr ""
+
+msgctxt "#30045"
+msgid "All"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Favourites"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Live TV"
 msgstr ""
