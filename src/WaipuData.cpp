@@ -561,6 +561,7 @@ void WaipuData::ReadSettings()
   m_password = kodi::addon::GetSettingString("password");
   m_protocol = kodi::addon::GetSettingString("protocol", "auto");
   m_provider = kodi::addon::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
+  m_channel_filter = kodi::addon::GetSettingEnum<WAIPU_CHANNEL_IMPORT_FILTER>("channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
 
@@ -622,6 +623,18 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       m_login_failed_counter = 0;
       m_provider = tmpProvider;
       kodi::addon::SetSettingString("refresh_token", "");
+      return ADDON_STATUS_NEED_RESTART;
+    }
+  }
+  else if (settingName == "channel_import_filter")
+  {
+    WAIPU_CHANNEL_IMPORT_FILTER tmpFilter = settingValue.GetEnum<WAIPU_CHANNEL_IMPORT_FILTER>();
+    if (tmpFilter != m_channel_filter)
+    {
+      m_channel_filter = tmpFilter;
+      // we need to restart plugin for now, to LoadChannelData()
+      //kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+      //return ADDON_STATUS_OK;
       return ADDON_STATUS_NEED_RESTART;
     }
   }
@@ -796,9 +809,17 @@ bool WaipuData::LoadChannelData()
         skipChannel |= (prop.GetString() == std::string("UserSetHidden"));
         tvfuse |= (prop.GetString() == std::string("tvfuse"));
       }
-      if (skipChannel)
+      // skip if we do not enforce to show all
+      if (m_channel_filter != CHANNEL_FILTER_ALL && skipChannel)
         continue;
     }
+
+    // Apply LiveTV filter (=!tvfuse)
+    if (m_channel_filter == CHANNEL_FILTER_LIVE && tvfuse) continue;
+
+    // Apply Favourites filter
+    bool isFav = channel["faved"].GetBool();
+    if (m_channel_filter == CHANNEL_FILTER_FAVOURITES && !isFav) continue;
 
     ++i;
     WaipuChannel waipu_channel;
@@ -869,7 +890,6 @@ bool WaipuData::LoadChannelData()
 
     kodi::Log(ADDON_LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
 
-    bool isFav = channel["faved"].GetBool();
     if (isFav)
     {
       // user added channel to favorites
