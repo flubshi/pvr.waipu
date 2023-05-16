@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2021-10-31 00:30+0000\n"
+"PO-Revision-Date: 2023-05-09 23:16+0000\n"
 "Last-Translator: Christian Gade <gade@kodi.tv>\n"
 "Language-Team: Danish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/da_dk/>\n"
 "Language: da_dk\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.8\n"
+"X-Generator: Weblate 4.15.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -161,6 +161,26 @@ msgstr "Brug kode:"
 
 msgctxt "#30042"
 msgid "EPG preview images"
+msgstr "Forhåndsvisning af billeder for EPG"
+
+msgctxt "#30043"
+msgid "Import Channels"
+msgstr ""
+
+msgctxt "#30044"
+msgid "All visible"
+msgstr ""
+
+msgctxt "#30045"
+msgid "All"
+msgstr ""
+
+msgctxt "#30046"
+msgid "Favourites"
+msgstr ""
+
+msgctxt "#30047"
+msgid "Live TV"
 msgstr ""
 
 #~ msgctxt "#30009"
