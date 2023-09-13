@@ -958,8 +958,13 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
 PVR_ERROR WaipuData::GetChannelStreamProperties(
     const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
+
   LoadChannelData();
   PVR_ERROR ret = PVR_ERROR_FAILED;
+
+  //if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
+  //  return ret;
+
   std::string protocol = m_protocol;
   if (protocol == "auto")
   {

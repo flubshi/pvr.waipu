@@ -177,3 +177,18 @@ msgstr ""
 msgctxt "#30047"
 msgid "Live TV"
 msgstr ""
+
+#. notification: Inputstreams
+msgctxt "#30500"
+msgid "Inputstream error"
+msgstr ""
+
+#. notification: Inputstreams
+msgctxt "#30501"
+msgid "The %s addon is not installed."
+msgstr ""
+
+#. notification: Inputstreams
+msgctxt "#30502"
+msgid "The %s addon is not enabled."
+msgstr ""
