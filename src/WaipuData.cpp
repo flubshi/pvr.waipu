@@ -288,7 +288,7 @@ const std::map<std::string, std::string> WaipuData::GetOAuthDeviceCode(const std
   {
     rapidjson::Document doc;
     doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
+    if (doc.HasParseError())
     {
       kodi::Log(ADDON_LOG_ERROR, "[GetOAuthDeviceCode] ERROR: error while parsing json");
       return result;
@@ -337,7 +337,7 @@ const std::map<std::string, std::string> WaipuData::CheckOAuthState(const std::s
   {
     rapidjson::Document doc;
     doc.Parse(jsonString.c_str());
-    if (doc.GetParseError())
+    if (doc.HasParseError())
     {
       kodi::Log(ADDON_LOG_ERROR, "[CheckOAuthState] ERROR: error while parsing json");
       return result;
@@ -535,7 +535,7 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   rapidjson::Document deviceTokenDoc;
   deviceTokenDoc.Parse(jsonDeviceToken.c_str());
-  if (deviceTokenDoc.GetParseError())
+  if (deviceTokenDoc.HasParseError())
   {
     kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] parse error :(");
     return false;
@@ -761,7 +761,7 @@ bool WaipuData::LoadChannelData()
   kodi::Log(ADDON_LOG_DEBUG, "[channels] parse channels");
   rapidjson::Document channelsDoc;
   channelsDoc.Parse(jsonChannels.c_str());
-  if (channelsDoc.GetParseError())
+  if (channelsDoc.HasParseError())
   {
     kodi::Log(ADDON_LOG_ERROR, "[LoadChannelData] ERROR: error while parsing json");
     return false;
@@ -1027,7 +1027,7 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
 
       rapidjson::Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
-      if (streamURLDoc.GetParseError())
+      if (streamURLDoc.HasParseError())
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
         return "";
@@ -1131,7 +1131,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
     rapidjson::Document epgDoc;
     epgDoc.Parse(jsonEpg.c_str());
-    if (epgDoc.GetParseError())
+    if (epgDoc.HasParseError())
     {
       kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
       return PVR_ERROR_SERVER_ERROR;
@@ -1366,7 +1366,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
       rapidjson::Document epgDoc;
       epgDoc.Parse(jsonEpg.c_str());
 
-      if (epgDoc.GetParseError() || epgDoc["result"].Empty() ||
+      if (epgDoc.HasParseError() || epgDoc["result"].Empty() ||
           !epgDoc["result"][0].HasMember("streamUrlProvider") ||
           epgDoc["result"][0]["streamUrlProvider"].IsNull())
       {
@@ -1388,7 +1388,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
 
         rapidjson::Document tagDoc;
         tagDoc.Parse(tag_resp.c_str());
-        if (tagDoc.GetParseError())
+        if (tagDoc.HasParseError())
         {
           kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
           return "";
@@ -1551,7 +1551,7 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
 
   rapidjson::Document recordingDoc;
   recordingDoc.Parse(rec_resp.c_str());
-  if (recordingDoc.GetParseError())
+  if (recordingDoc.HasParseError())
   {
     kodi::Log(ADDON_LOG_ERROR, "[getRecordingURL] ERROR: error while parsing json");
     return "";
@@ -1662,7 +1662,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
   rapidjson::Document timersDoc;
   timersDoc.Parse(jsonRecordings.c_str());
-  if (timersDoc.GetParseError())
+  if (timersDoc.HasParseError())
   {
     kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
     return PVR_ERROR_SERVER_ERROR;
