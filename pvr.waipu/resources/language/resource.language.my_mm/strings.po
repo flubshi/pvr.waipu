@@ -182,3 +182,19 @@ msgstr "အကြိုက်နှစ်သက်ဆုံး"
 msgctxt "#30047"
 msgid "Live TV"
 msgstr "Live TV"
+
+msgctxt "#30048"
+msgid "HLS: Use inputstream.ffmpegdirect"
+msgstr ""
+
+msgctxt "#30500"
+msgid "Inputstream error"
+msgstr ""
+
+msgctxt "#30501"
+msgid "The %s addon is not installed."
+msgstr ""
+
+msgctxt "#30502"
+msgid "The %s addon is not enabled."
+msgstr ""

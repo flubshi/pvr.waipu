@@ -692,13 +692,13 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
 
   properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
-  properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (protocol == "dash")
+  if (protocol == "dash" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
+    properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
     properties.emplace_back("inputstream.adaptive.manifest_type", "mpd");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
 
@@ -717,13 +717,24 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 
     properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
+  else if (protocol == "hls" && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
+  {
+    if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
+      {
+	kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
+	return;
+      }
+    // HLS
+    kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls using inputstream.ffmpegdirect");
+    properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.ffmpegdirect");
+    properties.emplace_back("inputstream.ffmpegdirect.manifest_type", "hls");
+    properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
+    properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream", realtime ? "true" : "false");
+  }
   else if (protocol == "hls")
   {
-    // HLS
-    kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls");
-    properties.emplace_back("inputstream.adaptive.manifest_type", "hls");
-    properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
-    properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
+      kodi::Log(ADDON_LOG_DEBUG, "[SetStreamProperties] play protocol '%s' using internal player",
+                protocol.c_str());
   }
   else
   {
