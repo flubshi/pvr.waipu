@@ -177,3 +177,7 @@ msgstr ""
 msgctxt "#30047"
 msgid "Live TV"
 msgstr ""
+
+msgctxt "#30048"
+msgid "HLS: Use inputstream.ffmpegdirect"
+msgstr ""
