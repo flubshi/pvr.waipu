@@ -145,6 +145,11 @@
 					</constraints>
 					<control type="spinner" format="string" />
 				</setting>
+            <setting id="streaming_use_ffmpegdirect" type="boolean" label="30048" help="">
+               <level>2</level>
+               <default>true</default>
+               <control type="toggle"/>
+            </setting>
 			</group>
 		</category>
 		<category id="misc" label="30035" help="">
