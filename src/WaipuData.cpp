@@ -694,7 +694,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (protocol == "dash")
+  if (protocol == "dash" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
@@ -719,6 +719,11 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   }
   else if (protocol == "hls" && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
   {
+    if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
+      {
+	kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
+	return;
+      }
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls using inputstream.ffmpegdirect");
     properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.ffmpegdirect");
