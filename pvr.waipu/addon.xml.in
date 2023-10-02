@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="20.10.0"
+  version="20.10.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,7 +26,7 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-- Implement inputstream.ffmpegdirect for HLS streams
+- Update translation files from weblate
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
