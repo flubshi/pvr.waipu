@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2023-05-24 15:31+0000\n"
+"PO-Revision-Date: 2023-09-27 18:06+0000\n"
 "Last-Translator: Oskari Lavinto <olavinto@protonmail.com>\n"
 "Language-Team: Finnish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/fi_fi/>\n"
 "Language: fi_fi\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.17\n"
+"X-Generator: Weblate 5.0.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -29,7 +29,7 @@ msgstr "Yleiset"
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr ""
+msgstr "Sähköposti"
 
 msgctxt "#30003"
 msgid "Password"
@@ -37,7 +37,7 @@ msgstr "Salasana"
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr ""
+msgstr "Protokolla"
 
 msgctxt "#30005"
 msgid "Streaming"
@@ -49,87 +49,87 @@ msgstr "InputStream Helper -tiedot"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr ""
+msgstr "(Uudelleen)asenna Widevine CDM -kirjasto..."
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr ""
+msgstr "Toimittaja"
 
 msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
-msgstr ""
+msgstr "Waipu.tv (käyttäjätiedot)"
 
 msgctxt "#30010"
 msgid "O2 TV"
-msgstr ""
+msgstr "O2 TV"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr ""
+msgstr "Suoratoistoprotokolla"
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr ""
+msgstr "Videoresoluutio"
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr ""
+msgstr "Äänikoodekit"
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr ""
+msgstr "SD-PALp25: h264; 720x540; 25fps"
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr ""
+msgstr "SD-PALp50: h264; 720x540; 50fps"
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr ""
+msgstr "HD-720p25: h264; 1280x720; 25fps"
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr ""
+msgstr "HD-720p50: h264; 1280x720; 50fps"
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr ""
+msgstr "HD-1080p25: h264; 1920x1080; 25fps"
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr ""
+msgstr "HD-1080p50: h264; 1920x1080; 50fps"
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr ""
+msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr ""
+msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr ""
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr ""
+msgstr "Virhe: Kirjautuminen ei onnistu. Tarkista käyttäjätiedot!"
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr ""
+msgstr "Verkkoyhteyttä ei ole"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr ""
+msgstr "Virheelliset kirjautumistiedot"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr ""
+msgstr "Vaadittu käyttäjätunnus ja salasana eivät ole käytettävissä"
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr ""
+msgstr "Päivitä tunniste"
 
 msgctxt "#30035"
 msgid "Misc"
@@ -141,15 +141,15 @@ msgstr "Laitetunniste"
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr ""
+msgstr "Tyhjennä kirjautumistiedot"
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
-msgstr ""
+msgstr "Waipu.tv (laitekirjautuminen)"
 
 msgctxt "#30039"
 msgid "Go to:"
-msgstr ""
+msgstr "Avaa:"
 
 msgctxt "#30040"
 msgid "Login"
@@ -157,19 +157,19 @@ msgstr "Kirjautuminen"
 
 msgctxt "#30041"
 msgid "Use Code:"
-msgstr ""
+msgstr "Käytä koodia:"
 
 msgctxt "#30042"
 msgid "EPG preview images"
-msgstr ""
+msgstr "Ohjelmaoppaan esikatselukuvat"
 
 msgctxt "#30043"
 msgid "Import Channels"
-msgstr ""
+msgstr "Tuo kanavia"
 
 msgctxt "#30044"
 msgid "All visible"
-msgstr ""
+msgstr "Näytä kaikki"
 
 msgctxt "#30045"
 msgid "All"
@@ -185,16 +185,16 @@ msgstr "Tv-lähetys"
 
 msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
-msgstr ""
+msgstr "HLS: Käytä inputstream.ffmpegdirect"
 
 msgctxt "#30500"
 msgid "Inputstream error"
-msgstr ""
+msgstr "Inputstream-virhe"
 
 msgctxt "#30501"
 msgid "The %s addon is not installed."
-msgstr ""
+msgstr "%s -lisäosaa ei ole asennettu."
 
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
-msgstr ""
+msgstr "%s -lisäosa ei ole käytössä."
