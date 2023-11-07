@@ -1,7 +1,7 @@
 [![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](pvr.waipu/LICENSE.txt)
 [![Build and run tests](https://github.com/flubshi/pvr.waipu/actions/workflows/build.yml/badge.svg?branch=Nexus)](https://github.com/flubshi/pvr.waipu/actions/workflows/build.yml)
 [![Build Status](https://dev.azure.com/flubshi/pvr.waipu/_apis/build/status/flubshi.pvr.waipu?branchName=Nexus)](https://dev.azure.com/flubshi/pvr.waipu/_build/latest?definitionId=1&branchName=Nexus)
-[![Build Status](https://jenkins.kodi.tv/buildStatus/icon?job=flubshi%2Fpvr.waipu%2FNexus)](https://jenkins.kodi.tv/job/flubshi/job/pvr.waipu/job/Nexus/)
+[![Build Status](https://jenkins.kodi.tv/view/Addons/job/flubshi/job/pvr.waipu/job/Nexus/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/flubshi%2Fpvr.waipu/branches/)
 
 # Waipu PVR client for Kodi
 This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provides Kodi integration for the German TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
