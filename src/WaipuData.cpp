@@ -1324,7 +1324,7 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   // check if program is running and replay allowed
   auto current_time = time(NULL);
   if (m_account_replay_allowed && current_time > tag.GetStartTime() &&
-      current_time < tag.GetEndTime())
+      (current_time < tag.GetEndTime() || current_time - 60*60 < tag.GetStartTime()))
   {
     isPlayable = (tag.GetFlags() & EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU);
   }
