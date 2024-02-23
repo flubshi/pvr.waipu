@@ -209,14 +209,17 @@ bool Utils::CheckInputstreamInstalledAndEnabled(const std::string& inputstreamNa
   {
     if (!enabled)
     {
-      std::string message = kodi::tools::StringUtils::Format(kodi::addon::GetLocalizedString(30502).c_str(), inputstreamName.c_str());
-      kodi::QueueNotification(QueueMsg::QUEUE_ERROR, kodi::addon::GetLocalizedString(30500), message);
+      std::string message = kodi::tools::StringUtils::Format(
+          kodi::addon::GetLocalizedString(30502).c_str(), inputstreamName.c_str());
+      kodi::QueueNotification(QueueMsg::QUEUE_ERROR, kodi::addon::GetLocalizedString(30500),
+                              message);
       return false;
     }
   }
   else // Not installed
   {
-    std::string message = kodi::tools::StringUtils::Format(kodi::addon::GetLocalizedString(30501).c_str(), inputstreamName.c_str());
+    std::string message = kodi::tools::StringUtils::Format(
+        kodi::addon::GetLocalizedString(30501).c_str(), inputstreamName.c_str());
     kodi::QueueNotification(QueueMsg::QUEUE_ERROR, kodi::addon::GetLocalizedString(30500), message);
     return false;
   }
