@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="20.11.0"
+  version="20.11.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,6 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v20.11.1
+- Translations updates from Weblate
+	- de_de, fr_fr, it_it, ko_kr, pt_br, ru_ru
+
 - Allow restart of program that is not running anymore but started max 1 hour in the past
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
