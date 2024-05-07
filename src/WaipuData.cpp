@@ -855,9 +855,12 @@ bool WaipuData::LoadChannelData()
     m_channels.emplace_back(waipuChannel);
   }
 
-  m_channelGroups.emplace_back(cgroup_fav);
-  m_channelGroups.emplace_back(cgroup_live);
-  m_channelGroups.emplace_back(cgroup_vod);
+  if (!cgroup_fav.channels.empty())
+    m_channelGroups.emplace_back(cgroup_fav);
+  if (!cgroup_live.channels.empty())
+    m_channelGroups.emplace_back(cgroup_live);
+  if (!cgroup_vod.channels.empty())
+    m_channelGroups.emplace_back(cgroup_vod);
 
   return true;
 }
