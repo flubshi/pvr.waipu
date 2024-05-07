@@ -125,7 +125,7 @@ private:
   std::atomic<bool> m_loginThreadRunning = {false};
   std::thread m_loginThread;
   void LoginThread();
-  int m_nextLoginAttempt = 0;
+  time_t m_nextLoginAttempt = 0;
   WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter = WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
 
   struct WaipuChannel
