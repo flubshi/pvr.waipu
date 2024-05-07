@@ -801,7 +801,6 @@ bool WaipuData::LoadChannelData()
     WaipuChannel waipuChannel;
 
     waipuChannel.iChannelNumber = i + 1; // position
-    waipuChannel.tvfuse = 0;
     waipuChannel.waipuID = waipuId; // waipu[id]
     waipuChannel.iUniqueId = Utils::Hash(waipuId);
     waipuChannel.strChannelName = channel["displayName"].GetString(); // waipu[displayName]
@@ -823,6 +822,7 @@ bool WaipuData::LoadChannelData()
     bool isFav = userSettings["favorite"].GetBool();
     bool isVisible = userSettings["visible"].GetBool();
     bool tvfuse = (*stationConfig)["newTv"].GetBool();
+    waipuChannel.tvfuse = tvfuse;
 
     // skip if we do not enforce to show all
     if (m_channel_filter != CHANNEL_FILTER_ALL && !isVisible)
