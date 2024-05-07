@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="21.5.1"
+  version="21.5.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,6 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v21.5.2
+- Translations updates from Weblate
+	- et_ee
+
 v21.5.1
 - Translations updates from Weblate
 	- de_de, es_es, fr_fr, it_it, ko_kr, pt_br, ru_ru
