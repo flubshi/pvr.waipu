@@ -753,32 +753,31 @@ bool WaipuData::LoadChannelData()
     return false;
 
   std::lock_guard<std::mutex> lock(mutex);
-  kodi::Log(ADDON_LOG_DEBUG, "[load data] Get channels");
 
-  std::string jsonChannels = HttpGet("https://epg.waipu.tv/api/channels");
-  if (jsonChannels.empty())
+  std::string stationConfigJson = HttpGet("https://web-proxy.waipu.tv/station-config");
+  kodi::Log(ADDON_LOG_DEBUG, "[%s] Station config JSON: %s", __FUNCTION__, stationConfigJson.c_str());
+
+  rapidjson::Document stationConfigDoc;
+  stationConfigDoc.Parse(stationConfigJson.c_str());
+  if (stationConfigDoc.HasParseError())
   {
-    kodi::Log(ADDON_LOG_ERROR, "[channels] ERROR - empty response");
+    kodi::Log(ADDON_LOG_ERROR, "[%s] Error while parsing station config JSON", __FUNCTION__);
     m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
     return false;
   }
-  jsonChannels = "{\"result\": " + jsonChannels + "}";
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] length: %i;", jsonChannels.size());
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] %s;", jsonChannels.c_str());
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] %s;",
-            jsonChannels.substr(jsonChannels.size() - 40).c_str());
+  const auto& stationConfigs = stationConfigDoc["stations"].GetArray();
 
-  // parse channels
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] parse channels");
-  rapidjson::Document channelsDoc;
-  channelsDoc.Parse(jsonChannels.c_str());
-  if (channelsDoc.HasParseError())
+  std::string userStationsJson = HttpGet("https://user-stations.waipu.tv/api/stations?omitted=false");
+  kodi::Log(ADDON_LOG_DEBUG, "[%s] User stations JSON: %s", __FUNCTION__, userStationsJson.c_str());
+
+  rapidjson::Document doc;
+  doc.Parse(userStationsJson.c_str());
+  if (doc.HasParseError())
   {
-    kodi::Log(ADDON_LOG_ERROR, "[LoadChannelData] ERROR: error while parsing json");
+    kodi::Log(ADDON_LOG_ERROR, "[%s] Error while parsing user stations JSON", __FUNCTION__);
+    m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
     return false;
   }
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] iterate channels");
-  kodi::Log(ADDON_LOG_DEBUG, "[channels] size: %i;", channelsDoc["result"].Size());
 
   WaipuChannelGroup cgroup_fav;
   cgroup_fav.name = "Favoriten";
@@ -789,135 +788,71 @@ bool WaipuData::LoadChannelData()
   WaipuChannelGroup cgroup_vod;
   cgroup_vod.name = "VoD";
 
-  int i = 0;
-  for (const auto& channel : channelsDoc["result"].GetArray())
+  for (rapidjson::SizeType i = 0; i < doc.Size(); i++)
   {
-    const std::string waipuid = channel["id"].GetString();
-    // check if channel is part of user channels:
-    bool isHD = false;
-    if (find(m_user_channels_sd.begin(), m_user_channels_sd.end(), waipuid.c_str()) !=
-        m_user_channels_sd.end())
-    {
-      isHD = false;
-    }
-    else if (find(m_user_channels_hd.begin(), m_user_channels_hd.end(), waipuid.c_str()) !=
-             m_user_channels_hd.end())
-    {
-      isHD = true;
-    }
-    else
-    {
+    const auto& channel = doc[i];
+    const std::string waipuId = channel["stationId"].GetString();
+
+    const auto& stationConfig = std::find_if(stationConfigs.begin(), stationConfigs.end(),
+                          [waipuId](const auto& v) { return v["id"].GetString() == waipuId; });
+    if (stationConfig == stationConfigs.end())
       continue;
-    }
 
-    bool tvfuse = false;
-    // check if user has hidden this channel
-    if (channel.HasMember("properties") && channel["properties"].IsArray())
-    {
-      bool skipChannel = false;
-      for (auto& prop : channel["properties"].GetArray())
-      {
-        skipChannel |= (prop.GetString() == std::string("UserSetHidden"));
-        tvfuse |= (prop.GetString() == std::string("tvfuse"));
-      }
-      // skip if we do not enforce to show all
-      if (m_channel_filter != CHANNEL_FILTER_ALL && skipChannel)
-        continue;
-    }
+    WaipuChannel waipuChannel;
 
-    // Apply LiveTV filter (=!tvfuse)
-    if (m_channel_filter == CHANNEL_FILTER_LIVE && tvfuse) continue;
+    waipuChannel.iChannelNumber = i + 1; // position
+    waipuChannel.tvfuse = 0;
+    waipuChannel.waipuID = waipuId; // waipu[id]
+    waipuChannel.iUniqueId = Utils::Hash(waipuId);
+    waipuChannel.strChannelName = channel["displayName"].GetString(); // waipu[displayName]
 
-    // Apply Favourites filter
-    bool isFav = channel["faved"].GetBool();
-    if (m_channel_filter == CHANNEL_FILTER_FAVOURITES && !isFav) continue;
+    std::string iconUrl = (*stationConfig)["logoTemplateUrl"].GetString();
+    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"), channel["streamQuality"].GetString());
+    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
+    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
 
-    ++i;
-    WaipuChannel waipu_channel;
-    waipu_channel.iChannelNumber = i; // position
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] channelnr(pos): %i;", waipu_channel.iChannelNumber);
-
-    waipu_channel.tvfuse = tvfuse;
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] tvfuse: %i;", waipu_channel.tvfuse);
-
-    waipu_channel.waipuID = waipuid; // waipu[id]
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] waipuid: %s;", waipu_channel.waipuID.c_str());
-
-    const int uniqueId = Utils::Hash(waipuid);
-    waipu_channel.iUniqueId = uniqueId;
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] id: %i;", uniqueId);
-
-    const std::string displayName = channel["displayName"].GetString();
-    waipu_channel.strChannelName = displayName; // waipu[displayName]
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] name: %s;", waipu_channel.strChannelName.c_str());
-
-    // iterate links
-    std::string icon;
-    std::string icon_sd;
-    std::string icon_hd;
-    for (const auto& link : channel["links"].GetArray())
-    {
-      const std::string rel = link["rel"].GetString();
-      const std::string href = link["href"].GetString();
-      if (rel == "icon")
-      {
-        icon = href;
-        continue;
-      }
-      else if (rel == "iconsd")
-      {
-        icon_sd = href;
-        continue;
-      }
-      else if (rel == "iconhd")
-      {
-        icon_hd = href;
-        continue;
-      }
-      kodi::Log(ADDON_LOG_DEBUG, "[channel] link: %s -> %s;", rel.c_str(), href.c_str());
-    }
-
-    std::string channel_url = "";
-    if (icon_hd.size() > 0 && isHD)
-    {
-      channel_url = icon_hd + "?width=256&height=256";
-    }
-    else if (icon_sd.size() > 0)
-    {
-      channel_url = icon_sd + "?width=256&height=256";
-    }
-    else if (icon.size() > 0)
-    {
-      channel_url = icon + "?width=256&height=256";
-    }
-
-    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipu_channel.waipuID + ".png";
+    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuId + ".png";
     if (!kodi::vfs::FileExists(iconPath, true))
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[channel] download channel logo: %s -> %s", channel_url.c_str(), iconPath.c_str());
-      Utils::FileDownload(channel_url, iconPath);
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__, iconUrl.c_str(), iconPath.c_str());
+      Utils::FileDownload(iconUrl, iconPath);
     }
-    waipu_channel.strIconPath = iconPath;
+    waipuChannel.strIconPath = iconPath;
 
-    kodi::Log(ADDON_LOG_DEBUG, "[channel] selected channel logo: %s", waipu_channel.strIconPath.c_str());
+    const auto& userSettings = channel["userSettings"].GetObject();
+    bool isFav = userSettings["favorite"].GetBool();
+    bool isVisible = userSettings["visible"].GetBool();
+    bool tvfuse = (*stationConfig)["newTv"].GetBool();
 
+    // skip if we do not enforce to show all
+    if (m_channel_filter != CHANNEL_FILTER_ALL && !isVisible)
+      continue;
+
+    // Apply LiveTV filter (=!tvfuse)
+    if (m_channel_filter == CHANNEL_FILTER_LIVE && tvfuse)
+      continue;
+
+    // Apply Favourites filter
+    if (m_channel_filter == CHANNEL_FILTER_FAVOURITES && !isFav)
+      continue;
+
+    // user added channel to favorites
     if (isFav)
-    {
-      // user added channel to favorites
-      cgroup_fav.channels.emplace_back(waipu_channel);
-    }
-    if (tvfuse)
-    {
-      // Video on Demand channel
-      cgroup_vod.channels.emplace_back(waipu_channel);
-    }
-    else
-    {
-      // Not VoD -> Live TV
-      cgroup_live.channels.emplace_back(waipu_channel);
-    }
+      cgroup_fav.channels.emplace_back(waipuChannel);
 
-    m_channels.emplace_back(waipu_channel);
+    if (tvfuse) // Video on Demand channel
+      cgroup_vod.channels.emplace_back(waipuChannel);
+    else // Not VoD -> Live TV
+      cgroup_live.channels.emplace_back(waipuChannel);
+
+
+
+    kodi::Log(ADDON_LOG_DEBUG,
+              "[channel] number: %i, tvfuse: %i, waipuId: %s, id: %i, name: %s, logo: %s",
+              waipuChannel.iChannelNumber, waipuChannel.tvfuse, waipuChannel.waipuID.c_str(),
+              waipuChannel.iUniqueId, waipuChannel.strChannelName.c_str(), waipuChannel.strIconPath.c_str());
+
+    m_channels.emplace_back(waipuChannel);
   }
 
   m_channelGroups.emplace_back(cgroup_fav);
