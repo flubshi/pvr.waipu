@@ -1935,4 +1935,14 @@ PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
   return PVR_ERROR_NO_ERROR;
 }
 
+PVR_ERROR WaipuData::OnSystemWake()
+{
+  m_accessToken = JWT();
+  m_deviceCapabilitiesToken = JWT();
+  m_nextLoginAttempt = 0;
+  m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+
+  return PVR_ERROR_NO_ERROR;
+}
+
 ADDONCREATOR(WaipuData)
