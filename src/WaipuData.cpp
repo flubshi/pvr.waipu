@@ -187,8 +187,9 @@ void WaipuData::LoginThread()
                                                              PVR_CONNECTION_STATE_CONNECTED, "");
       m_nextLoginAttempt = std::time(0) + 60;
 
-      if (previousStatus != m_login_status)
+      if (previousStatus != m_login_status || m_lastUpdate < std::time(0) - 30*60)
       {
+        m_lastUpdate = std::time(0);
         kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
         kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
         kodi::addon::CInstancePVRClient::TriggerTimerUpdate();

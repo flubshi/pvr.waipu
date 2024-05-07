@@ -172,6 +172,7 @@ private:
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
+  time_t m_lastUpdate = 0;
 
   void ReadSettings();
   bool ParseAccessToken();
