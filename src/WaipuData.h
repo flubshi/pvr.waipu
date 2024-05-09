@@ -117,6 +117,7 @@ public:
   PVR_ERROR DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceDelete) override;
   PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
+  PVR_ERROR OnSystemWake() override;
 
 private:
   bool m_isConnected = false;
@@ -124,7 +125,7 @@ private:
   std::atomic<bool> m_loginThreadRunning = {false};
   std::thread m_loginThread;
   void LoginThread();
-  int m_nextLoginAttempt = 0;
+  time_t m_nextLoginAttempt = 0;
   WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter = WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
 
   struct WaipuChannel
