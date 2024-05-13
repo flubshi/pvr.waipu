@@ -802,6 +802,8 @@ bool WaipuData::LoadChannelData()
 
     waipuChannel.iChannelNumber = i + 1; // position
     waipuChannel.waipuID = waipuId; // waipu[id]
+    // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
+    std::transform(waipuChannel.waipuID.begin(), waipuChannel.waipuID.end(), waipuChannel.waipuID.begin(),::toupper);
     waipuChannel.iUniqueId = Utils::Hash(waipuId);
     waipuChannel.strChannelName = channel["displayName"].GetString(); // waipu[displayName]
 
@@ -810,7 +812,7 @@ bool WaipuData::LoadChannelData()
     iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
     iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
 
-    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuId + ".png";
+    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuChannel.waipuID + ".png";
     if (!kodi::vfs::FileExists(iconPath, true))
     {
       kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__, iconUrl.c_str(), iconPath.c_str());
