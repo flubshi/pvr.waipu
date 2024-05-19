@@ -168,6 +168,11 @@
                </constraints>
                <control type="spinner" format="string" />
             </setting>
+            <setting id="epg_experimental" type="boolean" label="30049" help="">
+               <level>3</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
 				<setting id="epg_show_preview_images" type="boolean" label="30042" help="">
                <level>3</level>
                <default>false</default>
