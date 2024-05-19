@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="21.6.1"
+  version="21.6.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,7 +26,7 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-- Add workaround to fix recordings/timers
+- Experimental: New EPG API
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
