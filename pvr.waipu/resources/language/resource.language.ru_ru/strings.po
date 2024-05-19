@@ -187,6 +187,10 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: Использовать inputstream.ffmpegdirect"
 
+msgctxt "#30049"
+msgid "Experimental EPG"
+msgstr ""
+
 msgctxt "#30500"
 msgid "Inputstream error"
 msgstr "Ошибка Inputstream"
