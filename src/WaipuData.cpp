@@ -714,8 +714,6 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
                             "https://drm.wpstr.tv/license-proxy-widevine/cenc/"
                             "|Content-Type=text%2Fxml&x-dt-custom-data=" +
                                 license + "|R{SSM}|JBlicense");
-
-    properties.emplace_back("inputstream.adaptive.manifest_update_parameter", "full");
   }
   else if (protocol == "hls" && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
   {
@@ -731,14 +729,23 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
     properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream", realtime ? "true" : "false");
   }
-  else if (protocol == "hls")
+  else if (protocol == "hls" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
-      kodi::Log(ADDON_LOG_DEBUG, "[SetStreamProperties] play protocol '%s' using internal player",
+      kodi::Log(ADDON_LOG_DEBUG, "[SetStreamProperties] play protocol '%s' using inputstream adaptive",
                 protocol.c_str());
+
+      properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
+      properties.emplace_back("inputstream.adaptive.manifest_type", "hls");
+      properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
+
+      if (playTimeshiftBuffer)
+      {
+        properties.emplace_back("inputstream.adaptive.play_timeshift_buffer", "true");
+      }
   }
   else
   {
-    kodi::Log(ADDON_LOG_ERROR, "[SetStreamProperties] called with invalid protocol '%s'",
+    kodi::Log(ADDON_LOG_ERROR, "[SetStreamProperties] called with invalid protocol '%s' or missing inputstream addon.",
               protocol.c_str());
   }
 }
