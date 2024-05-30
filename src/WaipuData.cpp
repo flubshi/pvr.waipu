@@ -830,15 +830,14 @@ bool WaipuData::LoadChannelData()
     const auto& userSettings = channel["userSettings"].GetObject();
     bool isFav = userSettings["favorite"].GetBool();
     bool isVisible = userSettings["visible"].GetBool();
-    bool tvfuse = (*stationConfig)["newTv"].GetBool();
-    waipuChannel.tvfuse = tvfuse;
+    waipuChannel.tvfuse = (*stationConfig)["newTv"].GetBool();
 
     // skip if we do not enforce to show all
     if (m_channel_filter != CHANNEL_FILTER_ALL && !isVisible)
       continue;
 
     // Apply LiveTV filter (=!tvfuse)
-    if (m_channel_filter == CHANNEL_FILTER_LIVE && tvfuse)
+    if (m_channel_filter == CHANNEL_FILTER_LIVE && waipuChannel.tvfuse)
       continue;
 
     // Apply Favourites filter
@@ -849,7 +848,7 @@ bool WaipuData::LoadChannelData()
     if (isFav)
       cgroup_fav.channels.emplace_back(waipuChannel);
 
-    if (tvfuse) // Video on Demand channel
+    if (waipuChannel.tvfuse) // Video on Demand channel
       cgroup_vod.channels.emplace_back(waipuChannel);
     else // Not VoD -> Live TV
       cgroup_live.channels.emplace_back(waipuChannel);
@@ -930,8 +929,8 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
         if (m_hls_allowlist.contains(thisChannel.waipuID))
         {
           protocol = "hls";
-          break;
         }
+        break;
       }
     }
     kodi::Log(ADDON_LOG_DEBUG, "protocol auto select: %s", protocol.c_str());
@@ -1085,7 +1084,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     kodi::Log(ADDON_LOG_DEBUG, "[epg-all] %s", jsonEpg.c_str());
     if (jsonEpg.empty())
     {
-      kodi::Log(ADDON_LOG_ERROR, "[epg] empty server response");
+      kodi::Log(ADDON_LOG_DEBUG, "%s - Empty server response", __FUNCTION__);
       return PVR_ERROR_SERVER_ERROR;
     }
     jsonEpg = "{\"result\": " + jsonEpg + "}";
@@ -1094,7 +1093,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     epgDoc.Parse(jsonEpg.c_str());
     if (epgDoc.HasParseError())
     {
-      kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
+      kodi::Log(ADDON_LOG_ERROR, "[%s] Error while parsing JSON", __FUNCTION__);
       return PVR_ERROR_SERVER_ERROR;
     }
     kodi::Log(ADDON_LOG_DEBUG, "[epg] iterate entries");
