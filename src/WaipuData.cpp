@@ -1238,6 +1238,7 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
                                       time_t end,
                                       kodi::addon::PVREPGTagsResultSet& results)
 {
+  const int grid_align_hours = 4; // align 4h
 
   for (const auto& channel : m_channels)
   {
@@ -1257,16 +1258,15 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
       limit--;
 
       struct tm *tm = std::gmtime(&start);
-      tm->tm_hour -= tm->tm_hour % 4; // align 4h
+      tm->tm_hour -= tm->tm_hour % grid_align_hours; // align to grid window
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] tm %d", tm->tm_hour);
 
-      char buffer[80];
+      char startTimeBuf[30];
       // 2024-05-17T17:00:00.000Z
-      strftime(buffer,80,"%Y-%m-%dT%H:00:00.000Z",tm);
+      strftime(startTimeBuf,30,"%Y-%m-%dT%H:00:00.000Z",tm);
 
-      std::string startTime = Utils::TimeToString(start);
 
-      std::string jsonEpg = HttpGet("https://epg-cache.waipu.tv/api/grid/"+channelid+"/" + buffer);
+      std::string jsonEpg = HttpGet("https://epg-cache.waipu.tv/api/grid/"+channelid+"/" + startTimeBuf);
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] %s", jsonEpg.c_str());
       if (jsonEpg.empty())
       {
@@ -1320,8 +1320,7 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
 
 	// set endTime
 	const std::string entryEndTime = epgData["stopTime"].GetString();
-	start = Utils::StringToTime(entryEndTime);
-	tag.SetEndTime(start);
+	tag.SetEndTime(Utils::StringToTime(entryEndTime));
 
 	// epg preview image
 	if (m_epg_show_preview_images && epgData.HasMember("previewImage"))
@@ -1364,8 +1363,9 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
 
 	tag.SetFlags(flags);
 	results.Add(tag);
-	if(limit < 1) break;
       }
+      start = start + grid_align_hours * 60 * 60;
+      if (limit < 1) break;
     }
   }
   return PVR_ERROR_NO_ERROR;
