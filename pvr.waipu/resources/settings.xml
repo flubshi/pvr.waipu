@@ -1,10 +1,10 @@
 <?xml version="1.0" ?>
 <settings version="1">
 	<section id="pvr.waipu">
-		<category id="credentials" label="30001" help="">
+		<category id="credentials" label="30001">
 			<group id="1" label="">
 			    <setting id="provider_select" type="integer" label="30008"
-               help="">
+                help="30050">
                <level>0</level>
                <default>0</default>
                <constraints>
@@ -16,7 +16,7 @@
                </constraints>
                <control type="spinner" format="string" />
             </setting>
-				<setting id="username" type="string" label="30002" help="">
+				<setting id="username" type="string" label="30002" help="30050">
 					<level>0</level>
 					<default />
 					<constraints>
@@ -29,7 +29,7 @@
                  <dependency type="visible" setting="provider_select">0</dependency>
                </dependencies>
 				</setting>
-				<setting id="password" type="string" label="30003" help="">
+				<setting id="password" type="string" label="30003" help="30050">
 					<level>0</level>
 					<default />
 					<constraints>
@@ -54,7 +54,7 @@
 			</group>
 			<group id="2" label="">
 				<setting id="install_widevine" type="string" label="30007"
-					help="">
+					help="30051">
 					<level>0</level>
 					<default />
 					<constraints>
@@ -67,7 +67,7 @@
 					<dependency type="visible" operator="!is"
 						setting="system.platform.android">true</dependency>
 				</setting>
-				<setting id="run_is_info" type="string" label="30006" help="">
+				<setting id="run_is_info" type="string" label="30006" help="30052">
 					<level>0</level>
 					<default />
 					<constraints>
@@ -132,7 +132,7 @@
             </setting>
 			</group>
 			<group id="3" label="30011">
-				<setting id="protocol" type="string" label="30004" help="">
+				<setting id="protocol" type="string" label="30004" help="30053">
 					<level>2</level>
 					<default>auto</default>
 					<constraints>
@@ -145,7 +145,7 @@
 					</constraints>
 					<control type="spinner" format="string" />
 				</setting>
-            <setting id="streaming_use_ffmpegdirect" type="boolean" label="30048" help="">
+            <setting id="streaming_use_ffmpegdirect" type="boolean" label="30048" help="30054">
                <level>2</level>
                <default>true</default>
                <control type="toggle"/>

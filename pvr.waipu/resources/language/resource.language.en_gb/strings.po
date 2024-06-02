@@ -186,6 +186,26 @@ msgctxt "#30049"
 msgid "Experimental EPG"
 msgstr ""
 
+msgctxt "#30050"
+msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
+msgstr ""
+
+msgctxt "#30051"
+msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
+msgstr ""
+
+msgctxt "#30052"
+msgid "Check whether Widevine CDM is installed. Required to play non public channels."
+msgstr ""
+
+msgctxt "#30053"
+msgid "Select streaming protocol. Use AUTO or MPEG_DASH. Do not use HLS, because not all channels support this."
+msgstr ""
+
+msgctxt "#30054"
+msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
+msgstr ""
+
 msgctxt "#30500"
 msgid "Inputstream error"
 msgstr ""
