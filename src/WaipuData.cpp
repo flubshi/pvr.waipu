@@ -1547,7 +1547,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     {
       // skip not FINISHED entries
       std::string status = recording["status"].GetString();
-      if (status != "FINISHED")
+      if (status != "FINISHED" && status != "RECORDING")
         continue;
 
       kodi::addon::PVRRecording tag;
@@ -1718,7 +1718,7 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
     return PVR_ERROR_FAILED;
   }
 
-  SetStreamProperties(properties, strUrl, true, false, protocol);
+  SetStreamProperties(properties, strUrl, true, true, protocol);
 
   return PVR_ERROR_NO_ERROR;
 }
