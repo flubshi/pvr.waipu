@@ -122,6 +122,10 @@ public:
   PVR_ERROR AddTimer(const kodi::addon::PVRTimer& timer) override;
   PVR_ERROR GetDriveSpace(uint64_t& total, uint64_t& used) override;
   PVR_ERROR OnSystemWake() override;
+  PVR_ERROR GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                           int& position) override;
+  PVR_ERROR SetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                           int lastplayedposition) override;
 
 private:
   bool m_isConnected = false;
