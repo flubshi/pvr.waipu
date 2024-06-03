@@ -187,7 +187,7 @@ void WaipuData::LoginThread()
                                                              PVR_CONNECTION_STATE_CONNECTED, "");
       m_nextLoginAttempt = std::time(0) + 60;
 
-      if (previousStatus != m_login_status || m_lastUpdate < std::time(0) - 30*60)
+      if (previousStatus != m_login_status || m_lastUpdate < std::time(0) - 30 * 60)
       {
         m_lastUpdate = std::time(0);
         kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
@@ -562,7 +562,8 @@ void WaipuData::ReadSettings()
   m_password = kodi::addon::GetSettingString("password");
   m_protocol = kodi::addon::GetSettingString("protocol", "auto");
   m_provider = kodi::addon::GetSettingEnum<WAIPU_PROVIDER>("provider_select", WAIPU_PROVIDER_WAIPU);
-  m_channel_filter = kodi::addon::GetSettingEnum<WAIPU_CHANNEL_IMPORT_FILTER>("channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
+  m_channel_filter = kodi::addon::GetSettingEnum<WAIPU_CHANNEL_IMPORT_FILTER>(
+      "channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
 
@@ -606,15 +607,15 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
 
   else if (settingName == "protocol")
   {
-     m_protocol = settingValue.GetString();
-     return ADDON_STATUS_OK;
+    m_protocol = settingValue.GetString();
+    return ADDON_STATUS_OK;
   }
 
   else if (settingName == "epg_show_preview_images")
-    {
-      m_epg_show_preview_images = settingValue.GetBoolean();
-      return ADDON_STATUS_OK;
-    }
+  {
+    m_epg_show_preview_images = settingValue.GetBoolean();
+    return ADDON_STATUS_OK;
+  }
 
   else if (settingName == "provider_select")
   {
@@ -719,35 +720,39 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   else if (protocol == "hls" && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
   {
     if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
-      {
-	kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
-	return;
-      }
+    {
+      kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
+      return;
+    }
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls using inputstream.ffmpegdirect");
     properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.ffmpegdirect");
     properties.emplace_back("inputstream.ffmpegdirect.manifest_type", "hls");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
-    properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream", realtime ? "true" : "false");
+    properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream",
+                            realtime ? "true" : "false");
   }
   else if (protocol == "hls" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
-      kodi::Log(ADDON_LOG_DEBUG, "[SetStreamProperties] play protocol '%s' using inputstream adaptive",
-                protocol.c_str());
+    kodi::Log(ADDON_LOG_DEBUG,
+              "[SetStreamProperties] play protocol '%s' using inputstream adaptive",
+              protocol.c_str());
 
-      properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
-      properties.emplace_back("inputstream.adaptive.manifest_type", "hls");
-      properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
+    properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
+    properties.emplace_back("inputstream.adaptive.manifest_type", "hls");
+    properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
 
-      if (playTimeshiftBuffer)
-      {
-        properties.emplace_back("inputstream.adaptive.play_timeshift_buffer", "true");
-      }
+    if (playTimeshiftBuffer)
+    {
+      properties.emplace_back("inputstream.adaptive.play_timeshift_buffer", "true");
+    }
   }
   else
   {
-    kodi::Log(ADDON_LOG_ERROR, "[SetStreamProperties] called with invalid protocol '%s' or missing inputstream addon.",
-              protocol.c_str());
+    kodi::Log(
+        ADDON_LOG_ERROR,
+        "[SetStreamProperties] called with invalid protocol '%s' or missing inputstream addon.",
+        protocol.c_str());
   }
 }
 
@@ -763,7 +768,8 @@ bool WaipuData::LoadChannelData()
   std::lock_guard<std::mutex> lock(mutex);
 
   std::string stationConfigJson = HttpGet("https://web-proxy.waipu.tv/station-config");
-  kodi::Log(ADDON_LOG_DEBUG, "[%s] Station config JSON: %s", __FUNCTION__, stationConfigJson.c_str());
+  kodi::Log(ADDON_LOG_DEBUG, "[%s] Station config JSON: %s", __FUNCTION__,
+            stationConfigJson.c_str());
 
   rapidjson::Document stationConfigDoc;
   stationConfigDoc.Parse(stationConfigJson.c_str());
@@ -775,7 +781,8 @@ bool WaipuData::LoadChannelData()
   }
   const auto& stationConfigs = stationConfigDoc["stations"].GetArray();
 
-  std::string userStationsJson = HttpGet("https://user-stations.waipu.tv/api/stations?omitted=false");
+  std::string userStationsJson =
+      HttpGet("https://user-stations.waipu.tv/api/stations?omitted=false");
   kodi::Log(ADDON_LOG_DEBUG, "[%s] User stations JSON: %s", __FUNCTION__, userStationsJson.c_str());
 
   rapidjson::Document doc;
@@ -801,8 +808,9 @@ bool WaipuData::LoadChannelData()
     const auto& channel = doc[i];
     const std::string waipuId = channel["stationId"].GetString();
 
-    const auto& stationConfig = std::find_if(stationConfigs.begin(), stationConfigs.end(),
-                          [waipuId](const auto& v) { return v["id"].GetString() == waipuId; });
+    const auto& stationConfig =
+        std::find_if(stationConfigs.begin(), stationConfigs.end(),
+                     [waipuId](const auto& v) { return v["id"].GetString() == waipuId; });
     if (stationConfig == stationConfigs.end())
       continue;
 
@@ -811,19 +819,23 @@ bool WaipuData::LoadChannelData()
     waipuChannel.iChannelNumber = i + 1; // position
     waipuChannel.waipuID = waipuId; // waipu[id]
     // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
-    std::transform(waipuChannel.waipuID.begin(), waipuChannel.waipuID.end(), waipuChannel.waipuID.begin(),::toupper);
+    std::transform(waipuChannel.waipuID.begin(), waipuChannel.waipuID.end(),
+                   waipuChannel.waipuID.begin(), ::toupper);
     waipuChannel.iUniqueId = Utils::Hash(waipuId);
     waipuChannel.strChannelName = channel["displayName"].GetString(); // waipu[displayName]
 
     std::string iconUrl = (*stationConfig)["logoTemplateUrl"].GetString();
-    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"), channel["streamQuality"].GetString());
+    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"),
+                                 channel["streamQuality"].GetString());
     iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
     iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
 
-    std::string iconPath = "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuChannel.waipuID + ".png";
+    std::string iconPath =
+        "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuChannel.waipuID + ".png";
     if (!kodi::vfs::FileExists(iconPath, true))
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__, iconUrl.c_str(), iconPath.c_str());
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__,
+                iconUrl.c_str(), iconPath.c_str());
       Utils::FileDownload(iconUrl, iconPath);
     }
     waipuChannel.strIconPath = iconPath;
@@ -854,12 +866,11 @@ bool WaipuData::LoadChannelData()
     else // Not VoD -> Live TV
       cgroup_live.channels.emplace_back(waipuChannel);
 
-
-
     kodi::Log(ADDON_LOG_DEBUG,
               "[channel] number: %i, tvfuse: %i, waipuId: %s, id: %i, name: %s, logo: %s",
               waipuChannel.iChannelNumber, waipuChannel.tvfuse, waipuChannel.waipuID.c_str(),
-              waipuChannel.iUniqueId, waipuChannel.strChannelName.c_str(), waipuChannel.strIconPath.c_str());
+              waipuChannel.iUniqueId, waipuChannel.strChannelName.c_str(),
+              waipuChannel.strIconPath.c_str());
 
     m_channels.emplace_back(waipuChannel);
   }
@@ -1163,14 +1174,13 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
       // epg preview image
       if (m_epg_show_preview_images && epgData.HasMember("previewImages") &&
-	  epgData["previewImages"].IsArray() && epgData["previewImages"].Size() > 0)
+          epgData["previewImages"].IsArray() && epgData["previewImages"].Size() > 0)
       {
         std::string tmp_img = epgData["previewImages"][0].GetString();
         tmp_img += "?width=480&height=270";
         tag.SetIconPath(tmp_img);
         kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
       }
-
 
       // iSeriesNumber
       if (epgData.HasMember("season") && !epgData["season"].IsNull())
@@ -1227,17 +1237,18 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       tag.SetFlags(flags);
       results.Add(tag);
     }
-    if(epg_experimental && !has_results){
-	return GetEPGForChannelNew(channelUid, start, end, results);
+    if (epg_experimental && !has_results)
+    {
+      return GetEPGForChannelNew(channelUid, start, end, results);
     }
   }
   return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
-                                      time_t start,
-                                      time_t end,
-                                      kodi::addon::PVREPGTagsResultSet& results)
+                                         time_t start,
+                                         time_t end,
+                                         kodi::addon::PVREPGTagsResultSet& results)
 {
   const int grid_align_hours = 4; // align 4h
 
@@ -1248,31 +1259,32 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
 
     std::string channelid = channel.waipuID;
 
-    std::transform(channelid.begin(), channelid.end(), channelid.begin(),::tolower);
+    std::transform(channelid.begin(), channelid.end(), channelid.begin(), ::tolower);
 
     kodi::Log(ADDON_LOG_DEBUG, "[epg-new] channel: %s", channelid.c_str());
     std::string endTime = Utils::TimeToString(end);
 
     int limit = 32;
 
-    while(start < end){
+    while (start < end)
+    {
       limit--;
 
-      struct tm *tm = std::gmtime(&start);
+      struct tm* tm = std::gmtime(&start);
       tm->tm_hour -= tm->tm_hour % grid_align_hours; // align to grid window
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] tm %d", tm->tm_hour);
 
       char startTimeBuf[30];
       // 2024-05-17T17:00:00.000Z
-      strftime(startTimeBuf,30,"%Y-%m-%dT%H:00:00.000Z",tm);
+      strftime(startTimeBuf, 30, "%Y-%m-%dT%H:00:00.000Z", tm);
 
-
-      std::string jsonEpg = HttpGet("https://epg-cache.waipu.tv/api/grid/"+channelid+"/" + startTimeBuf);
+      std::string jsonEpg =
+          HttpGet("https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf);
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] %s", jsonEpg.c_str());
       if (jsonEpg.empty())
       {
-	kodi::Log(ADDON_LOG_ERROR, "[epg-new] empty server response");
-	return PVR_ERROR_SERVER_ERROR;
+        kodi::Log(ADDON_LOG_ERROR, "[epg-new] empty server response");
+        return PVR_ERROR_SERVER_ERROR;
       }
       jsonEpg = "{\"result\": " + jsonEpg + "}";
 
@@ -1280,93 +1292,93 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
       epgDoc.Parse(jsonEpg.c_str());
       if (epgDoc.HasParseError())
       {
-	kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
-	return PVR_ERROR_SERVER_ERROR;
+        kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
+        return PVR_ERROR_SERVER_ERROR;
       }
 
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] size: %i;", epgDoc["result"].Size());
 
       for (const auto& epgData : epgDoc["result"].GetArray())
       {
-	kodi::addon::PVREPGTag tag;
+        kodi::addon::PVREPGTag tag;
 
-	// generate a unique boadcast id
-	const std::string epg_bid = epgData["id"].GetString();
-	kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid: %s;", epg_bid.c_str());
-	int dirtyID = Utils::GetIDDirty(epg_bid);
-	kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid dirty: %i;", dirtyID);
-	tag.SetUniqueBroadcastId(dirtyID);
+        // generate a unique boadcast id
+        const std::string epg_bid = epgData["id"].GetString();
+        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid: %s;", epg_bid.c_str());
+        int dirtyID = Utils::GetIDDirty(epg_bid);
+        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid dirty: %i;", dirtyID);
+        tag.SetUniqueBroadcastId(dirtyID);
 
-	// channel ID
-	tag.SetUniqueChannelId(channel.iUniqueId);
+        // channel ID
+        tag.SetUniqueChannelId(channel.iUniqueId);
 
-	unsigned int flags = EPG_TAG_FLAG_UNDEFINED;
+        unsigned int flags = EPG_TAG_FLAG_UNDEFINED;
 
-	// is recordable
-	bool isRecordable = !epgData["recordingForbidden"].GetBool();
-	kodi::Log(ADDON_LOG_DEBUG, "[epg-new] recordable: %i;", isRecordable);
-	if (isRecordable)
-	{
-	  flags |= EPG_TAG_FLAG_IS_RECORDABLE_WAIPU;
-	  flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU;
-	}
+        // is recordable
+        bool isRecordable = !epgData["recordingForbidden"].GetBool();
+        kodi::Log(ADDON_LOG_DEBUG, "[epg-new] recordable: %i;", isRecordable);
+        if (isRecordable)
+        {
+          flags |= EPG_TAG_FLAG_IS_RECORDABLE_WAIPU;
+          flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU;
+        }
 
-	// set title
-	tag.SetTitle(epgData["title"].GetString());
-	kodi::Log(ADDON_LOG_DEBUG, "[epg] title: %s;", epgData["title"].GetString());
+        // set title
+        tag.SetTitle(epgData["title"].GetString());
+        kodi::Log(ADDON_LOG_DEBUG, "[epg] title: %s;", epgData["title"].GetString());
 
-	// set startTime
-	const std::string entryStartTime = epgData["startTime"].GetString();
-	tag.SetStartTime(Utils::StringToTime(entryStartTime));
+        // set startTime
+        const std::string entryStartTime = epgData["startTime"].GetString();
+        tag.SetStartTime(Utils::StringToTime(entryStartTime));
 
-	// set endTime
-	const std::string entryEndTime = epgData["stopTime"].GetString();
-	tag.SetEndTime(Utils::StringToTime(entryEndTime));
+        // set endTime
+        const std::string entryEndTime = epgData["stopTime"].GetString();
+        tag.SetEndTime(Utils::StringToTime(entryEndTime));
 
-	// epg preview image
-	if (m_epg_show_preview_images && epgData.HasMember("previewImage"))
-	{
-	  std::string tmp_img = epgData["previewImage"].GetString();
-	  tag.SetIconPath(tmp_img);
-	  kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
-	}
+        // epg preview image
+        if (m_epg_show_preview_images && epgData.HasMember("previewImage"))
+        {
+          std::string tmp_img = epgData["previewImage"].GetString();
+          tag.SetIconPath(tmp_img);
+          kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
+        }
 
+        if (epgData.HasMember("seriesId") && !epgData["seriesId"].IsNull())
+        {
+          flags |= EPG_TAG_FLAG_IS_SERIES;
+          tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE);
+        }
 
-	if (epgData.HasMember("seriesId") && !epgData["seriesId"].IsNull())
-	{
-	  flags |= EPG_TAG_FLAG_IS_SERIES;
-	  tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE);
-	}
+        // episodeName
+        if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
+        {
+          tag.SetEpisodeName(epgData["episodeTitle"].GetString());
+        }
 
-	// episodeName
-	if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
-	{
-	  tag.SetEpisodeName(epgData["episodeTitle"].GetString());
-	}
+        // genre
+        if (epgData.HasMember("genre") && !epgData["genre"].IsNull())
+        {
+          const std::string genreStr = epgData["genre"].GetString();
+          int genre = m_categories.Category(genreStr);
+          if (genre)
+          {
+            tag.SetGenreSubType(genre & 0x0F);
+            tag.SetGenreType(genre & 0xF0);
+          }
+          else
+          {
+            tag.SetGenreType(EPG_GENRE_USE_STRING);
+            tag.SetGenreSubType(0); /* not supported */
+            tag.SetGenreDescription(genreStr);
+          }
+        }
 
-	// genre
-	if (epgData.HasMember("genre") && !epgData["genre"].IsNull())
-	{
-	  const std::string genreStr = epgData["genre"].GetString();
-	  int genre = m_categories.Category(genreStr);
-	  if (genre)
-	  {
-	    tag.SetGenreSubType(genre & 0x0F);
-	    tag.SetGenreType(genre & 0xF0);
-	  }
-	  else
-	  {
-	    tag.SetGenreType(EPG_GENRE_USE_STRING);
-	    tag.SetGenreSubType(0); /* not supported */
-	    tag.SetGenreDescription(genreStr);
-	  }
-	}
-
-	tag.SetFlags(flags);
-	results.Add(tag);
+        tag.SetFlags(flags);
+        results.Add(tag);
       }
       start = start + grid_align_hours * 60 * 60;
-      if (limit < 1) break;
+      if (limit < 1)
+        break;
     }
   }
   return PVR_ERROR_NO_ERROR;
@@ -1415,7 +1427,7 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   // check if program is running and replay allowed
   auto current_time = time(NULL);
   if (m_account_replay_allowed && current_time > tag.GetStartTime() &&
-      (current_time < tag.GetEndTime() || current_time - 60*60 < tag.GetStartTime()))
+      (current_time < tag.GetEndTime() || current_time - 60 * 60 < tag.GetStartTime()))
   {
     isPlayable = (tag.GetFlags() & EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU);
   }

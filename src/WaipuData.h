@@ -99,9 +99,9 @@ public:
                              time_t end,
                              kodi::addon::PVREPGTagsResultSet& results) override;
   PVR_ERROR GetEPGForChannelNew(int channelUid,
-                             time_t start,
-                             time_t end,
-                             kodi::addon::PVREPGTagsResultSet& results);
+                                time_t start,
+                                time_t end,
+                                kodi::addon::PVREPGTagsResultSet& results);
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
   PVR_ERROR GetEPGTagStreamProperties(
@@ -130,7 +130,8 @@ private:
   std::thread m_loginThread;
   void LoginThread();
   time_t m_nextLoginAttempt = 0;
-  WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter = WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
+  WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter =
+      WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
 
   struct WaipuChannel
   {
