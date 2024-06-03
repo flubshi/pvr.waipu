@@ -95,6 +95,10 @@ std::string WaipuData::HttpRequestToCurl(Curl& curl,
   {
     content = curl.Delete(url, postData, statusCode);
   }
+  else if (action == "PUT")
+  {
+    content = curl.Put(url, postData, statusCode);
+  }
   else
   {
     content = curl.Get(url, statusCode);
@@ -664,6 +668,7 @@ PVR_ERROR WaipuData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsRecordingsDelete(true);
   capabilities.SetSupportsTimers(true);
   capabilities.SetSupportsChannelGroups(true);
+  capabilities.SetSupportsLastPlayedPosition(true);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2044,6 +2049,28 @@ PVR_ERROR WaipuData::OnSystemWake()
   m_deviceCapabilitiesToken = JWT();
   m_nextLoginAttempt = 0;
   m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+
+  return PVR_ERROR_NO_ERROR;
+}
+
+PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                                    int& position)
+{
+  return PVR_ERROR_NOT_IMPLEMENTED;
+}
+
+PVR_ERROR WaipuData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                                    int lastplayedposition)
+{
+  if (!IsConnected())
+    return PVR_ERROR_FAILED;
+
+  std::string request_data = "{\"position\":" + std::to_string(lastplayedposition) + "}";
+  std::string response = HttpRequest(
+      "PUT", "https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
+      request_data.c_str(),
+      {{"Content-Type", "application/vnd.waipu.stream-position-request.v1+json"}});
+  kodi::Log(ADDON_LOG_DEBUG, "%s - Response: %s", __FUNCTION__, response.c_str());
 
   return PVR_ERROR_NO_ERROR;
 }

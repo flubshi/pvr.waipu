@@ -23,6 +23,7 @@ public:
   std::string Delete(const std::string& url, const std::string& postData, int& statusCode);
   std::string Get(const std::string& url, int& statusCode);
   std::string Post(const std::string& url, const std::string& postData, int& statusCode);
+  std::string Put(const std::string& url, const std::string& postData, int& statusCode);
   void AddHeader(const std::string& name, const std::string& value);
   void AddOption(const std::string& name, const std::string& value);
   void ResetHeaders();

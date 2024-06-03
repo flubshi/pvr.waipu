@@ -67,6 +67,11 @@ std::string Curl::Post(const std::string& url, const std::string& postData, int&
   return Request("POST", url, postData, statusCode);
 }
 
+std::string Curl::Put(const std::string& url, const std::string& postData, int& statusCode)
+{
+  return Request("PUT", url, postData, statusCode);
+}
+
 void Curl::ParseCookies(kodi::vfs::CFile* file, const std::string& host)
 {
   const std::vector<std::string> cookies =
