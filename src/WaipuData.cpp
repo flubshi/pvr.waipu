@@ -31,6 +31,7 @@
 #include <chrono>
 #include <ctime>
 #include <regex>
+#include <set>
 #include <thread>
 
 #include <kodi/gui/dialogs/Progress.h>
@@ -1536,6 +1537,137 @@ PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
+kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const rapidjson::Value& recordingEntry)
+{
+
+  kodi::addon::PVRRecording tag;
+  bool isSeries = false;
+
+  tag.SetIsDeleted(false);
+  std::string recordingId = recordingEntry["id"].GetString();
+  tag.SetRecordingId(recordingId);
+  tag.SetPlayCount(recordingEntry.HasMember("fullyWatchedCount") &&
+                   recordingEntry["fullyWatchedCount"].GetInt());
+
+  const std::string rec_title = recordingEntry["title"].GetString();
+  tag.SetTitle(rec_title);
+
+  if (recordingEntry.HasMember("previewImage") && !recordingEntry["previewImage"].IsNull())
+  {
+    std::string rec_img = recordingEntry["previewImage"].GetString();
+    rec_img = std::regex_replace(rec_img, std::regex("\\$\\{resolution\\}"), "320x180");
+    tag.SetIconPath(rec_img);
+    tag.SetThumbnailPath(rec_img);
+  }
+
+  if (recordingEntry.HasMember("durationSeconds") && !recordingEntry["durationSeconds"].IsNull())
+    tag.SetDuration(recordingEntry["durationSeconds"].GetInt());
+
+  if (recordingEntry.HasMember("positionPercentage") &&
+      !recordingEntry["positionPercentage"].IsNull())
+  {
+    int positionPercentage = recordingEntry["positionPercentage"].GetInt();
+    int position = tag.GetDuration() * positionPercentage / 100;
+    tag.SetLastPlayedPosition(position);
+  }
+
+  if (recordingEntry.HasMember("recordingStartTime") &&
+      !recordingEntry["recordingStartTime"].IsNull())
+    tag.SetRecordingTime(Utils::StringToTime(recordingEntry["recordingStartTime"].GetString()));
+
+  if (recordingEntry.HasMember("genreDisplayName") && !recordingEntry["genreDisplayName"].IsNull())
+  {
+    std::string genreStr = recordingEntry["genreDisplayName"].GetString();
+    int genre = m_categories.Category(genreStr);
+    if (genre)
+    {
+      tag.SetGenreSubType(genre & 0x0F);
+      tag.SetGenreType(genre & 0xF0);
+    }
+    else
+    {
+      tag.SetGenreType(EPG_GENRE_USE_STRING);
+      tag.SetGenreSubType(0); /* not supported */
+      tag.SetGenreDescription(genreStr);
+    }
+  }
+
+  if (recordingEntry.HasMember("episodeTitle") && !recordingEntry["episodeTitle"].IsNull())
+  {
+    tag.SetEpisodeName(recordingEntry["episodeTitle"].GetString());
+    isSeries = true;
+  }
+
+  if (recordingEntry.HasMember("season") && !recordingEntry["season"].IsNull())
+    tag.SetSeriesNumber(Utils::StringToInt(recordingEntry["season"].GetString(),
+                                           PVR_RECORDING_INVALID_SERIES_EPISODE));
+
+  if (recordingEntry.HasMember("episode") && !recordingEntry["episode"].IsNull())
+    tag.SetEpisodeNumber(Utils::StringToInt(recordingEntry["episode"].GetString(),
+                                            PVR_RECORDING_INVALID_SERIES_EPISODE));
+
+  // epg mapping
+  if (recordingEntry.HasMember("programId") && !recordingEntry["programId"].IsNull())
+  {
+    std::string epg_id = recordingEntry["programId"].GetString();
+    int dirtyID = Utils::GetIDDirty(epg_id);
+    tag.SetEPGEventId(dirtyID);
+  }
+
+  // not every series is correctly tagged - lets assume recording groups are also series
+  if (recordingEntry.HasMember("recordingGroup"))
+    isSeries = true;
+
+  if (isSeries)
+  {
+    tag.SetFlags(PVR_RECORDING_FLAG_IS_SERIES);
+    tag.SetDirectory(rec_title);
+  }
+
+  // Additional program details like year or plot are on available in an additional details request. Maybe we should provide this as settings option?
+  //  const bool fetchAdditionalInfos = false;
+  //  if (fetchAdditionalInfos)
+  //  {
+  //
+  //    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
+  //                               {{"Accept", "application/vnd.waipu.recording-v4+json"}});
+  //    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+  //
+  //    rapidjson::Document doc;
+  //    doc.Parse(json.c_str());
+  //    if (!doc.HasParseError())
+  //    {
+  //      if (doc.HasMember("programDetails"))
+  //      {
+  //        if (doc["programDetails"].HasMember("textContent"))
+  //        {
+  //          if (doc["programDetails"]["textContent"].HasMember("descLong"))
+  //          {
+  //            std::string descr = doc["programDetails"]["textContent"]["descLong"].GetString();
+  //            tag.SetPlot(descr);
+  //            tag.SetPlotOutline(descr);
+  //          }
+  //          else if (doc["programDetails"]["textContent"].HasMember("descShort"))
+  //          {
+  //            std::string descr = doc["programDetails"]["textContent"]["descShort"].GetString();
+  //            tag.SetPlot(descr);
+  //            tag.SetPlotOutline(descr);
+  //          }
+  //        }
+  //        if (doc["programDetails"].HasMember("production"))
+  //        {
+  //          if (doc["programDetails"]["production"].HasMember("year"))
+  //          {
+  //            std::string year = doc["programDetails"]["production"]["year"].GetString();
+  //            tag.SetYear(Utils::StringToInt(year, 1970));
+  //          }
+  //        }
+  //      }
+  //    }
+  //  }
+  return tag;
+}
+
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
   if (!IsConnected())
@@ -1544,100 +1676,67 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
   m_active_recordings_update = true;
 
   {
-    std::string json = HttpGet("https://recording.waipu.tv/api/recordings",
-                               {{"Accept", "application/vnd.waipu.recordings-v2+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+    std::string recordingGroupsJSON =
+        HttpGet("https://recording.waipu.tv/api/recordings",
+                {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[recordingGroupsJSON] %s", recordingGroupsJSON.c_str());
 
-    rapidjson::Document doc;
-    doc.Parse(json.c_str());
-    if (doc.HasParseError())
+    rapidjson::Document recordingGroupsDoc;
+    recordingGroupsDoc.Parse(recordingGroupsJSON.c_str());
+    if (recordingGroupsDoc.HasParseError())
     {
-      kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
+      kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing recordingGroupsJSON");
       return PVR_ERROR_SERVER_ERROR;
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.Size());
-
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings] getGroups");
+    std::set<int> recordingGroups;
     int recordings_count = 0;
 
-    for (const auto& recording : doc.GetArray())
+    for (const auto& recordingEntry : recordingGroupsDoc.GetArray())
     {
       // skip not FINISHED entries
-      std::string status = recording["status"].GetString();
-      if (status != "FINISHED" && status != "RECORDING")
-        continue;
+      std::string status = recordingEntry["status"].GetString();
 
-      kodi::addon::PVRRecording tag;
-
-      tag.SetIsDeleted(false);
-      tag.SetRecordingId(recording["id"].GetString());
-      tag.SetPlayCount(recording.HasMember("watched") && recording["watched"].GetBool());
-
-      const rapidjson::Value& epgData = recording["epgData"];
-
-      const std::string rec_title = epgData["title"].GetString();
-      tag.SetTitle(rec_title);
-      tag.SetDirectory(rec_title);
-
-      if (epgData.HasMember("previewImages") && epgData["previewImages"].IsArray() &&
-          epgData["previewImages"].Size() > 0)
+      if (recordingEntry.HasMember("recordingGroup") && recordingEntry["recordingGroup"].IsInt())
       {
-        std::string rec_img =
-            std::string(epgData["previewImages"][0].GetString()) + "?width=256&height=256";
-        tag.SetIconPath(rec_img);
-        tag.SetThumbnailPath(rec_img);
+        int recordingGroup = recordingEntry["recordingGroup"].GetInt();
+        kodi::Log(ADDON_LOG_DEBUG, "[recordings] found group: %i;", recordingGroup);
+        recordingGroups.insert(recordingGroup);
       }
-
-      if (epgData.HasMember("duration") && !epgData["duration"].IsNull())
-        tag.SetDuration(Utils::StringToInt(epgData["duration"].GetString(), 0) * 60);
-
-      if (epgData.HasMember("season") && !epgData["season"].IsNull())
-        tag.SetSeriesNumber(Utils::StringToInt(epgData["season"].GetString(),
-                                               PVR_RECORDING_INVALID_SERIES_EPISODE));
-
-      if (epgData.HasMember("episode") && !epgData["episode"].IsNull())
-        tag.SetEpisodeNumber(Utils::StringToInt(epgData["episode"].GetString(),
-                                                PVR_RECORDING_INVALID_SERIES_EPISODE));
-
-      if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
-        tag.SetEpisodeName(epgData["episodeTitle"].GetString());
-
-      if (epgData.HasMember("year") && !epgData["year"].IsNull())
-        tag.SetYear(Utils::StringToInt(epgData["year"].GetString(), 1970));
-
-      if (recording.HasMember("startTime") && !recording["startTime"].IsNull())
-        tag.SetRecordingTime(Utils::StringToTime(recording["startTime"].GetString()));
-
-      if (epgData.HasMember("description") && !epgData["description"].IsNull())
-        tag.SetPlot(epgData["description"].GetString());
-
-      if (epgData.HasMember("genreDisplayName") && !epgData["genreDisplayName"].IsNull())
+      else if (status == "FINISHED" || status == "RECORDING")
       {
-        std::string genreStr = epgData["genreDisplayName"].GetString();
-        int genre = m_categories.Category(genreStr);
-        if (genre)
-        {
-          tag.SetGenreSubType(genre & 0x0F);
-          tag.SetGenreType(genre & 0xF0);
-        }
-        else
-        {
-          tag.SetGenreType(EPG_GENRE_USE_STRING);
-          tag.SetGenreSubType(0); /* not supported */
-          tag.SetGenreDescription(genreStr);
-        }
+        recordings_count++;
+        results.Add(ParseRecordingEntry(recordingEntry));
       }
+    }
 
-      // epg mapping
-      if (epgData.HasMember("id") && !epgData["id"].IsNull())
+    for (const int& recordingGroup : recordingGroups)
+    {
+      std::string json = HttpGet("https://recording.waipu.tv/api/recordings?recordingGroup=" +
+                                     std::to_string(recordingGroup),
+                                 {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+
+      rapidjson::Document doc;
+      doc.Parse(json.c_str());
+      if (doc.HasParseError())
       {
-        std::string epg_id = epgData["id"].GetString();
-        int dirtyID = Utils::GetIDDirty(epg_id);
-        tag.SetEPGEventId(dirtyID);
+        kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
+        return PVR_ERROR_SERVER_ERROR;
       }
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.Size());
 
-      recordings_count++;
-      results.Add(tag);
+      for (const rapidjson::Value& recordingEntry : doc.GetArray())
+      {
+        // skip not FINISHED entries
+        std::string status = recordingEntry["status"].GetString();
+        if (status != "FINISHED" && status != "RECORDING")
+          continue;
+
+        recordings_count++;
+        results.Add(ParseRecordingEntry(recordingEntry));
+      }
     }
     m_recordings_count = recordings_count;
   }

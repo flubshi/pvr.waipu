@@ -109,6 +109,7 @@ public:
       std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
   PVR_ERROR GetRecordingsAmount(bool deleted, int& amount) override;
+  kodi::addon::PVRRecording ParseRecordingEntry(const rapidjson::Value& recordingEntry);
   PVR_ERROR GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results) override;
   PVR_ERROR DeleteRecording(const kodi::addon::PVRRecording& recording) override;
   PVR_ERROR GetRecordingStreamProperties(
