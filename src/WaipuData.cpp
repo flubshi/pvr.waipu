@@ -907,24 +907,28 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
+  if (radio)
+  {
+    kodi::Log(ADDON_LOG_ERROR,
+              "[%s] ERROR: Function was called with invalid parameter 'radio: true'", __FUNCTION__);
+    return PVR_ERROR_INVALID_PARAMETERS;
+  }
+
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   LoadChannelData();
 
   for (const auto& channel : m_channels)
   {
-    if (!radio)
-    {
-      kodi::addon::PVRChannel kodiChannel;
+    kodi::addon::PVRChannel kodiChannel;
 
-      kodiChannel.SetUniqueId(channel.iUniqueId);
-      kodiChannel.SetIsRadio(false);
-      kodiChannel.SetChannelNumber(channel.iChannelNumber);
-      kodiChannel.SetChannelName(channel.strChannelName);
-      kodiChannel.SetIconPath(channel.strIconPath);
-      kodiChannel.SetIsHidden(false);
+    kodiChannel.SetUniqueId(channel.iUniqueId);
+    kodiChannel.SetIsRadio(false);
+    kodiChannel.SetChannelNumber(channel.iChannelNumber);
+    kodiChannel.SetChannelName(channel.strChannelName);
+    kodiChannel.SetIconPath(channel.strIconPath);
+    kodiChannel.SetIsHidden(false);
 
-      results.Add(kodiChannel);
-    }
+    results.Add(kodiChannel);
   }
   return PVR_ERROR_NO_ERROR;
 }
@@ -1034,6 +1038,13 @@ PVR_ERROR WaipuData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsR
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
+  if (radio)
+  {
+    kodi::Log(ADDON_LOG_ERROR,
+              "[%s] ERROR: Function was called with invalid parameter 'radio: true'", __FUNCTION__);
+    return PVR_ERROR_INVALID_PARAMETERS;
+  }
+
   LoadChannelData();
   std::vector<WaipuChannelGroup>::iterator it;
   for (it = m_channelGroups.begin(); it != m_channelGroups.end(); ++it)
@@ -1052,6 +1063,13 @@ PVR_ERROR WaipuData::GetChannelGroups(bool radio, kodi::addon::PVRChannelGroupsR
 PVR_ERROR WaipuData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& group,
                                             kodi::addon::PVRChannelGroupMembersResultSet& results)
 {
+  if (group.GetIsRadio())
+  {
+    kodi::Log(ADDON_LOG_ERROR,
+              "[%s] ERROR: Function was called with a group having 'radio: true'", __FUNCTION__);
+    return PVR_ERROR_INVALID_PARAMETERS;
+  }
+
   LoadChannelData();
   for (const auto& cgroup : m_channelGroups)
   {
