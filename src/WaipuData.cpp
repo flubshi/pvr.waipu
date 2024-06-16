@@ -506,12 +506,18 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
   std::string appVersion;
   GetBackendVersion(appVersion);
 
+  kodi_version_t kodi_version;
+  kodi::KodiVersion(kodi_version);
+
   bool cap_audio_aac = kodi::addon::GetSettingBoolean("streaming_capabilities_audio_aac", false);
 
   std::string capabilitesData =
-      "{\"type\": \"receiver\", \"model\": \"Kodi 19\", \"manufacturer\": \"Team Kodi\", "
-      "\"platform\": \"Kodi 19-pvr.waipu\", \"appVersion\": \"" +
-      appVersion +
+      "{\"type\": \"receiver\", \"model\": \"Kodi " + std::to_string(kodi_version.major) + "." +
+      std::to_string(kodi_version.minor) +
+      "\", \"manufacturer\": \"Team Kodi\", "
+      "\"platform\": \"Kodi " +
+      std::to_string(kodi_version.major) + "." + std::to_string(kodi_version.minor) +
+      "-pvr.waipu\", \"appVersion\": \"" + appVersion +
       "\", \"capabilities\": {\"audio\": {\"aac\": " + (cap_audio_aac ? "true" : "false") +
       "},\"video\": { ";
 
