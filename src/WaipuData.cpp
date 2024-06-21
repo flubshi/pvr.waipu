@@ -2155,7 +2155,35 @@ PVR_ERROR WaipuData::OnSystemWake()
 PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
                                                     int& position)
 {
-  return PVR_ERROR_NOT_IMPLEMENTED;
+  if (!IsConnected())
+    return PVR_ERROR_FAILED;
+
+  std::string responseJSON =
+      HttpGet("https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
+              {{"Content-Type", "application/json"}});
+
+  if (responseJSON.empty())
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "%s - Empty StreamPosition retrieved - start from beginning.",
+              __FUNCTION__);
+    position = 0;
+    return PVR_ERROR_NO_ERROR;
+  }
+
+  kodi::Log(ADDON_LOG_DEBUG, "%s - Response: %s", __FUNCTION__, responseJSON.c_str());
+
+  rapidjson::Document recordingPosDoc;
+  recordingPosDoc.Parse(responseJSON.c_str());
+  if (recordingPosDoc.HasParseError())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: Parsing StreamPosition JSON", __FUNCTION__);
+    return PVR_ERROR_SERVER_ERROR;
+  }
+  // {"streamId":"1036499352","position":5040,"changed":"2024-06-21T17:54:52.000+00:00"}
+  if (recordingPosDoc.HasMember("position") && recordingPosDoc["position"].IsInt())
+    position = recordingPosDoc["position"].GetInt();
+
+  return PVR_ERROR_NO_ERROR;
 }
 
 PVR_ERROR WaipuData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
