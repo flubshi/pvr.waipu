@@ -176,6 +176,11 @@
                <default>false</default>
                <control type="toggle"/>
             </setting>
+            <setting id="recordings_additional_infos" type="boolean" label="30055" help="">
+               <level>3</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
 				<setting id="epg_show_preview_images" type="boolean" label="30042" help="">
                <level>3</level>
                <default>false</default>
