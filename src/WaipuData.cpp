@@ -609,19 +609,16 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       return ADDON_STATUS_NEED_RESTART;
     }
   }
-
   else if (settingName == "protocol")
   {
     m_protocol = settingValue.GetString();
     return ADDON_STATUS_OK;
   }
-
   else if (settingName == "epg_show_preview_images")
   {
     m_epg_show_preview_images = settingValue.GetBoolean();
     return ADDON_STATUS_OK;
   }
-
   else if (settingName == "provider_select")
   {
     WAIPU_PROVIDER tmpProvider = settingValue.GetEnum<WAIPU_PROVIDER>();
@@ -656,6 +653,10 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     kodi::addon::SetSettingBoolean("refresh_reset", false);
     kodi::addon::SetSettingString("refresh_token", "");
     return ADDON_STATUS_NEED_RESTART;
+  }
+  else if (settingName == "recordings_additional_infos")
+  {
+    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   }
 
   return ADDON_STATUS_OK;
@@ -1219,7 +1220,9 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       // year
       if (epgData.HasMember("year") && !epgData["year"].IsNull())
       {
-        tag.SetYear(Utils::StringToInt(epgData["year"].GetString(), 1970));
+        const int year = Utils::StringToInt(epgData["year"].GetString(), 1970);
+        if (year > 1970)
+          tag.SetYear(year);
       }
 
       // genre
@@ -1625,46 +1628,45 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const rapidjson::Value&
   }
 
   // Additional program details like year or plot are on available in an additional details request. Maybe we should provide this as settings option?
-  //  const bool fetchAdditionalInfos = false;
-  //  if (fetchAdditionalInfos)
-  //  {
-  //
-  //    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
-  //                               {{"Accept", "application/vnd.waipu.recording-v4+json"}});
-  //    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
-  //
-  //    rapidjson::Document doc;
-  //    doc.Parse(json.c_str());
-  //    if (!doc.HasParseError())
-  //    {
-  //      if (doc.HasMember("programDetails"))
-  //      {
-  //        if (doc["programDetails"].HasMember("textContent"))
-  //        {
-  //          if (doc["programDetails"]["textContent"].HasMember("descLong"))
-  //          {
-  //            std::string descr = doc["programDetails"]["textContent"]["descLong"].GetString();
-  //            tag.SetPlot(descr);
-  //            tag.SetPlotOutline(descr);
-  //          }
-  //          else if (doc["programDetails"]["textContent"].HasMember("descShort"))
-  //          {
-  //            std::string descr = doc["programDetails"]["textContent"]["descShort"].GetString();
-  //            tag.SetPlot(descr);
-  //            tag.SetPlotOutline(descr);
-  //          }
-  //        }
-  //        if (doc["programDetails"].HasMember("production"))
-  //        {
-  //          if (doc["programDetails"]["production"].HasMember("year"))
-  //          {
-  //            std::string year = doc["programDetails"]["production"]["year"].GetString();
-  //            tag.SetYear(Utils::StringToInt(year, 1970));
-  //          }
-  //        }
-  //      }
-  //    }
-  //  }
+  if (kodi::addon::GetSettingBoolean("recordings_additional_infos", false))
+  {
+
+    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
+                               {{"Accept", "application/vnd.waipu.recording-v4+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+
+    rapidjson::Document doc;
+    doc.Parse(json.c_str());
+    if (!doc.HasParseError())
+    {
+      if (doc.HasMember("programDetails"))
+      {
+        if (doc["programDetails"].HasMember("textContent"))
+        {
+          if (doc["programDetails"]["textContent"].HasMember("descLong"))
+          {
+            std::string descr = doc["programDetails"]["textContent"]["descLong"].GetString();
+            tag.SetPlot(descr);
+            tag.SetPlotOutline(descr);
+          }
+          else if (doc["programDetails"]["textContent"].HasMember("descShort"))
+          {
+            std::string descr = doc["programDetails"]["textContent"]["descShort"].GetString();
+            tag.SetPlot(descr);
+            tag.SetPlotOutline(descr);
+          }
+        }
+        if (doc["programDetails"].HasMember("production"))
+        {
+          if (doc["programDetails"]["production"].HasMember("year"))
+          {
+            std::string year = doc["programDetails"]["production"]["year"].GetString();
+            tag.SetYear(Utils::StringToInt(year, 1970));
+          }
+        }
+      }
+    }
+  }
   return tag;
 }
 
