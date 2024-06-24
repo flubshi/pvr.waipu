@@ -2192,6 +2192,9 @@ PVR_ERROR WaipuData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
   if (!IsConnected())
     return PVR_ERROR_FAILED;
 
+  if (lastplayedposition == -1)
+    lastplayedposition = 0;
+
   std::string request_data = "{\"position\":" + std::to_string(lastplayedposition) + "}";
   std::string response = HttpRequest(
       "PUT", "https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
