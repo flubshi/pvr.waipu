@@ -211,6 +211,10 @@ msgctxt "#30054"
 msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
 msgstr ""
 
+msgctxt "#30055"
+msgid "Recordings: Load description and year"
+msgstr ""
+
 msgctxt "#30500"
 msgid "Inputstream error"
 msgstr "Chyba Inputstream"

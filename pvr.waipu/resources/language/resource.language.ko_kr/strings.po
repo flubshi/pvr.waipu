@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2024-05-24 17:13+0000\n"
+"PO-Revision-Date: 2024-06-08 03:13+0000\n"
 "Last-Translator: Minho Park <parkmino@gmail.com>\n"
 "Language-Team: Korean <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ko_kr/>\n"
 "Language: ko_kr\n"
@@ -193,22 +193,26 @@ msgstr "실험적인 EPG"
 
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr ""
+msgstr "공급자/인증: Waipu(장치 로그인) 또는 O2 TV 사용을 권장합니다! 자격 증명 로그인을 사용하지 마십시오."
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
-msgstr ""
+msgstr "비공개 채널을 재생하려면 Widevine CDM이 필요합니다. 일부 채널이 작동하지 않으면 클릭하여 Widevine CDM을 설치하세요!"
 
 msgctxt "#30052"
 msgid "Check whether Widevine CDM is installed. Required to play non public channels."
-msgstr ""
+msgstr "Widevine CDM이 설치되어 있는지 확인하세요. 비공개 채널을 재생하는 데 필요합니다."
 
 msgctxt "#30053"
 msgid "Select streaming protocol. Use AUTO or MPEG_DASH. Do not use HLS, because not all channels support this."
-msgstr ""
+msgstr "스트리밍 프로토콜을 선택합니다. 자동 또는 MPEG_DASH를 사용하십시오. 모든 채널이 HLS를 지원하는 것은 아니므로 사용하지 마십시오."
 
 msgctxt "#30054"
 msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
+msgstr "기본적으로 HLS 재생에는 inputstream.adaptive를 사용합니다. 대신 inputstream.ffmpegdirect를 사용하려면 이 옵션을 선택합니다."
+
+msgctxt "#30055"
+msgid "Recordings: Load description and year"
 msgstr ""
 
 msgctxt "#30500"
