@@ -818,6 +818,11 @@ bool WaipuData::LoadChannelData()
   {
     const auto& channel = doc[i];
     const std::string waipuId = channel["stationId"].GetString();
+    if (channel.HasMember("locked") && channel["locked"].GetBool())
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked channel '%s'", __FUNCTION__, waipuId.c_str());
+      continue;
+    }
 
     const auto& stationConfig =
         std::find_if(stationConfigs.begin(), stationConfigs.end(),
@@ -1720,11 +1725,16 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
       if (recordingEntry.HasMember("recordingGroup") && recordingEntry["recordingGroup"].IsInt())
       {
         int recordingGroup = recordingEntry["recordingGroup"].GetInt();
-        kodi::Log(ADDON_LOG_DEBUG, "[recordings] found group: %i;", recordingGroup);
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i;", __FUNCTION__, recordingGroup);
         recordingGroups.insert(recordingGroup);
       }
       else if (status == "FINISHED" || status == "RECORDING")
       {
+        if (recordingEntry.HasMember("locked") && recordingEntry["locked"].GetBool())
+        {
+          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
+          continue;
+        }
         recordings_count++;
         results.Add(ParseRecordingEntry(recordingEntry));
       }
@@ -1754,6 +1764,11 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
         if (status != "FINISHED" && status != "RECORDING")
           continue;
 
+        if (recordingEntry.HasMember("locked") && recordingEntry["locked"].GetBool())
+        {
+          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
+          continue;
+        }
         recordings_count++;
         results.Add(ParseRecordingEntry(recordingEntry));
       }
