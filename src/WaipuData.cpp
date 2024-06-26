@@ -820,6 +820,11 @@ bool WaipuData::LoadChannelData()
   {
     const auto& channel = doc[i];
     const std::string waipuId = channel["stationId"].GetString();
+    if (channel.HasMember("locked") && channel["locked"].GetBool())
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked channel '%s'", __FUNCTION__, waipuId.c_str());
+      continue;
+    }
 
     const auto& stationConfig =
         std::find_if(stationConfigs.begin(), stationConfigs.end(),
@@ -1073,8 +1078,8 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& 
 {
   if (group.GetIsRadio())
   {
-    kodi::Log(ADDON_LOG_ERROR,
-              "[%s] ERROR: Function was called with a group having 'radio: true'", __FUNCTION__);
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: Function was called with a group having 'radio: true'",
+              __FUNCTION__);
     return PVR_ERROR_INVALID_PARAMETERS;
   }
 
