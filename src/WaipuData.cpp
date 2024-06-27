@@ -543,6 +543,8 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] response: %s", jsonDeviceToken.c_str());
 
+  std::string deviceToken;
+
   rapidjson::Document deviceTokenDoc;
   deviceTokenDoc.Parse(jsonDeviceToken.c_str());
   if (deviceTokenDoc.HasParseError())
@@ -691,7 +693,7 @@ PVR_ERROR WaipuData::GetBackendVersion(std::string& version)
   return PVR_ERROR_NO_ERROR;
 }
 
-const std::string& WaipuData::GetLicense()
+std::string WaipuData::GetLicense()
 {
   return m_license;
 }
@@ -954,14 +956,16 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
   {
     // use hls where possible, fallback to dash
     protocol = "dash";
-
-    const std::vector<WaipuChannel>::iterator thisChannel =
-        std::find_if(m_channels.begin(), m_channels.end(),
-                     [&](const WaipuChannel& v) { return v.iUniqueId == channel.GetUniqueId(); });
-
-    if (thisChannel != m_channels.end() && m_hls_allowlist.contains(thisChannel->waipuID))
+    for (const auto& thisChannel : m_channels)
     {
-      protocol = "hls";
+      if (thisChannel.iUniqueId == channel.GetUniqueId())
+      {
+        if (m_hls_allowlist.contains(thisChannel.waipuID))
+        {
+          protocol = "hls";
+        }
+        break;
+      }
     }
     kodi::Log(ADDON_LOG_DEBUG, "protocol auto select: %s", protocol.c_str());
   }
@@ -1074,8 +1078,8 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& 
 {
   if (group.GetIsRadio())
   {
-    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: Function was called with a group having 'radio: true'",
-              __FUNCTION__);
+    kodi::Log(ADDON_LOG_ERROR,
+              "[%s] ERROR: Function was called with a group having 'radio: true'", __FUNCTION__);
     return PVR_ERROR_INVALID_PARAMETERS;
   }
 
@@ -1296,6 +1300,7 @@ PVR_ERROR WaipuData::GetEPGForChannelNew(int channelUid,
     std::transform(channelid.begin(), channelid.end(), channelid.begin(), ::tolower);
 
     kodi::Log(ADDON_LOG_DEBUG, "[epg-new] channel: %s", channelid.c_str());
+    std::string endTime = Utils::TimeToString(end);
 
     int limit = 32;
 
@@ -1520,6 +1525,7 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
         // fallback to replay playback
         kodi::Log(ADDON_LOG_DEBUG,
                   "[play epg tag] streamUrlProvider not found -> fallback to replay!");
+        std::string startTime = std::to_string(tag.GetStartTime());
         return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, startTime);
       }
 
@@ -1845,7 +1851,7 @@ PVR_ERROR WaipuData::DeleteRecording(const kodi::addon::PVRRecording& recording)
   std::string request_data = "{\"ids\":[\"" + recording_id + "\"]}";
   kodi::Log(ADDON_LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
   std::string deleted =
-      HttpDelete("https://recording.waipu.tv/api/recordings", request_data,
+      HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
                  {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
   kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
@@ -2056,7 +2062,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     std::string request_data = "{\"ids\":[\"" + std::to_string(timer_id) + "\"]}";
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
     std::string deleted =
-        HttpDelete("https://recording.waipu.tv/api/recordings", request_data,
+        HttpDelete("https://recording.waipu.tv/api/recordings", request_data.c_str(),
                    {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
@@ -2074,7 +2080,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID,
               request_data.c_str());
     std::string deleted =
-        HttpPost("https://recording-scheduler.waipu.tv/api/delete-requests", request_data,
+        HttpPost("https://recording-scheduler.waipu.tv/api/delete-requests", request_data.c_str(),
                  {{"Content-Type",
                    "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
@@ -2171,7 +2177,7 @@ PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  total = m_account_hours_recording * 1024l * 1024l;
+  total = m_account_hours_recording * 1024 * 1024;
   used = m_finishedRecordingsSeconds > 0 ? m_finishedRecordingsSeconds * 1024 * 1024 / 3600 : 0;
 
   return PVR_ERROR_NO_ERROR;
@@ -2233,7 +2239,8 @@ PVR_ERROR WaipuData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
   std::string request_data = "{\"position\":" + std::to_string(lastplayedposition) + "}";
   std::string response = HttpRequest(
       "PUT", "https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
-      request_data, {{"Content-Type", "application/vnd.waipu.stream-position-request.v1+json"}});
+      request_data.c_str(),
+      {{"Content-Type", "application/vnd.waipu.stream-position-request.v1+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "%s - Response: %s", __FUNCTION__, response.c_str());
 
   return PVR_ERROR_NO_ERROR;

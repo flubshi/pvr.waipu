@@ -29,7 +29,7 @@ public:
   void ResetHeaders();
   virtual std::string GetCookie(const std::string& name);
   void SetCookie(const std::string& host, const std::string& name, const std::string& value);
-  const std::string& GetLocation() const { return m_location; }
+  std::string GetLocation() { return m_location; }
   void SetRedirectLimit(int limit) { m_redirectLimit = limit; }
 
 private:

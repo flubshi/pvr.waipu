@@ -27,14 +27,14 @@
 class JWT
 {
 public:
-  explicit JWT(std::string token);
-  explicit JWT(){};
+  JWT(std::string token);
+  JWT(){};
 
   bool isExpired(int offset = 0) const;
 
-  const std::string& getToken() const { return strToken; };
-  int getExp() const { return exp; };
-  bool isInitialized() const { return initialized; };
+  std::string getToken() { return strToken; };
+  int getExp() { return exp; };
+  bool isInitialized() { return initialized; };
   rapidjson::Document parsedToken; // bad, I know..
 
 private:
