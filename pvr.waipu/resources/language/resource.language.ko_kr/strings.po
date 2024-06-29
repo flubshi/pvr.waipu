@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2024-06-08 03:13+0000\n"
+"PO-Revision-Date: 2024-06-29 23:22+0000\n"
 "Last-Translator: Minho Park <parkmino@gmail.com>\n"
 "Language-Team: Korean <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ko_kr/>\n"
 "Language: ko_kr\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.5.4\n"
+"X-Generator: Weblate 5.6\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -213,7 +213,7 @@ msgstr "기본적으로 HLS 재생에는 inputstream.adaptive를 사용합니다
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
-msgstr ""
+msgstr "녹화: 설명 및 연도 읽기"
 
 msgctxt "#30500"
 msgid "Inputstream error"
