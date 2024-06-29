@@ -955,11 +955,11 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     // use hls where possible, fallback to dash
     protocol = "dash";
 
-    const std::vector<WaipuChannel>::iterator thisChannel =
+    const auto& thisChannel =
         std::find_if(m_channels.begin(), m_channels.end(),
-                     [&](const WaipuChannel& v) { return v.iUniqueId == channel.GetUniqueId(); });
+                     [channel](const auto& v) { return v.iUniqueId == channel.GetUniqueId(); });
 
-    if (thisChannel != m_channels.end() && m_hls_allowlist.contains(thisChannel->waipuID))
+    if (thisChannel != m_channels.end() && m_hls_allowlist.contains((*thisChannel).waipuID))
     {
       protocol = "hls";
     }
