@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2024-06-08 03:13+0000\n"
+"PO-Revision-Date: 2024-06-29 23:21+0000\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/it_it/>\n"
 "Language: it_it\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.5.4\n"
+"X-Generator: Weblate 5.6\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -213,7 +213,7 @@ msgstr "Per impostazione predefinita per riprodurre HLS viene usato inputstream.
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
-msgstr ""
+msgstr "Registrazioni: carica descrizione e anno"
 
 msgctxt "#30500"
 msgid "Inputstream error"
