@@ -160,7 +160,7 @@ private:
   std::string m_userhandle = "";
   std::string m_protocol;
   std::string m_device_id;
-  WAIPU_PROVIDER m_provider;
+  WAIPU_PROVIDER m_provider = WAIPU_PROVIDER_WAIPU;
 
   std::vector<WaipuChannel> m_channels;
   std::vector<WaipuChannelGroup> m_channelGroups;
@@ -188,7 +188,7 @@ private:
   void ReadSettings();
   bool ParseAccessToken();
 
-  void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int idx, int attributes);
+  void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id, int attributes);
 
   std::string GetChannelStreamURL(int uniqueId,
                                   const std::string& protocol,
@@ -196,7 +196,7 @@ private:
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   std::string GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
-  std::string GetLicense();
+  const std::string& GetLicense();
   const std::map<std::string, std::string> GetOAuthDeviceCode(const std::string& tenant);
   const std::map<std::string, std::string> CheckOAuthState(const std::string& device_code);
   void SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>& properties,
