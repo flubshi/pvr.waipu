@@ -997,12 +997,12 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       // ensure device token is fresh
       RefreshDeviceCapabiltiesToken();
 
-      std::string postData = "{\"stream\": { \"station\": \"" + channel.waipuID +
-                             "\", \"protocol\": \"" + protocol +
-                             "\", \"requestMuxInstrumentation\": false";
+      std::string postData =
+          "{\"stream\": { \"station\": \"" + channel.waipuID + "\", \"protocol\": \"" + protocol +
+          "\", \"requestMuxInstrumentation\": true, \"processOutcomeField\": true";
       if (!startTime.empty())
       {
-        postData += ", \"startTime\": " + startTime;
+        postData += ", \"startTimeReason\": \"restart\", \"startTime\": " + startTime;
       }
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
@@ -1520,7 +1520,8 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
         // fallback to replay playback
         kodi::Log(ADDON_LOG_DEBUG,
                   "[play epg tag] streamUrlProvider not found -> fallback to replay!");
-        return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, startTime);
+        return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol,
+                                   std::to_string(tag.GetStartTime()));
       }
 
       std::string url = epgDoc["result"][0]["streamUrlProvider"].GetString();
