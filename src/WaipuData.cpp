@@ -1520,7 +1520,8 @@ std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std
         // fallback to replay playback
         kodi::Log(ADDON_LOG_DEBUG,
                   "[play epg tag] streamUrlProvider not found -> fallback to replay!");
-        return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, startTime);
+        return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol,
+                                   std::to_string(tag.GetStartTime()));
       }
 
       std::string url = epgDoc["result"][0]["streamUrlProvider"].GetString();
