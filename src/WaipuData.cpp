@@ -945,7 +945,7 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
 }
 
 PVR_ERROR WaipuData::GetChannelStreamProperties(
-    const kodi::addon::PVRChannel& channel, std::vector<kodi::addon::PVRStreamProperty>& properties)
+    const kodi::addon::PVRChannel& channel, PVR_SOURCE source, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
   LoadChannelData();
   PVR_ERROR ret = PVR_ERROR_FAILED;
