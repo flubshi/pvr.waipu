@@ -104,7 +104,7 @@ std::string WaipuData::HttpRequestToCurl(Curl& curl,
   {
     content = curl.Get(url, statusCode);
   }
-  if (statusCode >= 200 && statusCode < 300)
+  if ((statusCode >= 200 && statusCode < 300) or statusCode == 403)
     return content;
 
   kodi::Log(ADDON_LOG_ERROR, "[Http-GET-Request] error. status: %i, body: %s", statusCode,
@@ -1018,6 +1018,21 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
         return "";
+      }
+
+      if (streamURLDoc.HasMember("status") && streamURLDoc["status"].GetInt() == 403)
+      {
+        if (streamURLDoc.HasMember("type"))
+        {
+          std::string error_type = streamURLDoc["type"].GetString();
+          kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR 403: %s", error_type.c_str());
+          if (error_type == "stream-url-provider/channel-forbidden")
+          {
+            m_channels.clear();
+            kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+          }
+          return "";
+        }
       }
 
       if (!streamURLDoc.HasMember("streamUrl"))
