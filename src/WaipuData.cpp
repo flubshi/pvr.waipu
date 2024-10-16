@@ -997,12 +997,12 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       // ensure device token is fresh
       RefreshDeviceCapabiltiesToken();
 
-      std::string postData = "{\"stream\": { \"station\": \"" + channel.waipuID +
-                             "\", \"protocol\": \"" + protocol +
-                             "\", \"requestMuxInstrumentation\": false";
+      std::string postData =
+          "{\"stream\": { \"station\": \"" + channel.waipuID + "\", \"protocol\": \"" + protocol +
+          "\", \"requestMuxInstrumentation\": true, \"processOutcomeField\": true";
       if (!startTime.empty())
       {
-        postData += ", \"startTime\": " + startTime;
+        postData += ", \"startTimeReason\": \"restart\", \"startTime\": " + startTime;
       }
       postData += "}}";
       kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
