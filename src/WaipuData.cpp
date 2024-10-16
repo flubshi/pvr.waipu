@@ -1931,6 +1931,13 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
   for (const auto& timer : timersDoc["result"].GetArray())
   {
+    // skip if missing epgdata
+    if (!timer.HasMember("epgData"))
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[timers] Skip due to missing epgData");
+      continue;
+    }
+
     // skip not FINISHED entries
     std::string status = timer["status"].GetString();
     if (status != "SCHEDULED" && status != "RECORDING")
