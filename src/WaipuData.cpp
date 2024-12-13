@@ -201,6 +201,8 @@ void WaipuData::LoginThread()
       }
 
       continue;
+    } else if (m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS) {
+       kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30030));
     }
 
     kodi::addon::CInstancePVRClient::ConnectionStateChange("Connecting",
