@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.2.1"
+  version="22.2.2"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,6 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v22.2.2
+- Translations updates from Weblate
+	- en_gb
+
 - Show error message when credentials are invalid ( contributed by @Rainer-Keller )
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
