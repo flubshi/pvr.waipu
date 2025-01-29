@@ -171,11 +171,6 @@
                </constraints>
                <control type="spinner" format="string" />
             </setting>
-            <setting id="epg_experimental" type="boolean" label="30049" help="">
-               <level>3</level>
-               <default>false</default>
-               <control type="toggle"/>
-            </setting>
             <setting id="recordings_additional_infos" type="boolean" label="30055" help="">
                <level>3</level>
                <default>false</default>
