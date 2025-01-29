@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: inputstream.ffmpegdirect verwenden"
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr "Experimentelles EPG"
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr "Provider/Authentifizierung: Benutzung von Waipu (Geräte-Login) oder O2 TV empfohlen! Nicht Login mit Credentials verwenden."
@@ -226,3 +222,7 @@ msgstr "Das Addon %s ist nicht installirt."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "Das Addon %s ist nicht aktiviert."
+
+#~ msgctxt "#30049"
+#~ msgid "Experimental EPG"
+#~ msgstr "Experimentelles EPG"
