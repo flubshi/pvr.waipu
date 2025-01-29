@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr ""
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr ""
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr ""

@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: inputstream.ffmpegdirect 사용"
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr "실험적인 EPG"
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr "공급자/인증: Waipu(장치 로그인) 또는 O2 TV 사용을 권장합니다! 자격 증명 로그인을 사용하지 마십시오."
@@ -226,3 +222,7 @@ msgstr "%s 애드온이 설치되지 않았습니다."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "%s 애드온을 사용하지 않습니다."
+
+#~ msgctxt "#30049"
+#~ msgid "Experimental EPG"
+#~ msgstr "실험적인 EPG"
