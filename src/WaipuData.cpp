@@ -1128,6 +1128,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
     kodi::Log(ADDON_LOG_DEBUG, "[epg-new] channel: %s", channelid.c_str());
 
     int limit = 32;
+    char startTimeBuf[30];
+    rapidjson::Document epgDoc;
 
     while (start < end)
     {
@@ -1137,7 +1139,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       tm->tm_hour -= tm->tm_hour % grid_align_hours; // align to grid window
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] tm %d", tm->tm_hour);
 
-      char startTimeBuf[30];
+
       // 2024-05-17T17:00:00.000Z
       strftime(startTimeBuf, 30, "%Y-%m-%dT%H:00:00.000Z", tm);
 
@@ -1151,8 +1153,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       }
       jsonEpg = "{\"result\": " + jsonEpg + "}";
 
-      rapidjson::Document epgDoc;
-      epgDoc.Parse(jsonEpg.c_str());
+
+      epgDoc.ParseInsitu<rapidjson::kParseInsituFlag>(&jsonEpg[0]);
       if (epgDoc.HasParseError())
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
