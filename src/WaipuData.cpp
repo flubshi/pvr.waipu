@@ -1165,11 +1165,11 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       {
         kodi::addon::PVREPGTag tag;
 
-        // generate a unique boadcast id
-        const std::string epg_bid = epgData["id"].GetString();
-        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid: %s;", epg_bid.c_str());
-        int dirtyID = Utils::GetIDDirty(epg_bid);
-        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_bid dirty: %i;", dirtyID);
+        // get id, example: 1f2b25b5-0a39-5957-b411-3825326a3e54
+        const std::string epg_id = epgData["id"].GetString();
+        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id: %s;", epg_id.c_str());
+        int dirtyID = Utils::GetIDDirty(epg_id);
+        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id dirty: %i;", dirtyID);
         tag.SetUniqueBroadcastId(dirtyID);
 
         // channel ID
@@ -1197,6 +1197,10 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
         // set endTime
         const std::string entryEndTime = epgData["stopTime"].GetString();
         tag.SetEndTime(Utils::StringToTime(entryEndTime));
+
+        // set SetSeriesLink
+        // example: https://play.waipu.tv/programm/n24/1f2b25b5-0a39-5957-b411-3825326a3e54
+        tag.SetSeriesLink("https://play.waipu.tv/programm/"+channelid+"/"+epg_id);
 
         // epg preview image
         if (m_epg_show_preview_images && epgData.HasMember("previewImage"))
@@ -1673,11 +1677,12 @@ PVR_ERROR WaipuData::DeleteRecording(const kodi::addon::PVRRecording& recording)
     return PVR_ERROR_FAILED;
 
   std::string recording_id = recording.GetRecordingId();
+  // {"ids":["1310978347"]}
   std::string request_data = "{\"ids\":[\"" + recording_id + "\"]}";
   kodi::Log(ADDON_LOG_DEBUG, "[delete recording] req: %s;", request_data.c_str());
   std::string deleted =
       HttpDelete("https://recording.waipu.tv/api/recordings", request_data,
-                 {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+                 {{"Content-Type", "application/vnd.waipu.recording-ids-v4+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
   kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   return PVR_ERROR_NO_ERROR;
@@ -1932,41 +1937,25 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
   if (!IsConnected())
     return PVR_ERROR_FAILED;
 
-  for (const auto& channel : m_channels)
-  {
-    if (channel.iUniqueId != timer.GetClientChannelUid())
-      continue;
+  // Get UUID from SeriesLink - workaround: better save UUID somewhere else
+  const std::string series_link = timer.GetSeriesLink().c_str();
+  kodi::Log(ADDON_LOG_DEBUG, "[add timer] Series Link: %s", series_link.c_str());
+  std::vector<std::string> urlsplit;
+  urlsplit = kodi::tools::StringUtils::Split(series_link, "/");
+  const std::string programId = urlsplit.back();
+  kodi::Log(ADDON_LOG_DEBUG, "[add timer] ProgramId: %s", programId.c_str());
 
-    if (timer.GetTimerType() == 1)
-    {
-      // record single element
-      kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
-      // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
-      std::string postData = "{\"programId\":\"_" + std::to_string(timer.GetEPGUid()) +
-                             "\",\"channelId\":\"" + channel.waipuID + "\"" + "}";
-      std::string recordResp =
-          HttpPost("https://recording.waipu.tv/api/recordings", postData,
-                   {{"Content-Type", "application/vnd.waipu.start-recording-v2+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
-      kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
-      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-    }
-    else
-    {
-      // record series
-      kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
-      // {"title":"Das A-Team","channel":"RTLNITRO"}
-      std::string postData =
-          "{\"title\": \"" + timer.GetTitle() + "\",\"channel\":\"" + channel.waipuID + "\"" + "}";
-      std::string recordResp =
-          HttpPost("https://recording-scheduler.waipu.tv/api/serials", postData,
-                   {{"Content-Type", "application/vnd.waipu.recording-scheduler-serials-v1+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[add timer] repeating response: %s;", recordResp.c_str());
-      kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Created");
-      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
-    }
-  }
+  // record single element
+  kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+  // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
+  std::string postData = "{\"programId\":\"" + programId + "\"}";
+  std::string recordResp =
+      HttpPost("https://recording.waipu.tv/api/recordings", postData,
+               {{"Content-Type", "application/vnd.waipu.recording-create-v4+json"}});
+  kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
+  kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
+  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+
   return PVR_ERROR_NO_ERROR;
 }
 
