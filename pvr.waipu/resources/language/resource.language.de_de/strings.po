@@ -221,7 +221,7 @@ msgstr "Inputstream-Fehler"
 
 msgctxt "#30501"
 msgid "The %s addon is not installed."
-msgstr "Das Addon %s ist nicht installirt."
+msgstr "Das Addon %s ist nicht installiert."
 
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
