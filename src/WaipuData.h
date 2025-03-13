@@ -202,22 +202,31 @@ private:
                            const std::string& protocol);
 
   std::string HttpGet(const std::string& url,
-                      const std::map<std::string, std::string>& headers = {});
+                      const std::map<std::string,
+                      std::string>& headers = {},
+                      bool ignoreStatusCode = false);
   std::string HttpDelete(const std::string& url,
                          const std::string& postData,
-                         const std::map<std::string, std::string>& headers = {});
+                         const std::map<std::string,
+                         std::string>& headers = {},
+                         bool ignoreStatusCode = false);
   std::string HttpPost(const std::string& url,
                        const std::string& postData,
-                       const std::map<std::string, std::string>& headers = {});
+                       const std::map<std::string,
+                       std::string>& headers = {},
+                       bool ignoreStatusCode = false);
   std::string HttpRequest(const std::string& action,
                           const std::string& url,
                           const std::string& postData,
-                          const std::map<std::string, std::string>& headers = {});
+                          const std::map<std::string,
+                          std::string>& headers = {},
+                          bool ignoreStatusCode = false);
   std::string HttpRequestToCurl(Curl& curl,
                                 const std::string& action,
                                 const std::string& url,
                                 const std::string& postData,
-                                int& statusCode);
+                                int& statusCode,
+                                bool ignoreStatusCode = false);
   bool IsConnected();
   WAIPU_LOGIN_STATUS Login();
   WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
