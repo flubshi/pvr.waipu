@@ -709,7 +709,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
   properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
 
-  if (protocol == "dash" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
+  if ((protocol == "dash" || protocol == "MPEG_DASH") && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
@@ -730,7 +730,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
                             "|Content-Type=text%2Fxml&x-dt-custom-data=" +
                                 license + "|R{SSM}|JBlicense");
   }
-  else if (protocol == "hls" && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
+  else if ((protocol == "hls" || protocol == "HLS") && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
   {
     if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
     {
@@ -745,7 +745,7 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
     properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream",
                             realtime ? "true" : "false");
   }
-  else if (protocol == "hls" && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
+  else if ((protocol == "hls" || protocol == "HLS") && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
     kodi::Log(ADDON_LOG_DEBUG,
               "[SetStreamProperties] play protocol '%s' using inputstream adaptive",
@@ -1636,7 +1636,7 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   std::string recording_id = recording.GetRecordingId();
   kodi::Log(ADDON_LOG_DEBUG, "play recording -> %s", recording_id.c_str());
 
-  std::string rec_resp = HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id);
+  std::string rec_resp = HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id + "/streamingdetails");
   kodi::Log(ADDON_LOG_DEBUG, "recording resp -> %s", rec_resp.c_str());
 
   rapidjson::Document recordingDoc;
@@ -1648,18 +1648,18 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   }
   kodi::Log(ADDON_LOG_DEBUG, "[recording] streams");
   // check if streams there
-  if (!recordingDoc.HasMember("streamingDetails") ||
-      !recordingDoc["streamingDetails"].HasMember("streams"))
+  if (!recordingDoc.HasMember("streams"))
   {
+    kodi::Log(ADDON_LOG_ERROR, "[getRecordingURL] ERROR: missing streams");
     return "";
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;",
-            recordingDoc["streamingDetails"]["streams"].Size());
+            recordingDoc["streams"].Size());
 
   std::string protocol_fix = protocol == "dash" ? "MPEG_DASH" : "HLS";
 
-  for (const auto& stream : recordingDoc["streamingDetails"]["streams"].GetArray())
+  for (const auto& stream : recordingDoc["streams"].GetArray())
   {
     std::string current_protocol = stream["protocol"].GetString();
     kodi::Log(ADDON_LOG_DEBUG, "[stream] protocol: %s;", current_protocol.c_str());
