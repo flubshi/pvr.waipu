@@ -576,6 +576,7 @@ void WaipuData::ReadSettings()
   m_channel_filter = kodi::addon::GetSettingEnum<WAIPU_CHANNEL_IMPORT_FILTER>(
       "channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
+  m_recordings_backend_handle_position = kodi::addon::GetSettingBoolean("recordings_backend_handle_position");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
 
   m_device_id = kodi::addon::GetSettingString("device_id_uuid4");
@@ -664,6 +665,14 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
   {
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   }
+  else if (settingName == "recordings_backend_handle_position")
+  {
+    if (settingValue.GetBoolean() != m_recordings_backend_handle_position)
+      {
+	m_recordings_backend_handle_position = settingValue.GetBoolean();
+        return ADDON_STATUS_NEED_RESTART;
+      }
+  }
 
   return ADDON_STATUS_OK;
 }
@@ -676,7 +685,9 @@ PVR_ERROR WaipuData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
   capabilities.SetSupportsRecordingsDelete(true);
   capabilities.SetSupportsTimers(true);
   capabilities.SetSupportsChannelGroups(true);
-  capabilities.SetSupportsLastPlayedPosition(true);
+
+  const bool handle_position = kodi::addon::GetSettingBoolean("recordings_backend_handle_position", false);
+  capabilities.SetSupportsLastPlayedPosition(handle_position);
 
   return PVR_ERROR_NO_ERROR;
 }
