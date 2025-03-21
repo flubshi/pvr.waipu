@@ -1746,7 +1746,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   LoadChannelData();
 
   std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
-                                       {{"Accept", "application/vnd.waipu.recordings-v2+json"}});
+                                       {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[Timers] %s", jsonRecordings.c_str());
 
   jsonRecordings = "{\"result\": " + jsonRecordings + "}";
@@ -1769,9 +1769,9 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   for (const auto& timer : timersDoc["result"].GetArray())
   {
     // skip if missing epgdata
-    if (!timer.HasMember("epgData"))
+    if (!timer.HasMember("status") || !timer.HasMember("stationId") || !timer.HasMember("title"))
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[timers] Skip due to missing epgData");
+      kodi::Log(ADDON_LOG_DEBUG, "[timers] Skip due to missing status/station/title");
       continue;
     }
 
@@ -1797,21 +1797,25 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     }
     tag.SetLifetime(0);
 
-    const rapidjson::Value& epgData = timer["epgData"];
 
     // set recording title
-    std::string rec_title = epgData["title"].GetString();
+    std::string rec_title = timer["title"].GetString();
     kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
     tag.SetTitle(rec_title);
 
     int tag_channel;
     // channelid
-    if (timer.HasMember("channelId") && !timer["channelId"].IsNull())
+    if (timer.HasMember("stationId") && !timer["stationId"].IsNull())
     {
-      std::string channel_name = timer["channelId"].GetString();
+      std::string station_id = timer["stationId"].GetString();
+
+      // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
+      std::transform(station_id.begin(), station_id.end(),
+		     station_id.begin(), ::toupper);
+
       for (const auto& channel : m_channels)
       {
-        if (channel.waipuID != channel_name)
+        if (channel.waipuID != station_id)
           continue;
         tag_channel = channel.iUniqueId;
         tag.SetClientChannelUid(tag_channel);
@@ -1848,28 +1852,28 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     tag.SetEPGUid(Utils::StringToInt(rec_id, 0));
 
     // get recording time
-    if (timer.HasMember("startTime") && !timer["startTime"].IsNull())
+    if (timer.HasMember("epgStartTime") && !timer["epgStartTime"].IsNull())
     {
-      std::string startTime = timer["startTime"].GetString();
+      std::string startTime = timer["epgStartTime"].GetString();
       tag.SetStartTime(Utils::StringToTime(startTime));
     }
-    if (timer.HasMember("stopTime") && !timer["stopTime"].IsNull())
-    {
-      std::string endTime = timer["stopTime"].GetString();
-      tag.SetEndTime(Utils::StringToTime(endTime));
-    }
+    //if (timer.HasMember("stopTime") && !timer["stopTime"].IsNull())
+    //{
+    //  std::string endTime = timer["stopTime"].GetString();
+    //  tag.SetEndTime(Utils::StringToTime(endTime));
+    //}
 
     // get plot
-    if (epgData.HasMember("description") && !epgData["description"].IsNull())
-    {
-      std::string rec_plot = epgData["description"].GetString();
-      tag.SetSummary(rec_plot);
-    }
+    //if (epgData.HasMember("description") && !epgData["description"].IsNull())
+    //{
+    //  std::string rec_plot = epgData["description"].GetString();
+    //  tag.SetSummary(rec_plot);
+    //}
 
     // epg mapping
-    if (epgData.HasMember("id") && !epgData["id"].IsNull())
+    if (timer.HasMember("programId") && !timer["programId"].IsNull())
     {
-      std::string epg_id = epgData["id"].GetString();
+      std::string epg_id = timer["programId"].GetString();
       int dirtyID = Utils::GetIDDirty(epg_id);
       tag.SetEPGUid(dirtyID);
     }
