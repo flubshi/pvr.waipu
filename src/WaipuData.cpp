@@ -795,6 +795,10 @@ bool WaipuData::LoadChannelData()
   if (m_channels.size() > 0)
     return true;
 
+  // user wishes no channels, maybe just uses the plugin for recordings?
+  if (m_channel_filter == CHANNEL_FILTER_NONE)
+    return true;
+
   // no valid session
   if (!IsConnected())
     return false;
