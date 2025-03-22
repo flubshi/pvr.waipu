@@ -34,35 +34,44 @@
 #include <set>
 #include <thread>
 
+#include <kodi/gui/dialogs/OK.h>
 #include <kodi/gui/dialogs/Progress.h>
 
 std::mutex WaipuData::mutex;
 
 // BEGIN CURL helpers from zattoo addon:
 std::string WaipuData::HttpGet(const std::string& url,
-                               const std::map<std::string, std::string>& headers)
+                               const std::map<std::string,
+                               std::string>& headers,
+			       bool ignoreStatusCode)
 {
-  return HttpRequest("GET", url, "", headers);
+  return HttpRequest("GET", url, "", headers, ignoreStatusCode);
 }
 
 std::string WaipuData::HttpDelete(const std::string& url,
                                   const std::string& postData,
-                                  const std::map<std::string, std::string>& headers)
+                                  const std::map<std::string,
+                                  std::string>& headers,
+				  bool ignoreStatusCode)
 {
-  return HttpRequest("DELETE", url, postData, headers);
+  return HttpRequest("DELETE", url, postData, headers, ignoreStatusCode);
 }
 
 std::string WaipuData::HttpPost(const std::string& url,
                                 const std::string& postData,
-                                const std::map<std::string, std::string>& headers)
+                                const std::map<std::string,
+                                std::string>& headers,
+				bool ignoreStatusCode)
 {
-  return HttpRequest("POST", url, postData, headers);
+  return HttpRequest("POST", url, postData, headers, ignoreStatusCode);
 }
 
 std::string WaipuData::HttpRequest(const std::string& action,
                                    const std::string& url,
                                    const std::string& postData,
-                                   const std::map<std::string, std::string>& headers)
+                                   const std::map<std::string,
+                                   std::string>& headers,
+                                   bool ignoreStatusCode)
 {
   Curl curl;
   int statusCode;
@@ -77,14 +86,15 @@ std::string WaipuData::HttpRequest(const std::string& action,
   curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   kodi::Log(ADDON_LOG_DEBUG, "HTTP User-Agent: %s.", WAIPU_USER_AGENT.c_str());
 
-  return HttpRequestToCurl(curl, action, url, postData, statusCode);
+  return HttpRequestToCurl(curl, action, url, postData, statusCode, ignoreStatusCode);
 }
 
 std::string WaipuData::HttpRequestToCurl(Curl& curl,
                                          const std::string& action,
                                          const std::string& url,
                                          const std::string& postData,
-                                         int& statusCode)
+                                         int& statusCode,
+                                         bool ignoreStatusCode)
 {
   kodi::Log(ADDON_LOG_DEBUG, "Http-Request: %s %s.", action.c_str(), url.c_str());
   std::string content;
@@ -104,7 +114,7 @@ std::string WaipuData::HttpRequestToCurl(Curl& curl,
   {
     content = curl.Get(url, statusCode);
   }
-  if (statusCode >= 200 && statusCode < 300)
+  if (ignoreStatusCode || (statusCode >= 200 && statusCode < 300))
     return content;
 
   kodi::Log(ADDON_LOG_ERROR, "[Http-GET-Request] error. status: %i, body: %s", statusCode,
@@ -1027,7 +1037,8 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       std::string jsonStreamURL = HttpPost(
           "https://stream-url-provider.waipu.tv/api/stream-url", postData,
           {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"},
-           {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}});
+           {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}},
+          true);
 
       rapidjson::Document streamURLDoc;
       streamURLDoc.Parse(jsonStreamURL.c_str());
@@ -1037,9 +1048,20 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
         return "";
       }
 
+      if (streamURLDoc.HasMember("status") &&
+          streamURLDoc["status"].GetInt() == 403 &&
+          streamURLDoc.HasMember("title") &&
+          streamURLDoc.HasMember("detail"))
+      {
+        const std::string errorTitle = streamURLDoc["title"].GetString();
+        const std::string errorDetail = streamURLDoc["detail"].GetString();
+        kodi::gui::dialogs::OK::ShowAndGetInput(errorTitle, errorDetail);
+        return "";
+      }
       if (!streamURLDoc.HasMember("streamUrl"))
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
+        kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] body: %s", jsonStreamURL.c_str());
         return "";
       }
 
