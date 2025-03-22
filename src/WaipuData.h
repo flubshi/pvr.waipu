@@ -168,6 +168,7 @@ private:
 
   std::string m_license;
   int m_recordings_count = 0;
+  bool m_recordings_backend_handle_position = false;
   int m_timers_count = 0;
   int m_login_failed_counter = 0;
   time_t m_login_failed_locktime = 0;
