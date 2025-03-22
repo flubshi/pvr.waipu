@@ -220,4 +220,7 @@ msgstr ""
 
 msgctxt "#30056"
 msgid "None"
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
 msgstr ""
