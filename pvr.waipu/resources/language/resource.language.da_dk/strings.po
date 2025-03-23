@@ -223,6 +223,14 @@ msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "%s add-on er ikke aktiveret."
 
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""
+
 #~ msgctxt "#30009"
 #~ msgid "Waipu.tv"
 #~ msgstr "Waipu.tv"
