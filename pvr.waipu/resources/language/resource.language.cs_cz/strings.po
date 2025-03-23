@@ -222,3 +222,11 @@ msgstr "Doplněk %s není nainstalován."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "Doplněk %s není povolen."
+
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""

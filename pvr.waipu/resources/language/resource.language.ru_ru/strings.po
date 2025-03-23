@@ -222,3 +222,11 @@ msgstr "Дополнение %s не установлено."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "Дополнение %s не включено."
+
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""
