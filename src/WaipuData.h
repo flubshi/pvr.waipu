@@ -49,7 +49,8 @@ enum WAIPU_CHANNEL_IMPORT_FILTER
   CHANNEL_FILTER_ALL_VISIBLE = 0,
   CHANNEL_FILTER_ALL = 1,
   CHANNEL_FILTER_FAVOURITES = 2,
-  CHANNEL_FILTER_LIVE = 3
+  CHANNEL_FILTER_LIVE = 3,
+  CHANNEL_FILTER_NONE = 4,
 };
 
 enum class WAIPU_LOGIN_STATUS
@@ -167,6 +168,7 @@ private:
 
   std::string m_license;
   int m_recordings_count = 0;
+  bool m_recordings_backend_handle_position = false;
   int m_timers_count = 0;
   int m_login_failed_counter = 0;
   time_t m_login_failed_locktime = 0;
@@ -202,22 +204,31 @@ private:
                            const std::string& protocol);
 
   std::string HttpGet(const std::string& url,
-                      const std::map<std::string, std::string>& headers = {});
+                      const std::map<std::string,
+                      std::string>& headers = {},
+                      bool ignoreStatusCode = false);
   std::string HttpDelete(const std::string& url,
                          const std::string& postData,
-                         const std::map<std::string, std::string>& headers = {});
+                         const std::map<std::string,
+                         std::string>& headers = {},
+                         bool ignoreStatusCode = false);
   std::string HttpPost(const std::string& url,
                        const std::string& postData,
-                       const std::map<std::string, std::string>& headers = {});
+                       const std::map<std::string,
+                       std::string>& headers = {},
+                       bool ignoreStatusCode = false);
   std::string HttpRequest(const std::string& action,
                           const std::string& url,
                           const std::string& postData,
-                          const std::map<std::string, std::string>& headers = {});
+                          const std::map<std::string,
+                          std::string>& headers = {},
+                          bool ignoreStatusCode = false);
   std::string HttpRequestToCurl(Curl& curl,
                                 const std::string& action,
                                 const std::string& url,
                                 const std::string& postData,
-                                int& statusCode);
+                                int& statusCode,
+                                bool ignoreStatusCode = false);
   bool IsConnected();
   WAIPU_LOGIN_STATUS Login();
   WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
