@@ -223,6 +223,14 @@ msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "L'add-on %s non è abilitato.."
 
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""
+
 #~ msgctxt "#30049"
 #~ msgid "Experimental EPG"
 #~ msgstr "EPG sperimentale"

@@ -222,3 +222,11 @@ msgstr "O addon %s não está instalado."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "O addon %s não está ativado."
+
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""
