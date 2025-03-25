@@ -179,7 +179,7 @@
             </setting>
             <setting id="recordings_backend_handle_position" type="boolean" label="30057" help="">
                <level>3</level>
-               <default>false</default>
+               <default>true</default>
                <control type="toggle"/>
             </setting>
 				<setting id="epg_show_preview_images" type="boolean" label="30042" help="">
