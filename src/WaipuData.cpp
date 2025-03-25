@@ -1351,7 +1351,7 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   if (protocol == "auto")
     protocol = "dash"; //fallback to dash
 
-  std::string strUrl = GetEPGTagURL(tag, protocol);
+  std::string strUrl = GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, std::to_string(tag.GetStartTime()));
   if (strUrl.empty())
   {
     return PVR_ERROR_FAILED;
@@ -1360,72 +1360,6 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   SetStreamProperties(properties, strUrl, true, true, protocol);
 
   return PVR_ERROR_NO_ERROR;
-}
-
-std::string WaipuData::GetEPGTagURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol)
-{
-  for (const auto& channel : m_channels)
-  {
-    if (channel.iUniqueId == tag.GetUniqueChannelId())
-    {
-      std::string startTime = Utils::TimeToString(tag.GetStartTime());
-      std::string endTime = Utils::TimeToString(tag.GetEndTime());
-
-      std::string jsonEpg =
-          HttpGet("https://epg.waipu.tv/api/channels/" + channel.waipuID +
-                  "/programs?includeRunningAtStartTime=false&startTime=" + std::string(startTime) +
-                  "&stopTime=" + std::string(endTime));
-      kodi::Log(ADDON_LOG_DEBUG, "[epg-single-tag] %s", jsonEpg.c_str());
-      if (jsonEpg.empty())
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[epg-single-tag] empty server response");
-        return "";
-      }
-      jsonEpg = "{\"result\": " + jsonEpg + "}";
-
-      rapidjson::Document epgDoc;
-      epgDoc.Parse(jsonEpg.c_str());
-
-      if (epgDoc.HasParseError() || epgDoc["result"].Empty() ||
-          !epgDoc["result"][0].HasMember("streamUrlProvider") ||
-          epgDoc["result"][0]["streamUrlProvider"].IsNull())
-      {
-        // fallback to replay playback
-        kodi::Log(ADDON_LOG_DEBUG,
-                  "[play epg tag] streamUrlProvider not found -> fallback to replay!");
-        return GetChannelStreamURL(tag.GetUniqueChannelId(), protocol,
-                                   std::to_string(tag.GetStartTime()));
-      }
-
-      std::string url = epgDoc["result"][0]["streamUrlProvider"].GetString();
-
-      if (!url.empty())
-      {
-        kodi::Log(ADDON_LOG_DEBUG, "play url -> %s", url.c_str());
-
-        std::string tag_resp = HttpGet(url);
-        kodi::Log(ADDON_LOG_DEBUG, "tag resp -> %s", tag_resp.c_str());
-
-        rapidjson::Document tagDoc;
-        tagDoc.Parse(tag_resp.c_str());
-        if (tagDoc.HasParseError())
-        {
-          kodi::Log(ADDON_LOG_ERROR, "[getEPGTagURL] ERROR: error while parsing json");
-          return "";
-        }
-        kodi::Log(ADDON_LOG_DEBUG, "[tag] streams");
-        // check if streams there
-        if (tagDoc.HasMember("player") && tagDoc["player"].HasMember("mpd"))
-        {
-          std::string mpdUrl = tagDoc["player"]["mpd"].GetString();
-          kodi::Log(ADDON_LOG_DEBUG, "mpd url -> %s", mpdUrl.c_str());
-          return mpdUrl;
-        }
-      }
-    }
-  }
-  kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] channel or tag not found!");
-  return "";
 }
 
 PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
