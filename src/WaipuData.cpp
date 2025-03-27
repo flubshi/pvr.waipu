@@ -1999,7 +1999,16 @@ PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
 
   std::string responseJSON =
       HttpGet("https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
-              {{"Content-Type", "application/json"}});
+              {{"Content-Type", "application/json"}}, true);
+
+  // body: {"type":"stream-position/not-found","title":"Stream Position Not Found","status":404,"...
+  if (responseJSON.find("\"type\":\"stream-position/not-found\"") != std::string::npos &&
+    responseJSON.find("\"status\":404") != std::string::npos) {
+    kodi::Log(ADDON_LOG_DEBUG, "%s - No StreamPosition stored on backend - start from beginning.",
+              __FUNCTION__);
+    position = 0;
+    return PVR_ERROR_NO_ERROR;
+  }
 
   if (responseJSON.empty())
   {
