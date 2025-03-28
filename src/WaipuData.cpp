@@ -1341,6 +1341,52 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   return PVR_ERROR_NO_ERROR;
 }
 
+std::string WaipuData::GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol)
+{
+  // Get UUID from SeriesLink - workaround: better save UUID somewhere else
+  const std::string series_link = tag.GetSeriesLink();
+  if (series_link.empty())
+    return "";
+  kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] Series Link: %s", series_link.c_str());
+  std::vector<std::string> urlsplit;
+  urlsplit = kodi::tools::StringUtils::Split(series_link, "/");
+  const std::string programId = urlsplit.back();
+  kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] ProgramId: %s", programId.c_str());
+
+  // https://epg-cache.waipu.tv/api/programs/ee05ce19-1b98-53c4-a4eb-2c9d912bb0b6
+  std::string epgJSON = HttpGet("https://epg-cache.waipu.tv/api/programs/"+programId);
+
+  rapidjson::Document epgDoc;
+  epgDoc.Parse(epgJSON.c_str());
+  if (epgDoc.HasParseError())
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] error parse JSON %s", epgJSON.c_str());
+    return "";
+  }
+  if (epgDoc.HasMember("newTvMeta") && epgDoc["newTvMeta"].HasMember("source"))
+  {
+    const std::string sourceURL = epgDoc["newTvMeta"]["source"].GetString();
+    kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] sourceURL %s", sourceURL.c_str());
+    std::string tunerJSON = HttpGet(sourceURL);
+
+    rapidjson::Document tunerDoc;
+    tunerDoc.Parse(tunerJSON.c_str());
+    if (tunerDoc.HasParseError())
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] error parse JSON %s", epgJSON.c_str());
+      return "";
+    }
+    if (tunerDoc.HasMember("player")){
+      if ((protocol == "hls" ||  protocol == "HLS") && tunerDoc["player"].HasMember("hls"))
+	return tunerDoc["player"]["hls"].GetString();
+      if (tunerDoc["player"].HasMember("mpd"))
+	return tunerDoc["player"]["mpd"].GetString();
+      kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] No valid stream found");
+    }
+  }
+  return "";
+}
+
 PVR_ERROR WaipuData::GetEPGTagStreamProperties(
     const kodi::addon::PVREPGTag& tag, std::vector<kodi::addon::PVRStreamProperty>& properties)
 {
@@ -1351,10 +1397,16 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   if (protocol == "auto")
     protocol = "dash"; //fallback to dash
 
-  std::string strUrl = GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, std::to_string(tag.GetStartTime()));
+  std::string strUrl = GetEPGTagStreamURL(tag, protocol);
+
   if (strUrl.empty())
   {
-    return PVR_ERROR_FAILED;
+    // fallback: instant replay
+    strUrl = GetChannelStreamURL(tag.GetUniqueChannelId(), protocol, std::to_string(tag.GetStartTime()));
+    if (strUrl.empty())
+    {
+      return PVR_ERROR_FAILED;
+    }
   }
 
   SetStreamProperties(properties, strUrl, true, true, protocol);
