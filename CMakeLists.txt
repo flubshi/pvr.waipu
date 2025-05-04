@@ -24,6 +24,7 @@ set(PVRWAIPU_HEADERS
                     src/HLSAllowlist.h
                     src/Base64.h
                     src/JWT.h
+                    src/SynchronizedQueue.h
                     src/categories.h
                     src/WaipuData.h)
 
