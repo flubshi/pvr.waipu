@@ -101,6 +101,7 @@ public:
                              kodi::addon::PVREPGTagsResultSet& results) override;
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
+  std::string GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
   PVR_ERROR GetEPGTagStreamProperties(
       const kodi::addon::PVREPGTag& tag,
       std::vector<kodi::addon::PVRStreamProperty>& properties) override;
