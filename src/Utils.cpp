@@ -108,7 +108,8 @@ int Utils::GetIDDirty(std::string str)
     // str starts with _
     return StringToInt(kodi::tools::StringUtils::TrimLeft(str, "\t\n\v\f\r _"), 1);
   }
-  return rand() % 99999 + 1;
+  // fallback to deterministic int
+  return Hash(str);
 }
 
 int Utils::Hash(const std::string& str)
