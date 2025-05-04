@@ -23,6 +23,7 @@
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "JWT.h"
+#include "SynchronizedQueue.h"
 #include "categories.h"
 #include "kodi/Network.h"
 #include "kodi/addon-instance/PVR.h"
@@ -99,7 +100,7 @@ public:
                              time_t start,
                              time_t end,
                              kodi::addon::PVREPGTagsResultSet& results) override;
-  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry, const int kodiChanneliUniqueId, const std::string waipuChannelID);
+  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry, const int kodiChanneliUniqueId, const std::string waipuChannelID, const bool reSchedule);
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
   std::string GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
@@ -133,6 +134,9 @@ private:
   std::atomic<bool> m_loginThreadRunning = {false};
   std::thread m_loginThread;
   void LoginThread();
+  std::atomic<bool> m_EPGTaskThreadRunning = {false};
+  std::thread m_EPGTaskThread;
+  void EPGTaskThread();
   time_t m_nextLoginAttempt = 0;
   WAIPU_CHANNEL_IMPORT_FILTER m_channel_filter =
       WAIPU_CHANNEL_IMPORT_FILTER::CHANNEL_FILTER_ALL_VISIBLE;
@@ -147,6 +151,13 @@ private:
     bool tvfuse; // tvfuse is on demand channel
   };
 
+  struct EPGQueueTask
+  {
+    std::string epgid;
+    std::string waipuChannelID;
+    int kodiChannelID;
+  };
+
   struct WaipuChannelGroup
   {
     std::string name;
@@ -159,6 +170,7 @@ private:
   std::string m_userhandle = "";
   std::string m_protocol;
   std::string m_device_id;
+  SynchronizedQueue<EPGQueueTask> m_queue_epgtag_tasks;
   WAIPU_PROVIDER m_provider = WAIPU_PROVIDER_WAIPU;
 
   std::vector<WaipuChannel> m_channels;
