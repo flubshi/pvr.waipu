@@ -1384,6 +1384,7 @@ std::string WaipuData::GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, con
       kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] No valid stream found");
     }
   }
+  kodi::Log(ADDON_LOG_DEBUG, "[play epg tag] missing ['newTvMeta']['source'] in JSON %s", epgJSON.c_str());
   return "";
 }
 
@@ -1397,7 +1398,16 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   if (protocol == "auto")
     protocol = "dash"; //fallback to dash
 
-  std::string strUrl = GetEPGTagStreamURL(tag, protocol);
+  std::string strUrl = "";
+
+  const auto& thisChannel =
+      std::find_if(m_channels.begin(), m_channels.end(),
+                   [tag](const auto& v) { return v.iUniqueId == tag.GetUniqueChannelId(); });
+  // check if VoD Channel and we can obtain newMediaURL
+  if (thisChannel != m_channels.end() && (*thisChannel).tvfuse)
+  {
+      strUrl = GetEPGTagStreamURL(tag, protocol);
+  }
 
   if (strUrl.empty())
   {
