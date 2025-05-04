@@ -1140,6 +1140,88 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& 
   return PVR_ERROR_NO_ERROR;
 }
 
+kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const rapidjson::Value& tagEntry, const int kodiChanneliUniqueId, const std::string waipuChannelID)
+{
+  kodi::addon::PVREPGTag tag;
+
+  // get id, example: 1f2b25b5-0a39-5957-b411-3825326a3e54
+  const std::string epg_id = tagEntry["id"].GetString();
+  kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id: %s;", epg_id.c_str());
+  int dirtyID = Utils::GetIDDirty(epg_id);
+  kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id dirty: %i;", dirtyID);
+  tag.SetUniqueBroadcastId(dirtyID);
+
+  // channel ID
+  tag.SetUniqueChannelId(kodiChanneliUniqueId);
+
+  unsigned int flags = EPG_TAG_FLAG_UNDEFINED;
+
+  // is recordable
+  bool isRecordable = !tagEntry["recordingForbidden"].GetBool();
+  kodi::Log(ADDON_LOG_DEBUG, "[epg-new] recordable: %i;", isRecordable);
+  if (isRecordable)
+  {
+    flags |= EPG_TAG_FLAG_IS_RECORDABLE_WAIPU;
+    flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU;
+  }
+
+  // set title
+  tag.SetTitle(tagEntry["title"].GetString());
+  kodi::Log(ADDON_LOG_DEBUG, "[epg] title: %s;", tagEntry["title"].GetString());
+
+  // set startTime
+  const std::string entryStartTime = tagEntry["startTime"].GetString();
+  tag.SetStartTime(Utils::StringToTime(entryStartTime));
+
+  // set endTime
+  const std::string entryEndTime = tagEntry["stopTime"].GetString();
+  tag.SetEndTime(Utils::StringToTime(entryEndTime));
+
+  // set SetSeriesLink
+  // example: https://play.waipu.tv/programm/n24/1f2b25b5-0a39-5957-b411-3825326a3e54
+  tag.SetSeriesLink("https://play.waipu.tv/programm/"+waipuChannelID+"/"+epg_id);
+
+  // epg preview image
+  if (m_epg_show_preview_images && tagEntry.HasMember("previewImage"))
+  {
+    std::string tmp_img = tagEntry["previewImage"].GetString();
+    tag.SetIconPath(tmp_img);
+    kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
+  }
+
+  if (tagEntry.HasMember("seriesId") && !tagEntry["seriesId"].IsNull())
+  {
+    flags |= EPG_TAG_FLAG_IS_SERIES;
+    tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE);
+  }
+
+  // episodeName
+  if (tagEntry.HasMember("episodeTitle") && !tagEntry["episodeTitle"].IsNull())
+  {
+    tag.SetEpisodeName(tagEntry["episodeTitle"].GetString());
+  }
+
+  // genre
+  if (tagEntry.HasMember("genre") && !tagEntry["genre"].IsNull())
+  {
+    const std::string genreStr = tagEntry["genre"].GetString();
+    int genre = m_categories.Category(genreStr);
+    if (genre)
+    {
+      tag.SetGenreSubType(genre & 0x0F);
+      tag.SetGenreType(genre & 0xF0);
+    }
+    else
+    {
+      tag.SetGenreType(EPG_GENRE_USE_STRING);
+      tag.SetGenreSubType(0); /* not supported */
+      tag.SetGenreDescription(genreStr);
+    }
+  }
+
+  tag.SetFlags(flags);
+  return tag;
+}
 
 PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
                                          time_t start,
@@ -1202,85 +1284,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
       for (const auto& epgData : epgDoc["result"].GetArray())
       {
-        kodi::addon::PVREPGTag tag;
-
-        // get id, example: 1f2b25b5-0a39-5957-b411-3825326a3e54
-        const std::string epg_id = epgData["id"].GetString();
-        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id: %s;", epg_id.c_str());
-        int dirtyID = Utils::GetIDDirty(epg_id);
-        kodi::Log(ADDON_LOG_DEBUG, "[epg] epg_id dirty: %i;", dirtyID);
-        tag.SetUniqueBroadcastId(dirtyID);
-
-        // channel ID
-        tag.SetUniqueChannelId(channel.iUniqueId);
-
-        unsigned int flags = EPG_TAG_FLAG_UNDEFINED;
-
-        // is recordable
-        bool isRecordable = !epgData["recordingForbidden"].GetBool();
-        kodi::Log(ADDON_LOG_DEBUG, "[epg-new] recordable: %i;", isRecordable);
-        if (isRecordable)
-        {
-          flags |= EPG_TAG_FLAG_IS_RECORDABLE_WAIPU;
-          flags |= EPG_TAG_FLAG_INSTANT_RESTART_ALLOWED_WAIPU;
-        }
-
-        // set title
-        tag.SetTitle(epgData["title"].GetString());
-        kodi::Log(ADDON_LOG_DEBUG, "[epg] title: %s;", epgData["title"].GetString());
-
-        // set startTime
-        const std::string entryStartTime = epgData["startTime"].GetString();
-        tag.SetStartTime(Utils::StringToTime(entryStartTime));
-
-        // set endTime
-        const std::string entryEndTime = epgData["stopTime"].GetString();
-        tag.SetEndTime(Utils::StringToTime(entryEndTime));
-
-        // set SetSeriesLink
-        // example: https://play.waipu.tv/programm/n24/1f2b25b5-0a39-5957-b411-3825326a3e54
-        tag.SetSeriesLink("https://play.waipu.tv/programm/"+channelid+"/"+epg_id);
-
-        // epg preview image
-        if (m_epg_show_preview_images && epgData.HasMember("previewImage"))
-        {
-          std::string tmp_img = epgData["previewImage"].GetString();
-          tag.SetIconPath(tmp_img);
-          kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
-        }
-
-        if (epgData.HasMember("seriesId") && !epgData["seriesId"].IsNull())
-        {
-          flags |= EPG_TAG_FLAG_IS_SERIES;
-          tag.SetSeriesNumber(EPG_TAG_INVALID_SERIES_EPISODE);
-        }
-
-        // episodeName
-        if (epgData.HasMember("episodeTitle") && !epgData["episodeTitle"].IsNull())
-        {
-          tag.SetEpisodeName(epgData["episodeTitle"].GetString());
-        }
-
-        // genre
-        if (epgData.HasMember("genre") && !epgData["genre"].IsNull())
-        {
-          const std::string genreStr = epgData["genre"].GetString();
-          int genre = m_categories.Category(genreStr);
-          if (genre)
-          {
-            tag.SetGenreSubType(genre & 0x0F);
-            tag.SetGenreType(genre & 0xF0);
-          }
-          else
-          {
-            tag.SetGenreType(EPG_GENRE_USE_STRING);
-            tag.SetGenreSubType(0); /* not supported */
-            tag.SetGenreDescription(genreStr);
-          }
-        }
-
-        tag.SetFlags(flags);
-        results.Add(tag);
+        results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channelid));
       }
       start = start + grid_align_hours * 60 * 60;
       if (limit < 1)
