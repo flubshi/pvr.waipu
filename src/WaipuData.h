@@ -99,6 +99,7 @@ public:
                              time_t start,
                              time_t end,
                              kodi::addon::PVREPGTagsResultSet& results) override;
+  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry, const int kodiChanneliUniqueId, const std::string waipuChannelID);
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
   std::string GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
