@@ -217,7 +217,7 @@ void WaipuData::EPGTaskThread()
     kodi::addon::PVREPGTag epgTag = ParseEPGTagEntry(epgDoc, epgTask.kodiChannelID, epgTask.waipuChannelID, false);
     kodi::addon::CInstancePVRClient::EpgEventStateChange(epgTag, EPG_EVENT_UPDATED);
     kodi::Log(ADDON_LOG_DEBUG, "[epg-details] updated %s", epgTag.GetTitle().c_str());
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
@@ -941,6 +941,7 @@ bool WaipuData::LoadChannelData()
 
     const auto& userSettings = channel["userSettings"].GetObject();
     bool isFav = userSettings["favorite"].GetBool();
+    waipuChannel.isFavorite = isFav;
     bool isVisible = userSettings["visible"].GetBool();
     waipuChannel.tvfuse = (*stationConfig)["newTv"].GetBool();
 
@@ -1316,7 +1317,7 @@ kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const rapidjson::Value& tagEn
     {
       if (castEntry.HasMember("name") && castEntry.HasMember("role"))
       {
-        castStr += std::string(castEntry["name"].GetString()) + " (" + std::string(castEntry["role"].GetString()) + ")\n";
+        castStr += std::string(castEntry["name"].GetString()) + " (" + std::string(castEntry["role"].GetString()) + ")  ";
       }
     }
     kodi::Log(ADDON_LOG_DEBUG, "[epg] SetCast: %s;", castStr.c_str());
@@ -1431,7 +1432,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
       for (const auto& epgData : epgDoc["result"].GetArray())
       {
-        results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channelid, true));
+	// we limit epg details fetching to channel.isFavorite, because it takes a lot of time
+        results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channelid, channel.isFavorite));
       }
       start = start + grid_align_hours * 60 * 60;
       if (limit < 1)

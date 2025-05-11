@@ -150,6 +150,7 @@ private:
     std::string strChannelName; //waipu[displayName]
     std::string strIconPath; // waipu[links][rel=iconlargehd]
     bool tvfuse; // tvfuse is on demand channel
+    bool isFavorite; // channel is marked as favorite
   };
 
   struct EPGQueueTask
