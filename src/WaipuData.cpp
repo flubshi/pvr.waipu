@@ -1885,16 +1885,17 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     tag.SetEPGUid(Utils::StringToInt(rec_id, 0));
 
     // get recording time
+    time_t epgStartTime = 0;
     if (timer.HasMember("epgStartTime") && !timer["epgStartTime"].IsNull())
     {
-      std::string startTime = timer["epgStartTime"].GetString();
-      tag.SetStartTime(Utils::StringToTime(startTime));
+      epgStartTime = Utils::StringToTime(timer["epgStartTime"].GetString());
+      tag.SetStartTime(epgStartTime);
     }
-    //if (timer.HasMember("stopTime") && !timer["stopTime"].IsNull())
-    //{
-    //  std::string endTime = timer["stopTime"].GetString();
-    //  tag.SetEndTime(Utils::StringToTime(endTime));
-    //}
+    if (epgStartTime > 0 && timer.HasMember("durationSeconds") && !timer["durationSeconds"].IsNull())
+    {
+      int durationSeconds = timer["durationSeconds"].GetInt();
+      tag.SetEndTime(epgStartTime + durationSeconds);
+    }
 
     // get plot
     //if (epgData.HasMember("description") && !epgData["description"].IsNull())
