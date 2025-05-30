@@ -1939,7 +1939,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] req: %s;", request_data.c_str());
     std::string deleted =
         HttpDelete("https://recording.waipu.tv/api/recordings", request_data,
-                   {{"Content-Type", "application/vnd.waipu.pvr-recording-ids-v2+json"}});
+                   {{"Content-Type", "application/vnd.waipu.recording-ids-v4+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
