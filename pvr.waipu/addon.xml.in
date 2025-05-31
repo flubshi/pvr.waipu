@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="21.10.4"
+  version="21.11.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,7 +26,8 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-- Fix deletion of recordings
+- Implement series recording
+- Timers: Add duration/end time to timers
     </news>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
