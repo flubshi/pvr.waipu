@@ -9,7 +9,7 @@ on:
 
 jobs:
   default:
-    if: github.repository == 'kodi-pvr/pvr.waipu'
+    if: github.repository == 'flubshi/pvr.waipu'
     runs-on: ubuntu-latest
 
     strategy:
