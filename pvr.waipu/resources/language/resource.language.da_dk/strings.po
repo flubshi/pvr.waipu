@@ -231,6 +231,22 @@ msgctxt "#30057"
 msgid "Recordings: Use play position from backend"
 msgstr ""
 
+msgctxt "#30058"
+msgid "Create Recording"
+msgstr ""
+
+msgctxt "#30059"
+msgid "This recording is a TV series. Do you want to record all episodes?"
+msgstr ""
+
+msgctxt "#30060"
+msgid "Only this episode"
+msgstr ""
+
+msgctxt "#30061"
+msgid "All episodes"
+msgstr ""
+
 #~ msgctxt "#30009"
 #~ msgid "Waipu.tv"
 #~ msgstr "Waipu.tv"
