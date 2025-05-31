@@ -36,6 +36,7 @@
 
 #include <kodi/gui/dialogs/OK.h>
 #include <kodi/gui/dialogs/Progress.h>
+#include <kodi/gui/dialogs/YesNo.h>
 
 std::mutex WaipuData::mutex;
 
@@ -1985,15 +1986,75 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
   const std::string programId = urlsplit.back();
   kodi::Log(ADDON_LOG_DEBUG, "[add timer] ProgramId: %s", programId.c_str());
 
-  // record single element
-  kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
-  // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
-  std::string postData = "{\"programId\":\"" + programId + "\"}";
-  std::string recordResp =
-      HttpPost("https://recording.waipu.tv/api/recordings", postData,
-               {{"Content-Type", "application/vnd.waipu.recording-create-v4+json"}});
-  kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
+  std::string seriesID = "";
+  std::string stationID = "";
+  std::string recordingTitle = "";
+  bool seriesRecording = false;
+
+  std::string jsonTimer = HttpGet("https://epg-cache.waipu.tv/api/programs/"+programId);
+
+  rapidjson::Document timerDoc;
+  timerDoc.Parse(jsonTimer.c_str());
+  if (!timerDoc.HasParseError())
+  {
+    if (timerDoc.HasMember("series") &&
+	timerDoc["series"].HasMember("id") &&
+	timerDoc["series"]["id"].IsString())
+    {
+      seriesID = timerDoc["series"]["id"].GetString();
+    }
+
+    if (timerDoc.HasMember("stationId") &&
+	timerDoc["stationId"].IsString())
+    {
+      stationID = timerDoc["stationId"].GetString();
+      // we get the statioID in lower, but need uppercase for recording
+      std::transform(stationID.begin(), stationID.end(),stationID.begin(), ::toupper);
+    }
+
+    if (timerDoc.HasMember("textContent") &&
+  	timerDoc["textContent"].HasMember("title") &&
+  	timerDoc["textContent"]["title"].IsString())
+    {
+      recordingTitle = timerDoc["textContent"]["title"].GetString();
+    }
+  }
+
+  // it is a tv show - ask user whether to record all episodes
+  if (!seriesID.empty() && !stationID.empty() && !recordingTitle.empty())
+  {
+    seriesRecording = kodi::gui::dialogs::YesNo::ShowAndGetInput(
+      kodi::addon::GetLocalizedString(30058), // header
+      kodi::addon::GetLocalizedString(30059),
+      "",
+      "",
+      kodi::addon::GetLocalizedString(30060), // false label
+      kodi::addon::GetLocalizedString(30061)); // true label
+    // -1 == canceled
+    kodi::Log(ADDON_LOG_DEBUG, "[add timer] Selcted recording type: %d (1 == all episodes)", seriesRecording);
+  }
+
+  if (seriesRecording)
+  {
+    // series recording
+    kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record all episodes/series;");
+    const std::string postData = "{\"channel\":\"" + stationID + "\",\"title\":\""+recordingTitle+"\",\"seriesId\":\""+seriesID+"\"}";
+    const std::string recordResp =
+	HttpPost("https://recording-scheduler.waipu.tv/api/serials", postData,
+		 {{"Content-Type", "application/vnd.waipu.recording-scheduler-serials-v1+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[add timer] record all episodes response: %s;", recordResp.c_str());
+  }else{
+    // record single element
+    kodi::Log(ADDON_LOG_DEBUG, "[add timer] Record single tag;");
+    // {"programId":"_1051966761","channelId":"PRO7","startTime":"2019-02-03T18:05:00.000Z","stopTime":"2019-02-03T19:15:00.000Z"}
+    const std::string postData = "{\"programId\":\"" + programId + "\"}";
+    const std::string recordResp =
+	HttpPost("https://recording.waipu.tv/api/recordings", postData,
+		 {{"Content-Type", "application/vnd.waipu.recording-create-v4+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[add timer] single response: %s;", recordResp.c_str());
+  }
   kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
   kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
 
   return PVR_ERROR_NO_ERROR;
