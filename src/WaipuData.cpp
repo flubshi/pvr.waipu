@@ -836,6 +836,8 @@ bool WaipuData::LoadChannelData()
     return false;
   }
 
+  m_channelGroups.clear();
+
   WaipuChannelGroup cgroup_fav;
   cgroup_fav.name = "Favoriten";
 
