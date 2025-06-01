@@ -654,10 +654,10 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
     if (tmpFilter != m_channel_filter)
     {
       m_channel_filter = tmpFilter;
-      // we need to restart plugin for now, to LoadChannelData()
-      //kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
-      //return ADDON_STATUS_OK;
-      return ADDON_STATUS_NEED_RESTART;
+      // reload channels
+      m_channels.clear();
+      kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+      return ADDON_STATUS_OK;
     }
   }
   else if (settingName.rfind("streaming_capabilities_", 0) == 0)
@@ -805,6 +805,9 @@ bool WaipuData::LoadChannelData()
     return false;
 
   std::lock_guard<std::mutex> lock(mutex);
+
+  if (m_channels.size() > 0)
+    return true;
 
   std::string stationConfigJson = HttpGet("https://web-proxy.waipu.tv/station-config");
   kodi::Log(ADDON_LOG_DEBUG, "[%s] Station config JSON: %s", __FUNCTION__,
