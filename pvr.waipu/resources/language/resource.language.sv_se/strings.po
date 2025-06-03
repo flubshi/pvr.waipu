@@ -5,23 +5,23 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2023-06-21 12:42+0000\n"
-"Last-Translator: Christian Gade <gade@kodi.tv>\n"
+"PO-Revision-Date: 2025-04-07 16:56+0000\n"
+"Last-Translator: Daniel Nylander <daniel@danielnylander.se>\n"
 "Language-Team: Swedish <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/sv_se/>\n"
 "Language: sv_se\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.18\n"
+"X-Generator: Weblate 5.10.4\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr ""
+msgstr "waipu.tv PVR-klient"
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr ""
+msgstr "waipu.tv PVR-klient. Obs: Detta är inte ett officiellt waipu-plugin och är inte relaterat till Exaring AG eller waipu.tv. Det utvecklades av volontärer."
 
 msgctxt "#30001"
 msgid "General"
@@ -29,7 +29,7 @@ msgstr "Allmänt"
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr ""
+msgstr "E-post"
 
 msgctxt "#30003"
 msgid "Password"
@@ -37,7 +37,7 @@ msgstr "Lösenord"
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr ""
+msgstr "Protokoll"
 
 msgctxt "#30005"
 msgid "Streaming"
@@ -45,91 +45,91 @@ msgstr "Strömning"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr ""
+msgstr "Hjälpinformation för InputStream"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr ""
+msgstr "(Om)installera Widevine CDM-bibliotek..."
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr ""
+msgstr "Leverantör"
 
 msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
-msgstr ""
+msgstr "Waipu.tv (inloggningsuppgifter)"
 
 msgctxt "#30010"
 msgid "O2 TV"
-msgstr ""
+msgstr "O2 TV"
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr ""
+msgstr "Strömningsprotokoll"
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr ""
+msgstr "Videoupplösning"
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr ""
+msgstr "Ljudkodekar"
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr ""
+msgstr "SD-PALp25: h264; 720x540; 25 bilder/s"
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr ""
+msgstr "SD-PALp50: h264; 720x540; 50 bilder/s"
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr ""
+msgstr "HD-720p25: h264; 1280x720; 25 bilder/s"
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr ""
+msgstr "HD-720p50: h264; 1280x720; 50 bilder/s"
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr ""
+msgstr "HD-1080p25: h264; 1920x1080; 25 bilder/s"
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr ""
+msgstr "HD-1080p50: h264; 1920x1080; 50 bilder/s"
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr ""
+msgstr "HEVC-1080p50: hevc; 1920x1080; 50 bilder/s"
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr ""
+msgstr "HEVC-2160p50: hevc; 3840x2160; 50 bilder/s"
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr ""
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr ""
+msgstr "Felmeddelande: Inloggning inte möjlig. Kontrollera inloggningsuppgifterna!"
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr ""
+msgstr "Ingen nätverksanslutning"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr ""
+msgstr "Ogiltiga inloggningsuppgifter"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr ""
+msgstr "Nödvändigt användarnamn och lösenord inte tillgängligt"
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr ""
+msgstr "Uppdatera token"
 
 msgctxt "#30035"
 msgid "Misc"
@@ -141,15 +141,15 @@ msgstr "Enhets-ID"
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr ""
+msgstr "Nollställ inloggning"
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
-msgstr ""
+msgstr "Waipu.tv (enhetsinloggning)"
 
 msgctxt "#30039"
 msgid "Go to:"
-msgstr ""
+msgstr "Gå till:"
 
 msgctxt "#30040"
 msgid "Login"
@@ -157,19 +157,19 @@ msgstr "Logga in"
 
 msgctxt "#30041"
 msgid "Use Code:"
-msgstr ""
+msgstr "Använd kod:"
 
 msgctxt "#30042"
 msgid "EPG preview images"
-msgstr ""
+msgstr "EPG-förhandsvisningsbilder"
 
 msgctxt "#30043"
 msgid "Import Channels"
-msgstr ""
+msgstr "Importera kanaler"
 
 msgctxt "#30044"
 msgid "All visible"
-msgstr ""
+msgstr "Alla synliga"
 
 msgctxt "#30045"
 msgid "All"
@@ -185,44 +185,64 @@ msgstr "Live-TV"
 
 msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
-msgstr ""
-
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr ""
+msgstr "HLS: Använd inputstream.ffmpegdirect"
 
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr ""
+msgstr "Leverantör/Autentisering: Vi rekommenderar att du använder Waipu (enhetsinloggning) eller O2 TV! Använd inte inloggning med lösenord."
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
-msgstr ""
+msgstr "Widevine CDM krävs för att spela upp icke-offentliga kanaler. Klicka för att installera Widevine CDM om vissa kanaler inte fungerar!"
 
 msgctxt "#30052"
 msgid "Check whether Widevine CDM is installed. Required to play non public channels."
-msgstr ""
+msgstr "Kontrollera om Widevine CDM är installerat. Krävs för att spela upp icke-offentliga kanaler."
 
 msgctxt "#30053"
 msgid "Select streaming protocol. Use AUTO or MPEG_DASH. Do not use HLS, because not all channels support this."
-msgstr ""
+msgstr "Välj strömningsprotokoll. Använd AUTO eller MPEG_DASH. Använd inte HLS, eftersom inte alla kanaler stöder detta."
 
 msgctxt "#30054"
 msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
-msgstr ""
+msgstr "Som standard används inputstream.adaptive för uppspelning av HLS. Markera det här alternativet för att använda inputstream.ffmpegdirect istället."
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
-msgstr ""
+msgstr "Inspelningar: Läs in beskrivning och år"
 
 msgctxt "#30500"
 msgid "Inputstream error"
-msgstr ""
+msgstr "Fel i Inputstream"
 
 msgctxt "#30501"
 msgid "The %s addon is not installed."
-msgstr ""
+msgstr "Tillägget %s är inte installerat."
 
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
+msgstr "Tillägget %s är inte aktiverat."
+
+msgctxt "#30056"
+msgid "None"
+msgstr "Ingen"
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr "Inspelningar: Använd uppspelningsposition från backend"
+
+msgctxt "#30058"
+msgid "Create Recording"
+msgstr ""
+
+msgctxt "#30059"
+msgid "This recording is a TV series. Do you want to record all episodes?"
+msgstr ""
+
+msgctxt "#30060"
+msgid "Only this episode"
+msgstr ""
+
+msgctxt "#30061"
+msgid "All episodes"
 msgstr ""

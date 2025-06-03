@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2024-06-29 23:21+0000\n"
+"PO-Revision-Date: 2025-06-02 14:56+0000\n"
 "Last-Translator: Alfonso Cachero <alfonso.cachero@gmail.com>\n"
 "Language-Team: Spanish (Spain) <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/es_es/>\n"
 "Language: es_es\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.6\n"
+"X-Generator: Weblate 5.11.4\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: Usar inputstream.ffmpegdirect"
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr "EPG experimental"
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr "Proveedor/Autenticación: ¡Se recomienda usar Waipu (Inicio de sesión por dispositivo) o O2 TV! No usar inicio de sesión por credenciales."
@@ -226,6 +222,34 @@ msgstr "El add-on %s no está instalado."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "El add-on %s no está activado."
+
+msgctxt "#30056"
+msgid "None"
+msgstr "Ninguno"
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr "Grabaciones: Usar posición de reproducción desde el servidor"
+
+msgctxt "#30058"
+msgid "Create Recording"
+msgstr "Crear Grabación"
+
+msgctxt "#30059"
+msgid "This recording is a TV series. Do you want to record all episodes?"
+msgstr "Esta grabación es de una Serie de TV. ¿Quieres grabar todos los episodios?"
+
+msgctxt "#30060"
+msgid "Only this episode"
+msgstr "Solo este episodio"
+
+msgctxt "#30061"
+msgid "All episodes"
+msgstr "Todos los episodios"
+
+#~ msgctxt "#30049"
+#~ msgid "Experimental EPG"
+#~ msgstr "EPG experimental"
 
 #~ msgctxt "#30009"
 #~ msgid "Waipu.tv"

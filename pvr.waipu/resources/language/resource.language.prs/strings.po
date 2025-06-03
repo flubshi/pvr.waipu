@@ -4,249 +4,240 @@
 # Addon Provider: flubshi
 msgid ""
 msgstr ""
-"Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2025-06-01 08:13+0000\n"
-"Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
-"Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/it_it/>\n"
-"Language: it_it\n"
+"Language: prs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.11.4\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
-msgstr "Client PVR di waipu.tv"
+msgstr ""
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr "Client PVR di waipu.tv. Nota: questo non è un add-on ufficiale waipu e non è correlato a Exaring AG o waipu.tv. È stato sviluppato da volontari."
+msgstr ""
 
 msgctxt "#30001"
 msgid "General"
-msgstr "Generale"
+msgstr ""
 
 msgctxt "#30002"
 msgid "Mail"
-msgstr "Posta"
+msgstr ""
 
 msgctxt "#30003"
 msgid "Password"
-msgstr "Password"
+msgstr ""
 
 msgctxt "#30004"
 msgid "Protocol"
-msgstr "Protocollo"
+msgstr ""
 
 msgctxt "#30005"
 msgid "Streaming"
-msgstr "Streaming"
+msgstr ""
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr "Informazioni sull'assistente InputStream"
+msgstr ""
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
-msgstr "(Re)installa la libreria CDM Widevine..."
+msgstr ""
 
 msgctxt "#30008"
 msgid "Provider"
-msgstr "Fornitore"
+msgstr ""
 
 msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
-msgstr "Waipu.tv (credenziali)"
+msgstr ""
 
 msgctxt "#30010"
 msgid "O2 TV"
-msgstr "O2 TV"
+msgstr ""
 
 msgctxt "#30011"
 msgid "Streaming Protocol"
-msgstr "Protocollo di streaming"
+msgstr ""
 
 msgctxt "#30012"
 msgid "Video Resolution"
-msgstr "Risoluzione video"
+msgstr ""
 
 msgctxt "#30013"
 msgid "Audio Codecs"
-msgstr "Codec audio"
+msgstr ""
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr "SD-PALp25: h264; 720x540; 25fps"
+msgstr ""
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
-msgstr "SD-PALp50: h264; 720x540; 50fps"
+msgstr ""
 
 msgctxt "#30016"
 msgid "HD-720p25: h264; 1280x720; 25fps"
-msgstr "HD-720p25: h264; 1280x720; 25fps"
+msgstr ""
 
 msgctxt "#30017"
 msgid "HD-720p50: h264; 1280x720; 50fps"
-msgstr "HD-720p50: h264; 1280x720; 50fps"
+msgstr ""
 
 msgctxt "#30018"
 msgid "HD-1080p25: h264; 1920x1080; 25fps"
-msgstr "HD-1080p25: h264; 1920x1080; 25fps"
+msgstr ""
 
 msgctxt "#30019"
 msgid "HD-1080p50: h264; 1920x1080; 50fps"
-msgstr "HD-1080p50: h264; 1920x1080; 50fps"
+msgstr ""
 
 msgctxt "#30020"
 msgid "HEVC-1080p50: hevc; 1920x1080; 50fps"
-msgstr "HEVC-1080p50: hevc; 1920x1080; 50fps"
+msgstr ""
 
 msgctxt "#30021"
 msgid "HEVC-2160p50: hevc; 3840x2160; 50fps"
-msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
+msgstr ""
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr "AAC-LC: 128kBit, 48kHz"
+msgstr ""
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
-msgstr "Errore: accesso impossibile. Verifica le credenziali!"
+msgstr ""
 
 msgctxt "#30031"
 msgid "No network connection"
-msgstr "Nessuna connessione di rete"
+msgstr ""
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr "Credenziali di accesso non valide"
+msgstr ""
 
 msgctxt "#30033"
 msgid "Required username and password not available"
-msgstr "Nome utente e password obbligatori non disponibili"
+msgstr ""
 
 msgctxt "#30034"
 msgid "Refresh Token"
-msgstr "Aggiorna token"
+msgstr ""
 
 msgctxt "#30035"
 msgid "Misc"
-msgstr "Varie"
+msgstr ""
 
 msgctxt "#30036"
 msgid "Device ID"
-msgstr "ID dispositivo"
+msgstr ""
 
 msgctxt "#30037"
 msgid "Reset Login"
-msgstr "Reimposta accesso"
+msgstr ""
 
 msgctxt "#30038"
 msgid "Waipu.tv (Device Login)"
-msgstr "Waipu.tv (accesso al dispositivo)"
+msgstr ""
 
 msgctxt "#30039"
 msgid "Go to:"
-msgstr "Vai a:"
+msgstr ""
 
 msgctxt "#30040"
 msgid "Login"
-msgstr "Accedi"
+msgstr ""
 
 msgctxt "#30041"
 msgid "Use Code:"
-msgstr "Usa il codice:"
+msgstr ""
 
 msgctxt "#30042"
 msgid "EPG preview images"
-msgstr "Anteprima immagini EPG"
+msgstr ""
 
 msgctxt "#30043"
 msgid "Import Channels"
-msgstr "Importa canali"
+msgstr ""
 
 msgctxt "#30044"
 msgid "All visible"
-msgstr "Tutto visibile"
+msgstr ""
 
 msgctxt "#30045"
 msgid "All"
-msgstr "Tutto"
+msgstr ""
 
 msgctxt "#30046"
 msgid "Favourites"
-msgstr "Preferiti"
+msgstr ""
 
 msgctxt "#30047"
 msgid "Live TV"
-msgstr "Live TV"
+msgstr ""
 
 msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
-msgstr "HLS: usa inputstream.ffmpegdirect"
+msgstr ""
 
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr "Fornitore/Autenticazione: è consigliato l'uso di Waipu (accesso al dispositivo) o O2 TV! Non usare credenziali di accesso."
+msgstr ""
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
-msgstr "Per riprodurre canali non pubblici è necessario Widevine CDM. Fai clic per installare Widevine CDM se alcuni canali non funzionano!"
+msgstr ""
 
 msgctxt "#30052"
 msgid "Check whether Widevine CDM is installed. Required to play non public channels."
-msgstr "Controlla se Widevine CDM è installato. È necessario per riprodurre canali non pubblici."
+msgstr ""
 
 msgctxt "#30053"
 msgid "Select streaming protocol. Use AUTO or MPEG_DASH. Do not use HLS, because not all channels support this."
-msgstr "Seleziona il protocollo di streaming. Usa AUTO o MPEG_DASH. Non usare HLS perché non tutti i canali lo supportano."
+msgstr ""
 
 msgctxt "#30054"
 msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
-msgstr "Per impostazione predefinita per riprodurre HLS viene usato inputstream.adaptive. Seleziona questa opzione per usare invece inputstream.ffmpegdirect."
+msgstr ""
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
-msgstr "Registrazioni: carica descrizione e anno"
+msgstr ""
 
 msgctxt "#30500"
 msgid "Inputstream error"
-msgstr "Errore Inputstream"
+msgstr ""
 
 msgctxt "#30501"
 msgid "The %s addon is not installed."
-msgstr "L'add-on %s non è installato."
+msgstr ""
 
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
-msgstr "L'add-on %s non è abilitato.."
+msgstr ""
 
 msgctxt "#30056"
 msgid "None"
-msgstr "Nessuno"
+msgstr ""
 
 msgctxt "#30057"
 msgid "Recordings: Use play position from backend"
-msgstr "Registrazioni: usa la posizione di riproduzione dal backend"
+msgstr ""
 
 msgctxt "#30058"
 msgid "Create Recording"
-msgstr "Crea registrazione"
+msgstr ""
 
 msgctxt "#30059"
 msgid "This recording is a TV series. Do you want to record all episodes?"
-msgstr "Questa registrazione è una serie TV. Vuoi registrare tutti gli episodi?"
+msgstr ""
 
 msgctxt "#30060"
 msgid "Only this episode"
-msgstr "Solo questo episodio"
+msgstr ""
 
 msgctxt "#30061"
 msgid "All episodes"
-msgstr "Tutti gli episodi"
-
-#~ msgctxt "#30049"
-#~ msgid "Experimental EPG"
-#~ msgstr "EPG sperimentale"
+msgstr ""

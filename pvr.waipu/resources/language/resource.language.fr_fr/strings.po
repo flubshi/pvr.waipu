@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS : Utiliser inputstream.ffmpegdirect"
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr ""
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr ""
@@ -226,3 +222,27 @@ msgstr "L'extension %s n'est pas installée."
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "L'extension %s n'est pas activée."
+
+msgctxt "#30056"
+msgid "None"
+msgstr ""
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr ""
+
+msgctxt "#30058"
+msgid "Create Recording"
+msgstr ""
+
+msgctxt "#30059"
+msgid "This recording is a TV series. Do you want to record all episodes?"
+msgstr ""
+
+msgctxt "#30060"
+msgid "Only this episode"
+msgstr ""
+
+msgctxt "#30061"
+msgid "All episodes"
+msgstr ""

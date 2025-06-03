@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2024-06-08 03:13+0000\n"
+"PO-Revision-Date: 2025-06-01 21:43+0000\n"
 "Last-Translator: Kai Sommerfeld <ksooo@users.noreply.kodi.weblate.cloud>\n"
 "Language-Team: German <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/de_de/>\n"
 "Language: de_de\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.5.4\n"
+"X-Generator: Weblate 5.11.4\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -187,10 +187,6 @@ msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: inputstream.ffmpegdirect verwenden"
 
-msgctxt "#30049"
-msgid "Experimental EPG"
-msgstr "Experimentelles EPG"
-
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
 msgstr "Provider/Authentifizierung: Benutzung von Waipu (Geräte-Login) oder O2 TV empfohlen! Nicht Login mit Credentials verwenden."
@@ -213,7 +209,7 @@ msgstr "Standardmäßig wird inputstream.adaptive für die Wiedergabe von HLS ve
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
-msgstr ""
+msgstr "Aufnahmen: Beschreibung und Jahr laden"
 
 msgctxt "#30500"
 msgid "Inputstream error"
@@ -221,8 +217,36 @@ msgstr "Inputstream-Fehler"
 
 msgctxt "#30501"
 msgid "The %s addon is not installed."
-msgstr "Das Addon %s ist nicht installirt."
+msgstr "Das Addon %s ist nicht installiert."
 
 msgctxt "#30502"
 msgid "The %s addon is not enabled."
 msgstr "Das Addon %s ist nicht aktiviert."
+
+msgctxt "#30056"
+msgid "None"
+msgstr "Keine"
+
+msgctxt "#30057"
+msgid "Recordings: Use play position from backend"
+msgstr "Aufnahmen: Wiedergabeposition vom Backend verwenden"
+
+msgctxt "#30058"
+msgid "Create Recording"
+msgstr "Aufnahme erstellen"
+
+msgctxt "#30059"
+msgid "This recording is a TV series. Do you want to record all episodes?"
+msgstr "Diese Aufnahme ist eine TV-Serie. Sollen alle Episoden aufgenommen werden?"
+
+msgctxt "#30060"
+msgid "Only this episode"
+msgstr "Nur diese Episode"
+
+msgctxt "#30061"
+msgid "All episodes"
+msgstr "Alle Episoden"
+
+#~ msgctxt "#30049"
+#~ msgid "Experimental EPG"
+#~ msgstr "Experimentelles EPG"
