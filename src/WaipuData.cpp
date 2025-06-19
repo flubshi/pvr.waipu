@@ -1112,6 +1112,14 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
       {
         const std::string errorTitle = streamURLDoc["title"].GetString();
         const std::string errorDetail = streamURLDoc["detail"].GetString();
+
+	if (errorDetail == "User is not allowed to view this channel")
+	{
+	  // subscription expired? we need to refresh available channels
+	  m_channels.clear();
+	  kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+	}
+
         kodi::gui::dialogs::OK::ShowAndGetInput(errorTitle, errorDetail);
         return "";
       }
