@@ -172,6 +172,11 @@
                </constraints>
                <control type="spinner" format="string" />
             </setting>
+            <setting id="first_channel_number" type="integer" label="30062" help="">
+               <level>0</level>
+               <default>1</default>
+               <control type="edit" format="integer" />
+            </setting>
             <setting id="recordings_additional_infos" type="boolean" label="30055" help="">
                <level>3</level>
                <default>true</default>
