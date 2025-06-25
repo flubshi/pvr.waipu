@@ -241,3 +241,7 @@ msgstr ""
 msgctxt "#30061"
 msgid "All episodes"
 msgstr ""
+
+msgctxt "#30062"
+msgid "Start channel number"
+msgstr ""

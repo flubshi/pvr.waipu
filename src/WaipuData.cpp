@@ -639,6 +639,7 @@ void WaipuData::ReadSettings()
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
   m_recordings_backend_handle_position = kodi::addon::GetSettingBoolean("recordings_backend_handle_position");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
+  m_first_channel_number = kodi::addon::GetSettingInt("first_channel_number");
 
   m_device_id = kodi::addon::GetSettingString("device_id_uuid4");
   if (m_device_id.empty())
@@ -708,6 +709,16 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       m_channels.clear();
       kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
       return ADDON_STATUS_OK;
+    }
+  }
+  else if (settingName == "first_channel_number")
+  {
+    const int tmp_first_channel_number = settingValue.GetInt();
+    if (m_first_channel_number != tmp_first_channel_number)
+    {
+      m_first_channel_number = tmp_first_channel_number;
+      // kodi does not update channel ID without restart
+      return ADDON_STATUS_NEED_RESTART;
     }
   }
   else if (settingName.rfind("streaming_capabilities_", 0) == 0)
@@ -1018,7 +1029,8 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
 
     kodiChannel.SetUniqueId(channel.iUniqueId);
     kodiChannel.SetIsRadio(false);
-    kodiChannel.SetChannelNumber(channel.iChannelNumber);
+    // set channel plus offset from settings:
+    kodiChannel.SetChannelNumber(channel.iChannelNumber + m_first_channel_number - 1);
     kodiChannel.SetChannelName(channel.strChannelName);
     kodiChannel.SetIconPath(channel.strIconPath);
     kodiChannel.SetIsHidden(false);

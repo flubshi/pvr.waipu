@@ -171,6 +171,7 @@ private:
   std::string m_userhandle = "";
   std::string m_protocol;
   std::string m_device_id;
+  int m_first_channel_number = 1;
   SynchronizedQueue<EPGQueueTask> m_queue_epgtag_tasks;
   WAIPU_PROVIDER m_provider = WAIPU_PROVIDER_WAIPU;
 
