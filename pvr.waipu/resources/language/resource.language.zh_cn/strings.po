@@ -246,3 +246,7 @@ msgstr "仅该集"
 msgctxt "#30061"
 msgid "All episodes"
 msgstr "全部集"
+
+msgctxt "#30062"
+msgid "Start channel number"
+msgstr ""

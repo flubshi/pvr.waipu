@@ -247,6 +247,10 @@ msgctxt "#30061"
 msgid "All episodes"
 msgstr "모든 에피소드"
 
+msgctxt "#30062"
+msgid "Start channel number"
+msgstr ""
+
 #~ msgctxt "#30049"
 #~ msgid "Experimental EPG"
 #~ msgstr "실험적인 EPG"
