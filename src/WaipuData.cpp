@@ -295,34 +295,9 @@ bool WaipuData::ParseAccessToken()
   kodi::Log(ADDON_LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
   m_license = base64_encode(license_plain.c_str(), license_plain.length());
   kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
-  // get user channels
-  m_user_channels_sd.clear();
-  m_user_channels_hd.clear();
+
   if (m_accessToken.parsedToken.HasMember("userAssets"))
   {
-    if (m_accessToken.parsedToken["userAssets"].HasMember("channels"))
-    {
-      if (m_accessToken.parsedToken["userAssets"]["channels"].HasMember("SD"))
-      {
-        for (const auto& user_channel :
-             m_accessToken.parsedToken["userAssets"]["channels"]["SD"].GetArray())
-        {
-          std::string user_channel_s = user_channel.GetString();
-          kodi::Log(ADDON_LOG_DEBUG, "[jwt] SD channel: %s", user_channel_s.c_str());
-          m_user_channels_sd.emplace_back(user_channel_s);
-        }
-      }
-      if (m_accessToken.parsedToken["userAssets"]["channels"].HasMember("HD"))
-      {
-        for (const auto& user_channel :
-             m_accessToken.parsedToken["userAssets"]["channels"]["HD"].GetArray())
-        {
-          std::string user_channel_s = user_channel.GetString();
-          m_user_channels_hd.emplace_back(user_channel_s);
-          kodi::Log(ADDON_LOG_DEBUG, "[jwt] HD channel: %s", user_channel_s.c_str());
-        }
-      }
-    }
     if (m_accessToken.parsedToken["userAssets"].HasMember("instantRestart"))
     {
       m_account_replay_allowed = m_accessToken.parsedToken["userAssets"]["instantRestart"].GetBool();
