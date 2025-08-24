@@ -1273,7 +1273,7 @@ kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const rapidjson::Value& tagEn
     std::string tmp_img = tagEntry["previewImage"].GetString();
     tag.SetIconPath(tmp_img);
     kodi::Log(ADDON_LOG_DEBUG, "[epg] previewImage: %s;", tmp_img.c_str());
-  } else if (m_epg_show_preview_images && tagEntry.HasMember("imageUrls") && tagEntry["imageUrls"].IsArray() && sizeof(tagEntry["imageUrls"]) > 0)
+  } else if (m_epg_show_preview_images && tagEntry.HasMember("imageUrls") && tagEntry["imageUrls"].IsArray() && tagEntry["imageUrls"].Size() > 0)
     {
       std::string tmp_img = tagEntry["imageUrls"][0].GetString();
       tmp_img = std::regex_replace(tmp_img, std::regex("\\$\\{resolution\\}"), "320x180");
@@ -1601,8 +1601,8 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const rapidjson::Value&
   tag.SetIsDeleted(false);
   std::string recordingId = recordingEntry["id"].GetString();
   tag.SetRecordingId(recordingId);
-  tag.SetPlayCount(recordingEntry.HasMember("fullyWatchedCount") &&
-                   recordingEntry["fullyWatchedCount"].GetInt());
+  if (recordingEntry.HasMember("fullyWatchedCount"))
+    tag.SetPlayCount(recordingEntry["fullyWatchedCount"].GetInt());
 
   const std::string rec_title = recordingEntry["title"].GetString();
   tag.SetTitle(rec_title);
@@ -1619,7 +1619,8 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const rapidjson::Value&
     tag.SetDuration(recordingEntry["durationSeconds"].GetInt());
 
   if (recordingEntry.HasMember("positionPercentage") &&
-      !recordingEntry["positionPercentage"].IsNull())
+      !recordingEntry["positionPercentage"].IsNull() &&
+      recordingEntry["positionPercentage"].IsInt())
   {
     int positionPercentage = recordingEntry["positionPercentage"].GetInt();
     int position = tag.GetDuration() * positionPercentage / 100;
@@ -2112,7 +2113,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
     int groupID = timer.GetClientIndex();
     std::string request_data = "{\"serialRecordings\":[{\"id\":" + std::to_string(groupID) +
                                ",\"deleteFutureRecordings\":true,\"deleteFinishedRecordings\":"
-                               "false,\"deleteRunningRecordingss\":false}]}";
+                               "false,\"deleteRunningRecordings\":false}]}";
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] req (group: %i): %s;", groupID,
               request_data.c_str());
     std::string deleted =
