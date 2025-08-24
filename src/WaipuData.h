@@ -193,8 +193,6 @@ private:
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
   uint64_t m_finishedRecordingsSeconds = 0;
-  std::vector<std::string> m_user_channels_sd;
-  std::vector<std::string> m_user_channels_hd;
   WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
