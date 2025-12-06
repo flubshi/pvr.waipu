@@ -43,6 +43,35 @@
                  <dependency type="visible" setting="provider_select">0</dependency>
                </dependencies>
 				</setting>
+            <setting id="status_account" type="string" label="30002" help="">
+               <level>0</level>
+               <default />
+               <constraints>
+                  <allowempty>true</allowempty>
+               </constraints>
+               <control type="edit" format="string">
+                  <heading>30002</heading>
+               </control>
+               <enable>false</enable>
+               <dependencies>
+                 <dependency type="visible" operator="gt" setting="provider_select">0</dependency>
+               </dependencies>
+            </setting>
+            <setting id="status_subscription" type="string" label="30063" help="">
+               <level>0</level>
+               <default />
+               <constraints>
+                  <allowempty>true</allowempty>
+               </constraints>
+               <control type="edit" format="string">
+                  <heading>30063</heading>
+               </control>
+               <enable>false</enable>
+               <dependencies>
+                 <dependency type="visible" operator="gt" setting="provider_select">0</dependency>
+               </dependencies>
+            </setting>
+				
 				<setting id="refresh_reset" type="boolean" label="30037" help="">
                <level>0</level>
                <default>false</default>
