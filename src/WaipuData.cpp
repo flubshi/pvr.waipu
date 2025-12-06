@@ -308,6 +308,20 @@ bool WaipuData::ParseAccessToken()
       m_account_hours_recording = m_accessToken.parsedToken["userAssets"]["hoursRecording"].GetInt();
       kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
     }
+    if (m_accessToken.parsedToken["userAssets"].HasMember("account") && m_accessToken.parsedToken["userAssets"]["account"].HasMember("subscription"))
+    {
+      const std::string account_subscription = m_accessToken.parsedToken["userAssets"]["account"]["subscription"].GetString();
+      kodi::addon::SetSettingString("status_subscription", account_subscription);
+    }else{
+      kodi::addon::SetSettingString("status_subscription", "-");
+    }
+  }
+  if (m_accessToken.parsedToken.HasMember("email"))
+  {
+    const std::string account_email = m_accessToken.parsedToken["email"].GetString();
+    kodi::addon::SetSettingString("status_account", account_email);
+  }else{
+    kodi::addon::SetSettingString("status_account", "-");
   }
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
@@ -716,6 +730,8 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
   else if (settingName == "refresh_reset" && settingValue.GetBoolean())
   {
     kodi::addon::SetSettingBoolean("refresh_reset", false);
+    kodi::addon::SetSettingString("status_subscription", "-");
+    kodi::addon::SetSettingString("status_account", "-");
     kodi::addon::SetSettingString("refresh_token", "");
     return ADDON_STATUS_NEED_RESTART;
   }
