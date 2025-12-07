@@ -250,3 +250,7 @@ msgstr "Tous les épisodes"
 msgctxt "#30062"
 msgid "Start channel number"
 msgstr "Numéro de chaîne de départ"
+
+msgctxt "#30063"
+msgid "Subscription"
+msgstr ""

@@ -250,3 +250,7 @@ msgstr "全部集"
 msgctxt "#30062"
 msgid "Start channel number"
 msgstr "起始频道序号"
+
+msgctxt "#30063"
+msgid "Subscription"
+msgstr ""

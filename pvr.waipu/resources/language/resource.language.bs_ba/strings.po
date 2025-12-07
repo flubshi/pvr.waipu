@@ -250,3 +250,7 @@ msgstr "Sve epizode"
 msgctxt "#30062"
 msgid "Start channel number"
 msgstr "Početni broj kanala"
+
+msgctxt "#30063"
+msgid "Subscription"
+msgstr ""
