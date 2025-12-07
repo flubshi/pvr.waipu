@@ -29,6 +29,7 @@
 v21.12.5
 - Internal cleanup and bug fixes
     </news>
+    <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
     <summary lang="de_DE">waipu.tv PVR Client</summary>
     <summary lang="en_GB">waipu.tv PVR Client</summary>
@@ -42,6 +43,7 @@ v21.12.5
     <summary lang="ru_RU">Клиент записи эфира waipu.tv</summary>
     <summary lang="sv_SE">waipu.tv PVR-klient</summary>
     <summary lang="zh_CN">waipu.tv PVR 客户端</summary>
+    <description lang="bs_BA">waipu.tv PVR klijent. Napomena: Ovo nije službeni waipu dodatak i nije povezan s Exaring AG ili waipu.tv. Razvili su ga volonteri.</description>
     <description lang="da_DK">waipu.tv PVR-klient. Bemærk: Dette er ikke et officielt waipu-plugin og er ikke relateret til Exaring AG eller waipu.tv. Det er udviklet af frivillige.</description>
     <description lang="de_DE">waipu.tv PVR Client. Hinweis: Dies ist kein offizielles Waipu-Plugin und steht nicht in Verbindung zur Exaring AG oder zu waipu.tv. Es wurde von Freiwilligen entwickelt.</description>
     <description lang="en_GB">waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers.</description>
