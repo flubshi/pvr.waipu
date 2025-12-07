@@ -251,6 +251,10 @@ msgctxt "#30062"
 msgid "Start channel number"
 msgstr "Número de canal de inicio"
 
+msgctxt "#30063"
+msgid "Subscription"
+msgstr ""
+
 #~ msgctxt "#30049"
 #~ msgid "Experimental EPG"
 #~ msgstr "EPG experimental"

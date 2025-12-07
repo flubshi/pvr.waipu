@@ -250,3 +250,7 @@ msgstr "Все серии"
 msgctxt "#30062"
 msgid "Start channel number"
 msgstr "Номер начального канала"
+
+msgctxt "#30063"
+msgid "Subscription"
+msgstr ""
