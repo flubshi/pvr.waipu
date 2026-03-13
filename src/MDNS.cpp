@@ -1,11 +1,45 @@
+/*
+ *      Copyright (C) 2026 flubshi
+ *      https://github.com/flubshi
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  http://www.gnu.org/copyleft/gpl.html
+ *
+ */
+
 #include "MDNS.h"
 
 #include "kodi/General.h"
 #include <stdexcept>
 
+#ifdef _WIN32
+  #define sock_close closesocket
+  #define inet_addr_compat(x) inet_addr(x)  // deprecated warning unterdrücken
+  #pragma comment(lib, "ws2_32.lib")
+#else
+  #define sock_close close
+  #define inet_addr_compat(x) inet_addr(x)
+#endif
 
 MDNS::MDNS()
 {
+#ifdef _WIN32
+  WSADATA wsaData;
+  WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
   char buf[256];
   gethostname(buf, sizeof(buf));
   m_serviceName = buf;
@@ -22,6 +56,10 @@ MDNS::MDNS()
 MDNS::~MDNS()
 {
   StopRegistrationService();
+
+#ifdef _WIN32
+  WSACleanup();
+#endif
 }
 
 void MDNS::StartRegistrationService(const std::string& userCode)
@@ -56,7 +94,7 @@ void MDNS::StopRegistrationService()
   if (m_fd >= 0)
   {
     SendAnnouncement(0); // TTL=0 = goodbye
-    close(m_fd);
+    sock_close(m_fd);
     m_fd = -1;
   }
 
@@ -73,11 +111,14 @@ void MDNS::QueryLoop()
     timeval tv{};
     tv.tv_sec  = 1;
     tv.tv_usec = 0;
-    setsockopt(m_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    setsockopt(m_fd, SOL_SOCKET, SO_RCVTIMEO,
+               reinterpret_cast<const char*>(&tv), sizeof(tv));
 
     sockaddr_in sender{};
     socklen_t   senderLen = sizeof(sender);
-    const ssize_t n = recvfrom(m_fd, buf, sizeof(buf), 0,
+    const ssize_t n = recvfrom(m_fd,
+                               reinterpret_cast<char*>(buf), sizeof(buf),
+                               0,
                                reinterpret_cast<sockaddr*>(&sender), &senderLen);
     if (n <= 0)
       continue;
@@ -144,13 +185,22 @@ std::vector<uint8_t> MDNS::BuildResponse(uint32_t ttl) const
 
 int MDNS::MakeMdnsSocket()
 {
+#ifdef _WIN32
+  SOCKET fds = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  int fd = static_cast<int>(fds);
+#else
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+#endif
   if (fd < 0)
     throw std::runtime_error("mDNS: socket() failed");
 
   int yes = 1;
-  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes));
+  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+             reinterpret_cast<const char*>(&yes), sizeof(yes));
+#ifndef _WIN32
+  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT,
+             reinterpret_cast<const char*>(&yes), sizeof(yes));
+#endif
 
   sockaddr_in addr{};
   addr.sin_family      = AF_INET;
@@ -158,24 +208,31 @@ int MDNS::MakeMdnsSocket()
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   if (bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
   {
-    close(fd);
+    sock_close(fd);
     throw std::runtime_error("mDNS: bind() failed");
   }
 
   ip_mreq mreq{};
-  mreq.imr_multiaddr.s_addr = inet_addr(MDNS_ADDR);
+  inet_pton(AF_INET, MDNS_ADDR, &mreq.imr_multiaddr);
   mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-  setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
+  setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+             reinterpret_cast<const char*>(&mreq), sizeof(mreq));
 
   uint8_t ttl = 1;
-  setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl));
+  setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
+             reinterpret_cast<const char*>(&ttl), sizeof(ttl));
 
   return fd;
 }
 
 int MDNS::EphemeralPort()
 {
+#ifdef _WIN32
+  SOCKET fds = socket(AF_INET, SOCK_STREAM, 0);
+  int fd = static_cast<int>(fds);
+#else
   int fd = socket(AF_INET, SOCK_STREAM, 0);
+#endif
   if (fd < 0)
     return 0;
 
@@ -188,25 +245,31 @@ int MDNS::EphemeralPort()
   socklen_t len = sizeof(addr);
   getsockname(fd, reinterpret_cast<sockaddr*>(&addr), &len);
   const int port = ntohs(addr.sin_port);
-  close(fd);
+  sock_close(fd);
   return port;
 }
 
 uint32_t MDNS::GetLocalIp()
 {
+#ifdef _WIN32
+  SOCKET fds = socket(AF_INET, SOCK_DGRAM, 0);
+  int fd = static_cast<int>(fds);
+#else
   int fd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (fd < 0) return htonl(INADDR_LOOPBACK);
+#endif
+  if (fd < 0)
+    return htonl(INADDR_LOOPBACK);
 
   sockaddr_in addr{};
   addr.sin_family      = AF_INET;
   addr.sin_port        = htons(80);
-  addr.sin_addr.s_addr = inet_addr("8.8.8.8");
+  inet_pton(AF_INET, "8.8.8.8", &addr.sin_addr);
   connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 
   socklen_t len = sizeof(addr);
   getsockname(fd, reinterpret_cast<sockaddr*>(&addr), &len);
-  close(fd);
-  return addr.sin_addr.s_addr; // already in network byte order
+  sock_close(fd);
+  return addr.sin_addr.s_addr;
 }
 
 bool MDNS::IsPtrQueryForUs(const uint8_t* buf, ssize_t len)
@@ -245,9 +308,12 @@ void MDNS::SendToMulticast(const std::vector<uint8_t>& pkt) const
   sockaddr_in dest{};
   dest.sin_family      = AF_INET;
   dest.sin_port        = htons(MDNS_PORT);
-  dest.sin_addr.s_addr = inet_addr(MDNS_ADDR);
-  sendto(m_fd, pkt.data(), pkt.size(), 0,
-         reinterpret_cast<sockaddr*>(&dest), sizeof(dest));
+  inet_pton(AF_INET, MDNS_ADDR, &dest.sin_addr);
+  sendto(m_fd,
+         reinterpret_cast<const char*>(pkt.data()),
+         static_cast<int>(pkt.size()),
+         0,
+         reinterpret_cast<const sockaddr*>(&dest), sizeof(dest));
 }
 
 void MDNS::SendAnnouncement(uint32_t ttl) const

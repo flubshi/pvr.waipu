@@ -19,7 +19,21 @@
  *
  */
 
+#ifdef _WIN32
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+  #endif
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #ifndef VC_EXTRA_LEAN
+    #define VC_EXTRA_LEAN
+  #endif
+  #include <winsock2.h>
+#endif
+
 #include "WaipuData.h"
+#include "MDNS.h"            // before RapidJSON!
 
 #include "Base64.h"
 #include "Utils.h"
@@ -38,7 +52,9 @@
 #include <kodi/gui/dialogs/Progress.h>
 #include <kodi/gui/dialogs/YesNo.h>
 
-#include "MDNS.h"
+#ifdef GetObject
+  #undef GetObject
+#endif
 
 std::mutex WaipuData::mutex;
 

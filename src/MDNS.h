@@ -1,17 +1,54 @@
+/*
+ *      Copyright (C) 2026 flubshi
+ *      https://github.com/flubshi
+ *
+ *  This Program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2, or (at your option)
+ *  any later version.
+ *
+ *  This Program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with XBMC; see the file COPYING.  If not, write to
+ *  the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+ *  http://www.gnu.org/copyleft/gpl.html
+ *
+ */
+
 #pragma once
 
 #include <atomic>
 #include <condition_variable>
-#include <functional>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
+#include <cstdint>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#ifdef _WIN32
+  #ifndef WIN32_LEAN_AND_MEAN
+    #define WIN32_LEAN_AND_MEAN
+  #endif
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #ifndef VC_EXTRA_LEAN
+    #define VC_EXTRA_LEAN
+  #endif
+  #include <winsock2.h>
+  #include <ws2tcpip.h>
+  using ssize_t   = SSIZE_T;
+  using socklen_t = int;
+#else
+  #include <arpa/inet.h>
+  #include <netinet/in.h>
+  #include <sys/socket.h>
+  #include <unistd.h>
+#endif
 
 class MDNS
 {
