@@ -10,7 +10,6 @@
                <constraints>
                   <options>
                      <option label="30009">0</option>
-                     <option label="30010">1</option>
                      <option label="30038">2</option>
                   </options>
                </constraints>

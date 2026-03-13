@@ -4,7 +4,7 @@
 [![Build Status](https://jenkins.kodi.tv/view/Addons/job/flubshi/job/pvr.waipu/job/Piers/badge/icon)](https://jenkins.kodi.tv/blue/organizations/jenkins/flubshi%2Fpvr.waipu/branches/)
 
 # Waipu PVR client for Kodi
-This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provides Kodi integration for the German TV streaming provider waipu.tv and O2 TV. A user account for one of these providers is required to use this addon.
+This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provides Kodi integration for the German TV streaming provider waipu.tv. A user account (free or paid) is required to use this addon.
 
 ## Preview Images
 
@@ -12,12 +12,12 @@ This is the waipu PVR client addon for [Kodi](https://kodi.tv). It provides Kodi
 
 ## Installation
 
-Starting with Kodi 19 - Matrix, pvr.waipu will become an official Kodi plugin and should be shipped with your installation. Current test distributions, like [Milhouse LibreELEC Nightlies](https://forum.kodi.tv/showthread.php?tid=343068) or [gmc OSMC Nightlies](https://discourse.osmc.tv/t/kodi-19-matrix-nightly-builds-for-raspberry-pi/79407) already ship pvr.waipu.
+pvr.waipu is a Kodi plugin and should be shipped with your installation or be available in the official repository. If it is not available, contact the distributor.
 
 
 ## Disclaimer
 
-This is an *unofficial* plugin. It is provided by volunteers and not related to Exaring AG or waipu.tv.
+This is an *unofficial* (not related to Exaring AG) plugin. It is provided by volunteers and not related to Exaring AG or waipu.tv.
 For any support regarding this plugin, please create a github issue.
 
 
