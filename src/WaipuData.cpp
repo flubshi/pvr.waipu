@@ -1436,19 +1436,18 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
         kodi::Log(ADDON_LOG_ERROR, "[epg-new] empty server response");
         return PVR_ERROR_SERVER_ERROR;
       }
-      jsonEpg = "{\"result\": " + jsonEpg + "}";
 
 
       epgDoc.ParseInsitu<rapidjson::kParseInsituFlag>(&jsonEpg[0]);
-      if (epgDoc.HasParseError())
+      if (epgDoc.HasParseError() || !epgDoc.IsArray())
       {
         kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
         return PVR_ERROR_SERVER_ERROR;
       }
 
-      kodi::Log(ADDON_LOG_DEBUG, "[epg-new] size: %i;", epgDoc["result"].Size());
+      kodi::Log(ADDON_LOG_DEBUG, "[epg-new] size: %i;", epgDoc.Size());
 
-      for (const auto& epgData : epgDoc["result"].GetArray())
+      for (const auto& epgData : epgDoc.GetArray())
       {
 	// we limit epg details fetching to channel.isFavorite, because it takes a lot of time
         results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channelid, channel.isFavorite));
@@ -1954,24 +1953,22 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
                                        {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[Timers] %s", jsonRecordings.c_str());
 
-  jsonRecordings = "{\"result\": " + jsonRecordings + "}";
-
   rapidjson::Document timersDoc;
   timersDoc.Parse(jsonRecordings.c_str());
-  if (timersDoc.HasParseError())
+  if (timersDoc.HasParseError() || !timersDoc.IsArray())
   {
     kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
     return PVR_ERROR_SERVER_ERROR;
   }
   kodi::Log(ADDON_LOG_DEBUG, "[timers] iterate entries");
-  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc["result"].Size());
+  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc.Size());
 
   int recordings_count = 0;
   int timers_count = 0;
 
   std::vector<int> timerGroups;
 
-  for (const auto& timer : timersDoc["result"].GetArray())
+  for (const auto& timer : timersDoc.GetArray())
   {
     // skip if missing epgdata
     if (!timer.HasMember("status") || !timer.HasMember("stationId") || !timer.HasMember("title"))
