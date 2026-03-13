@@ -38,6 +38,8 @@
 #include <kodi/gui/dialogs/Progress.h>
 #include <kodi/gui/dialogs/YesNo.h>
 
+#include "MDNS.h"
+
 std::mutex WaipuData::mutex;
 
 // BEGIN CURL helpers from zattoo addon:
@@ -509,6 +511,10 @@ WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
     kodi::Log(ADDON_LOG_DEBUG, "OAuth missing response");
     return ret;
   }
+
+  MDNS mdns;
+  mdns.StartRegistrationService(deviceCodeMap.find("user_code")->second);
+
   std::string code_req =
       "device_code=" + deviceCodeMap.find("device_code")->second +
       "&grant_type=urn:ietf:params:oauth:grant-type:device_code&waipu_device_id=" + m_device_id;
@@ -547,6 +553,8 @@ WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
 
   progress->Abort();
   delete progress;
+
+  mdns.StopRegistrationService();
 
   return ret;
 }
