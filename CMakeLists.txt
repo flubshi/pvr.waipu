@@ -35,4 +35,8 @@ add_definitions(-DIPTV_VERSION=${IPTV_VERSION})
 
 build_addon(pvr.waipu PVRWAIPU DEPLIBS)
 
+if(WIN32)
+  target_link_libraries(pvr.waipu PRIVATE ws2_32)
+endif()
+
 include(CPack)
