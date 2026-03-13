@@ -162,10 +162,6 @@ WAIPU_LOGIN_STATUS WaipuData::Login()
     kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (user/pw)");
     return OAuthRequest(req);
   }
-  else if (m_provider == WAIPU_PROVIDER_O2)
-  {
-    return DeviceLogin("o2");
-  }
 
   // waipu oauth device workflow
   return DeviceLogin("waipu");
