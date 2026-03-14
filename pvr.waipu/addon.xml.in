@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.6.1"
+  version="22.7.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,13 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-v22.6.1
-- Translations updates from Weblate
-	- uk_ua
-
-v22.6.0
-- Show account status and subscription in settings
-- Update translations from Weblate
+v22.7.0
+- Implement magic login
+- Remove support for O2 TV
+- Optimizations
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
