@@ -59,10 +59,6 @@ msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
 msgstr "Waipu.tv（证书）"
 
-msgctxt "#30010"
-msgid "O2 TV"
-msgstr "O2 电视"
-
 msgctxt "#30011"
 msgid "Streaming Protocol"
 msgstr "流媒体协议"
@@ -188,8 +184,8 @@ msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS：使用 inputstream.ffmpegdirect"
 
 msgctxt "#30050"
-msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr "提供商/身份验证：建议使用 Waipu（设备登录）或 O2 TV！请勿使用凭据登录。"
+msgid "Provider/Authentication: Using Waipu (Device Login) is recommended! Do not use credentials login."
+msgstr ""
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
@@ -254,3 +250,11 @@ msgstr "起始频道序号"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr "订阅服务"
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV"
+#~ msgstr "O2 电视"
+
+#~ msgctxt "#30050"
+#~ msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
+#~ msgstr "提供商/身份验证：建议使用 Waipu（设备登录）或 O2 TV！请勿使用凭据登录。"

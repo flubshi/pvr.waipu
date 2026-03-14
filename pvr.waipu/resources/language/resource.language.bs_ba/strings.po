@@ -59,10 +59,6 @@ msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
 msgstr "Waipu.tv (Akreditacije)"
 
-msgctxt "#30010"
-msgid "O2 TV"
-msgstr "O2 TV"
-
 msgctxt "#30011"
 msgid "Streaming Protocol"
 msgstr "Protokol za strujanje"
@@ -188,8 +184,8 @@ msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: Koristite inputstream.ffmpegdirect"
 
 msgctxt "#30050"
-msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr "Pružatelj usluga/Autentifikacija: Preporučuje se korištenje Waipu-a (prijava na uređaj) ili O2 TV-a! Nemojte koristiti prijavu s vjerodajnicama."
+msgid "Provider/Authentication: Using Waipu (Device Login) is recommended! Do not use credentials login."
+msgstr ""
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
@@ -254,3 +250,11 @@ msgstr "Početni broj kanala"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr ""
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV"
+#~ msgstr "O2 TV"
+
+#~ msgctxt "#30050"
+#~ msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
+#~ msgstr "Pružatelj usluga/Autentifikacija: Preporučuje se korištenje Waipu-a (prijava na uređaj) ili O2 TV-a! Nemojte koristiti prijavu s vjerodajnicama."
