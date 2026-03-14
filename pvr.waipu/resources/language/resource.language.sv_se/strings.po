@@ -59,10 +59,6 @@ msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
 msgstr "Waipu.tv (inloggningsuppgifter)"
 
-msgctxt "#30010"
-msgid "O2 TV"
-msgstr "O2 TV"
-
 msgctxt "#30011"
 msgid "Streaming Protocol"
 msgstr "Strömningsprotokoll"
@@ -188,8 +184,8 @@ msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: Använd inputstream.ffmpegdirect"
 
 msgctxt "#30050"
-msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr "Leverantör/Autentisering: Vi rekommenderar att du använder Waipu (enhetsinloggning) eller O2 TV! Använd inte inloggning med lösenord."
+msgid "Provider/Authentication: Using Waipu (Device Login) is recommended! Do not use credentials login."
+msgstr ""
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
@@ -254,3 +250,11 @@ msgstr "Starta kanalnummer"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr "Abonnemang"
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV"
+#~ msgstr "O2 TV"
+
+#~ msgctxt "#30050"
+#~ msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
+#~ msgstr "Leverantör/Autentisering: Vi rekommenderar att du använder Waipu (enhetsinloggning) eller O2 TV! Använd inte inloggning med lösenord."

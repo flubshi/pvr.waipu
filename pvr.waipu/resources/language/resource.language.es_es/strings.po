@@ -59,10 +59,6 @@ msgctxt "#30009"
 msgid "Waipu.tv (Credentials)"
 msgstr "Waipu.tv (Credenciales)"
 
-msgctxt "#30010"
-msgid "O2 TV"
-msgstr "O2 TV"
-
 msgctxt "#30011"
 msgid "Streaming Protocol"
 msgstr "Protocolo de transmisión"
@@ -188,8 +184,8 @@ msgid "HLS: Use inputstream.ffmpegdirect"
 msgstr "HLS: Usar inputstream.ffmpegdirect"
 
 msgctxt "#30050"
-msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
-msgstr "Proveedor/Autenticación: ¡Se recomienda usar Waipu (Inicio de sesión por dispositivo) o O2 TV! No usar inicio de sesión por credenciales."
+msgid "Provider/Authentication: Using Waipu (Device Login) is recommended! Do not use credentials login."
+msgstr ""
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
@@ -254,6 +250,14 @@ msgstr "Número de canal de inicio"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr "Subscripción"
+
+#~ msgctxt "#30010"
+#~ msgid "O2 TV"
+#~ msgstr "O2 TV"
+
+#~ msgctxt "#30050"
+#~ msgid "Provider/Authentication: Using Waipu (Device Login) or O2 TV is recommended! Do not use credentials login."
+#~ msgstr "Proveedor/Autenticación: ¡Se recomienda usar Waipu (Inicio de sesión por dispositivo) o O2 TV! No usar inicio de sesión por credenciales."
 
 #~ msgctxt "#30049"
 #~ msgid "Experimental EPG"
