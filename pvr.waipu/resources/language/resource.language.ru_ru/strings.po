@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2025-12-20 07:13+0000\n"
+"PO-Revision-Date: 2026-03-25 08:13+0000\n"
 "Last-Translator: Alexey <signfinder@gmail.com>\n"
 "Language-Team: Russian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/ru_ru/>\n"
 "Language: ru_ru\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16.2\n"
 
 msgctxt "Addon Summary"
 msgid "waipu.tv PVR Client"
@@ -21,7 +21,7 @@ msgstr "Клиент записи эфира waipu.tv"
 
 msgctxt "Addon Description"
 msgid "waipu.tv PVR Client. Note: This is not an official waipu plugin and not related to Exaring AG or waipu.tv. It was developed by volunteers."
-msgstr "Клиент записи эфира waipu.tv. Примечание: Не является официальным дополнением Waipu и не связан с Exaring AG или waipu.tv. Разработка добровольцев."
+msgstr "Клиент записи эфира waipu.tv. Не является официальным дополнением Waipu и не связан с Exaring AG или waipu.tv, был разработан добровольцами."
 
 msgctxt "#30001"
 msgid "General"
@@ -45,7 +45,7 @@ msgstr "Видео-поток"
 
 msgctxt "#30006"
 msgid "InputStream Helper information"
-msgstr "Справочная информация входящего потока"
+msgstr "Справка помощника входящего потока"
 
 msgctxt "#30007"
 msgid "(Re)install Widevine CDM library..."
@@ -105,7 +105,7 @@ msgstr "HEVC-2160p50: hevc; 3840x2160; 50fps"
 
 msgctxt "#30025"
 msgid "AAC-LC: 128kBit, 48kHz"
-msgstr "AAC-LC: 128 кбит/с, 48 кГц"
+msgstr "AAC-LC: 128kBit, 48kHz"
 
 msgctxt "#30030"
 msgid "Error: Login not possible. Check credentials!"
@@ -117,7 +117,7 @@ msgstr "Отсутствует сетевое подключение"
 
 msgctxt "#30032"
 msgid "Invalid login credentials"
-msgstr "Неверные учётные данные для входа"
+msgstr "Неверные учётные данные"
 
 msgctxt "#30033"
 msgid "Required username and password not available"
@@ -169,7 +169,7 @@ msgstr "Все видимые"
 
 msgctxt "#30045"
 msgid "All"
-msgstr "Все треки"
+msgstr "Все"
 
 msgctxt "#30046"
 msgid "Favourites"
@@ -177,7 +177,7 @@ msgstr "Избранное"
 
 msgctxt "#30047"
 msgid "Live TV"
-msgstr "ТВ"
+msgstr "Прямой эфир"
 
 msgctxt "#30048"
 msgid "HLS: Use inputstream.ffmpegdirect"
@@ -185,7 +185,7 @@ msgstr "HLS: Использовать inputstream.ffmpegdirect"
 
 msgctxt "#30050"
 msgid "Provider/Authentication: Using Waipu (Device Login) is recommended! Do not use credentials login."
-msgstr ""
+msgstr "Провайдер/аутентификация: Рекомендуется использовать Waipu (вход с устройства)! Не используйте учетные данные для входа."
 
 msgctxt "#30051"
 msgid "Widevine CDM is required to play non public channels. Click to install Widevine CDM if some channels are not working!"
@@ -201,7 +201,7 @@ msgstr "Выберите протокол потоковой передачи. �
 
 msgctxt "#30054"
 msgid "By default, inputstream.adaptive is used for playing HLS. Check this option to use inputstream.ffmpegdirect instead."
-msgstr "По умолчанию для воспроизведения HLS используется inputstream.adaptive. Установите этот флажок, чтобы использовать inputstream.ffmpegdirect."
+msgstr "По умолчанию для воспроизведения HLS используется inputstream.adaptive. Выберите, чтобы использовать inputstream.ffmpegdirect."
 
 msgctxt "#30055"
 msgid "Recordings: Load description and year"
