@@ -44,6 +44,7 @@ v22.7.0
     <summary lang="ko_KR">waipu.tv PVR 클라이언트</summary>
     <summary lang="ru_RU">Клиент записи эфира waipu.tv</summary>
     <summary lang="sv_SE">waipu.tv PVR-klient</summary>
+    <summary lang="uk_UA">PVR-клієнт waipu.tv</summary>
     <summary lang="zh_CN">waipu.tv PVR 客户端</summary>
     <description lang="bs_BA">waipu.tv PVR klijent. Napomena: Ovo nije službeni waipu dodatak i nije povezan s Exaring AG ili waipu.tv. Razvili su ga volonteri.</description>
     <description lang="da_DK">waipu.tv PVR-klient. Bemærk: Dette er ikke et officielt waipu-plugin og er ikke relateret til Exaring AG eller waipu.tv. Det er udviklet af frivillige.</description>
@@ -56,8 +57,9 @@ v22.7.0
     <description lang="hr_HR">waipu.tv PVR klijent. Napomena: Ovo nije služebeni waipu dodatak i nije povezan s Exaring AG ili waipu.tv. Razvijen je od strane dobrovoljaca.</description>
     <description lang="it_IT">Client PVR di waipu.tv. Nota: questo non è un add-on ufficiale waipu e non è correlato a Exaring AG o waipu.tv. È stato sviluppato da volontari.</description>
     <description lang="ko_KR">waipu.tv PVR 클라이언트. 참고: 이것은 공식 waipu 플러그인이 아니며 Exaring AG 또는 waipu.tv와 관련이 없습니다. 자원 봉사자에 의해 개발되었습니다.</description>
-    <description lang="ru_RU">Клиент записи эфира waipu.tv. Примечание: Не является официальным дополнением Waipu и не связан с Exaring AG или waipu.tv. Разработка добровольцев.</description>
+    <description lang="ru_RU">Клиент записи эфира waipu.tv. Не является официальным дополнением Waipu и не связан с Exaring AG или waipu.tv, был разработан добровольцами.</description>
     <description lang="sv_SE">waipu.tv PVR-klient. Obs: Detta är inte ett officiellt waipu-plugin och är inte relaterat till Exaring AG eller waipu.tv. Det utvecklades av volontärer.</description>
+    <description lang="uk_UA">PVR-клієнт waipu.tv. Примітка: це неофіційний додаток waipu, він не пов’язаний з Exaring AG або waipu.tv. Його було розроблено волонтерами.</description>
     <description lang="zh_CN">waipu.tv PVR 客户端。注意：这不是官方的 waipu 插件，与 Exaring AG 或 waipu.tv 无关。它由志愿者开发。</description>
   </extension>
 </addon>
