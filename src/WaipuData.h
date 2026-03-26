@@ -216,6 +216,7 @@ private:
                            bool playTimeshiftBuffer,
                            const std::string& protocol);
 
+public:
   std::string HttpGet(const std::string& url,
                       const std::map<std::string,
                       std::string>& headers = {},
@@ -242,6 +243,7 @@ private:
                                 const std::string& postData,
                                 int& statusCode,
                                 bool ignoreStatusCode = false);
+private:
   bool IsConnected();
   WAIPU_LOGIN_STATUS Login();
   WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
