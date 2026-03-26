@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <future>
 #include <regex>
 #include <set>
 #include <thread>
@@ -1413,6 +1414,25 @@ kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const rapidjson::Value& tagEn
   return tag;
 }
 
+template<typename T>
+struct HttpGetRequests
+{
+  HttpGetRequests(WaipuData* request, const std::string& url, T data)
+    : url(url), request(request),
+    data(std::move(data))
+  {
+  }
+
+  void start() {
+    f = std::async(std::launch::async, [&](){ return request->HttpGet(url); });
+  }
+
+  WaipuData* request;
+  std::string url;
+  std::future<std::string> f;
+  T data;
+};
+
 PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
                                          time_t start,
                                          time_t end,
@@ -1424,6 +1444,8 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
   LoadChannelData();
 
   const int grid_align_hours = 4; // align 4h
+
+  std::vector<HttpGetRequests<WaipuChannel>> requests{};
 
   for (const auto& channel : m_channels)
   {
@@ -1438,7 +1460,6 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
     int limit = 32;
     char startTimeBuf[30];
-    rapidjson::Document epgDoc;
 
     while (start < end)
     {
@@ -1448,39 +1469,50 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
       tm->tm_hour -= tm->tm_hour % grid_align_hours; // align to grid window
       kodi::Log(ADDON_LOG_DEBUG, "[epg-new] tm %d", tm->tm_hour);
 
-
       // 2024-05-17T17:00:00.000Z
       strftime(startTimeBuf, 30, "%Y-%m-%dT%H:00:00.000Z", tm);
 
-      std::string jsonEpg =
-          HttpGet("https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf);
-      kodi::Log(ADDON_LOG_DEBUG, "[epg-new] %s", jsonEpg.c_str());
-      if (jsonEpg.empty())
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[epg-new] empty server response");
-        return PVR_ERROR_SERVER_ERROR;
-      }
+      const std::string url = "https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf;
+      requests.emplace_back(this, url, channel);
 
-
-      epgDoc.ParseInsitu<rapidjson::kParseInsituFlag>(&jsonEpg[0]);
-      if (epgDoc.HasParseError() || !epgDoc.IsArray())
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
-        return PVR_ERROR_SERVER_ERROR;
-      }
-
-      kodi::Log(ADDON_LOG_DEBUG, "[epg-new] size: %i;", epgDoc.Size());
-
-      for (const auto& epgData : epgDoc.GetArray())
-      {
-	// we limit epg details fetching to channel.isFavorite, because it takes a lot of time
-        results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channelid, channel.isFavorite));
-      }
       start = start + grid_align_hours * 60 * 60;
       if (limit < 1)
         break;
     }
   }
+
+  for (auto& request: requests)
+    request.start();
+
+  rapidjson::Document epgDoc;
+  for (auto& request: requests)
+  {
+    auto jsonEpg = request.f.get();
+
+    kodi::Log(ADDON_LOG_DEBUG, "[epg-new] %s", jsonEpg.c_str());
+    if (jsonEpg.empty())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[epg-new] empty server response");
+      return PVR_ERROR_SERVER_ERROR;
+    }
+
+    epgDoc.ParseInsitu<rapidjson::kParseInsituFlag>(&jsonEpg[0]);
+    if (epgDoc.HasParseError() || !epgDoc.IsArray())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[GetEPG] ERROR: error while parsing json");
+      return PVR_ERROR_SERVER_ERROR;
+    }
+
+    kodi::Log(ADDON_LOG_DEBUG, "[epg-new] size: %i;", epgDoc.Size());
+
+    for (const auto& epgData : epgDoc.GetArray())
+    {
+      // we limit epg details fetching to channel.isFavorite, because it takes a lot of time
+      const auto& channel = request.data;
+      results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channel.waipuID, channel.isFavorite));
+    }
+  }
+
   return PVR_ERROR_NO_ERROR;
 }
 
