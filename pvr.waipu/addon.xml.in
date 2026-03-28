@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.7.1"
+  version="22.8.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,14 +26,8 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-v22.7.1
-- Translations updates from Weblate
-	- de_de, es_es, it_it, ru_ru, sv_se, uk_ua, zh_cn
-
-v22.7.0
-- Implement magic login
-- Remove support for O2 TV
-- Optimizations
+v22.8.0
+- Load channel EPG data asynchronously. This significantly reduces EPG loading time. (Thanks to @damienruscoe )
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
