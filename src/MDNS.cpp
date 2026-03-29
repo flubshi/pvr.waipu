@@ -22,15 +22,16 @@
 #include "MDNS.h"
 
 #include "kodi/General.h"
+
 #include <stdexcept>
 
 #ifdef _WIN32
-  #define sock_close closesocket
-  #define inet_addr_compat(x) inet_addr(x)  // deprecated warning unterdrücken
-  #pragma comment(lib, "ws2_32.lib")
+#define sock_close closesocket
+#define inet_addr_compat(x) inet_addr(x) // deprecated warning unterdrücken
+#pragma comment(lib, "ws2_32.lib")
 #else
-  #define sock_close close
-  #define inet_addr_compat(x) inet_addr(x)
+#define sock_close close
+#define inet_addr_compat(x) inet_addr(x)
 #endif
 
 MDNS::MDNS()
@@ -68,9 +69,9 @@ void MDNS::StartRegistrationService(const std::string& userCode)
     return;
 
   m_userCode = userCode;
-  m_port     = EphemeralPort();
-  m_fd       = MakeMdnsSocket();
-  m_running  = true;
+  m_port = EphemeralPort();
+  m_fd = MakeMdnsSocket();
+  m_running = true;
 
   SendAnnouncement(ANNOUNCE_TTL);
 
@@ -101,7 +102,6 @@ void MDNS::StopRegistrationService()
   kodi::Log(ADDON_LOG_INFO, "[mDNS] onServiceUnregistered: %s", m_serviceName.c_str());
 }
 
-
 void MDNS::QueryLoop()
 {
   uint8_t buf[4096];
@@ -109,16 +109,13 @@ void MDNS::QueryLoop()
   while (m_running)
   {
     timeval tv{};
-    tv.tv_sec  = 1;
+    tv.tv_sec = 1;
     tv.tv_usec = 0;
-    setsockopt(m_fd, SOL_SOCKET, SO_RCVTIMEO,
-               reinterpret_cast<const char*>(&tv), sizeof(tv));
+    setsockopt(m_fd, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&tv), sizeof(tv));
 
     sockaddr_in sender{};
-    socklen_t   senderLen = sizeof(sender);
-    const ssize_t n = recvfrom(m_fd,
-                               reinterpret_cast<char*>(buf), sizeof(buf),
-                               0,
+    socklen_t senderLen = sizeof(sender);
+    const ssize_t n = recvfrom(m_fd, reinterpret_cast<char*>(buf), sizeof(buf), 0,
                                reinterpret_cast<sockaddr*>(&sender), &senderLen);
     if (n <= 0)
       continue;
@@ -135,37 +132,48 @@ std::vector<uint8_t> MDNS::BuildResponse(uint32_t ttl) const
 {
   const std::string instance = m_serviceName + "." + SERVICE_TYPE; //"._wlogin._tcp.local.";
   const std::string txtEntry = "code=" + m_userCode;
-  const uint32_t    localIp  = GetLocalIp();
+  const uint32_t localIp = GetLocalIp();
 
   DnsBuffer buf;
 
   // Header
   buf.U16(0x0000); // Transaction ID
   buf.U16(0x8400); // Flags: Response + Authoritative
-  buf.U16(0);      // Questions
-  buf.U16(3);      // Answers: PTR + SRV + TXT
-  buf.U16(0);      // Authority
-  buf.U16(1);      // Additional: A-Record
+  buf.U16(0); // Questions
+  buf.U16(3); // Answers: PTR + SRV + TXT
+  buf.U16(0); // Authority
+  buf.U16(1); // Additional: A-Record
 
   // PTR: _wlogin._tcp.local. → instance
   buf.Name(SERVICE_TYPE); // "_wlogin._tcp.local."
-  buf.U16(0x000C); buf.U16(0x0001); buf.U32(ttl);
-  auto p = buf.RdlengthPlaceholder(); auto s = buf.data.size();
+  buf.U16(0x000C);
+  buf.U16(0x0001);
+  buf.U32(ttl);
+  auto p = buf.RdlengthPlaceholder();
+  auto s = buf.data.size();
   buf.Name(instance);
   buf.PatchRdlength(p, s);
 
   // SRV: instance → hostname:port
   buf.Name(instance);
-  buf.U16(0x0021); buf.U16(0x0001); buf.U32(ttl);
-  p = buf.RdlengthPlaceholder(); s = buf.data.size();
-  buf.U16(0); buf.U16(0); buf.U16(static_cast<uint16_t>(m_port));
-  buf.Name(m_serviceName + ".local.");  // Target: hostname.local.
+  buf.U16(0x0021);
+  buf.U16(0x0001);
+  buf.U32(ttl);
+  p = buf.RdlengthPlaceholder();
+  s = buf.data.size();
+  buf.U16(0);
+  buf.U16(0);
+  buf.U16(static_cast<uint16_t>(m_port));
+  buf.Name(m_serviceName + ".local."); // Target: hostname.local.
   buf.PatchRdlength(p, s);
 
   // TXT: code=<userCode>
   buf.Name(instance);
-  buf.U16(0x0010); buf.U16(0x0001); buf.U32(ttl);
-  p = buf.RdlengthPlaceholder(); s = buf.data.size();
+  buf.U16(0x0010);
+  buf.U16(0x0001);
+  buf.U32(ttl);
+  p = buf.RdlengthPlaceholder();
+  s = buf.data.size();
   buf.U8(static_cast<uint8_t>(txtEntry.size()));
   for (char c : txtEntry)
     buf.U8(static_cast<uint8_t>(c));
@@ -173,10 +181,12 @@ std::vector<uint8_t> MDNS::BuildResponse(uint32_t ttl) const
 
   // A-Record: hostname.local. → IP  (Additional Record)
   buf.Name(m_serviceName + ".local.");
-  buf.U16(0x0001); buf.U16(0x0001); buf.U32(ttl); // Type A, Class IN
-  buf.U16(4);      // RDLENGTH: 4 bytes for IPv4
-  buf.U8((localIp      ) & 0xFF);
-  buf.U8((localIp >>  8) & 0xFF);
+  buf.U16(0x0001);
+  buf.U16(0x0001);
+  buf.U32(ttl); // Type A, Class IN
+  buf.U16(4); // RDLENGTH: 4 bytes for IPv4
+  buf.U8((localIp) & 0xFF);
+  buf.U8((localIp >> 8) & 0xFF);
   buf.U8((localIp >> 16) & 0xFF);
   buf.U8((localIp >> 24) & 0xFF);
 
@@ -195,16 +205,14 @@ int MDNS::MakeMdnsSocket()
     throw std::runtime_error("mDNS: socket() failed");
 
   int yes = 1;
-  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-             reinterpret_cast<const char*>(&yes), sizeof(yes));
+  setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&yes), sizeof(yes));
 #ifndef _WIN32
-  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT,
-             reinterpret_cast<const char*>(&yes), sizeof(yes));
+  setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, reinterpret_cast<const char*>(&yes), sizeof(yes));
 #endif
 
   sockaddr_in addr{};
-  addr.sin_family      = AF_INET;
-  addr.sin_port        = htons(MDNS_PORT);
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(MDNS_PORT);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   if (bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
   {
@@ -215,12 +223,10 @@ int MDNS::MakeMdnsSocket()
   ip_mreq mreq{};
   inet_pton(AF_INET, MDNS_ADDR, &mreq.imr_multiaddr);
   mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-  setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-             reinterpret_cast<const char*>(&mreq), sizeof(mreq));
+  setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, reinterpret_cast<const char*>(&mreq), sizeof(mreq));
 
   uint8_t ttl = 1;
-  setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL,
-             reinterpret_cast<const char*>(&ttl), sizeof(ttl));
+  setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, reinterpret_cast<const char*>(&ttl), sizeof(ttl));
 
   return fd;
 }
@@ -237,9 +243,9 @@ int MDNS::EphemeralPort()
     return 0;
 
   sockaddr_in addr{};
-  addr.sin_family      = AF_INET;
+  addr.sin_family = AF_INET;
   addr.sin_addr.s_addr = INADDR_ANY;
-  addr.sin_port        = 0;
+  addr.sin_port = 0;
   bind(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 
   socklen_t len = sizeof(addr);
@@ -261,8 +267,8 @@ uint32_t MDNS::GetLocalIp()
     return htonl(INADDR_LOOPBACK);
 
   sockaddr_in addr{};
-  addr.sin_family      = AF_INET;
-  addr.sin_port        = htons(80);
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(80);
   inet_pton(AF_INET, "8.8.8.8", &addr.sin_addr);
   connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
 
@@ -274,25 +280,31 @@ uint32_t MDNS::GetLocalIp()
 
 bool MDNS::IsPtrQueryForUs(const uint8_t* buf, ssize_t len)
 {
-  if (len < 12) return false;
+  if (len < 12)
+    return false;
 
-  const uint16_t flags     = (buf[2] << 8) | buf[3];
+  const uint16_t flags = (buf[2] << 8) | buf[3];
   const uint16_t questions = (buf[4] << 8) | buf[5];
-  if (flags & 0x8000) return false;
-  if (questions == 0) return false;
+  if (flags & 0x8000)
+    return false;
+  if (questions == 0)
+    return false;
 
   size_t i = 12;
   std::string qname;
   while (i < static_cast<size_t>(len) && buf[i] != 0)
   {
     const uint8_t labelLen = buf[i++];
-    if (i + labelLen > static_cast<size_t>(len)) return false;
-    if (!qname.empty()) qname += '.';
+    if (i + labelLen > static_cast<size_t>(len))
+      return false;
+    if (!qname.empty())
+      qname += '.';
     qname.append(reinterpret_cast<const char*>(&buf[i]), labelLen);
     i += labelLen;
   }
   i++;
-  if (i + 4 > static_cast<size_t>(len)) return false;
+  if (i + 4 > static_cast<size_t>(len))
+    return false;
 
   // remove trailing dot from SERVICE_TYPE for comparison
   std::string serviceType = SERVICE_TYPE;
@@ -306,13 +318,10 @@ bool MDNS::IsPtrQueryForUs(const uint8_t* buf, ssize_t len)
 void MDNS::SendToMulticast(const std::vector<uint8_t>& pkt) const
 {
   sockaddr_in dest{};
-  dest.sin_family      = AF_INET;
-  dest.sin_port        = htons(MDNS_PORT);
+  dest.sin_family = AF_INET;
+  dest.sin_port = htons(MDNS_PORT);
   inet_pton(AF_INET, MDNS_ADDR, &dest.sin_addr);
-  sendto(m_fd,
-         reinterpret_cast<const char*>(pkt.data()),
-         static_cast<int>(pkt.size()),
-         0,
+  sendto(m_fd, reinterpret_cast<const char*>(pkt.data()), static_cast<int>(pkt.size()), 0,
          reinterpret_cast<const sockaddr*>(&dest), sizeof(dest));
 }
 

@@ -100,7 +100,10 @@ public:
                              time_t start,
                              time_t end,
                              kodi::addon::PVREPGTagsResultSet& results) override;
-  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry, const int kodiChanneliUniqueId, const std::string waipuChannelID, const bool reSchedule);
+  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry,
+                                          const int kodiChanneliUniqueId,
+                                          const std::string waipuChannelID,
+                                          const bool reSchedule);
   PVR_ERROR IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable) override;
   PVR_ERROR IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& isPlayable) override;
   std::string GetEPGTagStreamURL(const kodi::addon::PVREPGTag& tag, const std::string& protocol);
@@ -218,24 +221,20 @@ private:
 
 public:
   std::string HttpGet(const std::string& url,
-                      const std::map<std::string,
-                      std::string>& headers = {},
+                      const std::map<std::string, std::string>& headers = {},
                       bool ignoreStatusCode = false);
   std::string HttpDelete(const std::string& url,
                          const std::string& postData,
-                         const std::map<std::string,
-                         std::string>& headers = {},
+                         const std::map<std::string, std::string>& headers = {},
                          bool ignoreStatusCode = false);
   std::string HttpPost(const std::string& url,
                        const std::string& postData,
-                       const std::map<std::string,
-                       std::string>& headers = {},
+                       const std::map<std::string, std::string>& headers = {},
                        bool ignoreStatusCode = false);
   std::string HttpRequest(const std::string& action,
                           const std::string& url,
                           const std::string& postData,
-                          const std::map<std::string,
-                          std::string>& headers = {},
+                          const std::map<std::string, std::string>& headers = {},
                           bool ignoreStatusCode = false);
   std::string HttpRequestToCurl(Curl& curl,
                                 const std::string& action,
@@ -243,6 +242,7 @@ public:
                                 const std::string& postData,
                                 int& statusCode,
                                 bool ignoreStatusCode = false);
+
 private:
   bool IsConnected();
   WAIPU_LOGIN_STATUS Login();
