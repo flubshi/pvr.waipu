@@ -68,9 +68,7 @@ std::string Utils::ReadFile(const std::string& path)
 time_t Utils::StringToTime(std::string timeString)
 {
   // expected timeString "2019-01-20T15:40:00+0100"
-  struct tm tm
-  {
-  };
+  struct tm tm{};
 
   int year, month, day, h, m, s, tzh, tzm;
   if (sscanf(timeString.c_str(), "%d-%d-%dT%d:%d:%d%d", &year, &month, &day, &h, &m, &s, &tzh) < 7)

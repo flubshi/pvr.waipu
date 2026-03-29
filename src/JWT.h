@@ -28,7 +28,7 @@ class JWT
 {
 public:
   explicit JWT(std::string token);
-  explicit JWT(){};
+  explicit JWT() {};
 
   bool isExpired(int offset = 0) const;
 

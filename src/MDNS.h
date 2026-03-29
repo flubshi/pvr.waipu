@@ -23,31 +23,31 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
-#include <cstdint>
 
 #ifdef _WIN32
-  #ifndef WIN32_LEAN_AND_MEAN
-    #define WIN32_LEAN_AND_MEAN
-  #endif
-  #ifndef NOMINMAX
-    #define NOMINMAX
-  #endif
-  #ifndef VC_EXTRA_LEAN
-    #define VC_EXTRA_LEAN
-  #endif
-  #include <winsock2.h>
-  #include <ws2tcpip.h>
-  using ssize_t   = SSIZE_T;
-  using socklen_t = int;
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef VC_EXTRA_LEAN
+#define VC_EXTRA_LEAN
+#endif
+#include <winsock2.h>
+#include <ws2tcpip.h>
+using ssize_t = SSIZE_T;
+using socklen_t = int;
 #else
-  #include <arpa/inet.h>
-  #include <netinet/in.h>
-  #include <sys/socket.h>
-  #include <unistd.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 class MDNS
@@ -70,7 +70,11 @@ private:
     std::vector<uint8_t> data;
 
     void U8(uint8_t v) { data.push_back(v); }
-    void U16(uint16_t v) { data.push_back(v >> 8); data.push_back(v & 0xFF); }
+    void U16(uint16_t v)
+    {
+      data.push_back(v >> 8);
+      data.push_back(v & 0xFF);
+    }
     void U32(uint32_t v)
     {
       for (int i = 24; i >= 0; i -= 8)
@@ -84,7 +88,7 @@ private:
         if (d == std::string::npos)
           d = n.size();
         const std::string label = n.substr(s, d - s);
-        if (label.empty())  // trailing dot → überspringen
+        if (label.empty()) // trailing dot → überspringen
           continue;
         U8(static_cast<uint8_t>(label.size()));
         for (char c : label)
@@ -101,32 +105,32 @@ private:
     void PatchRdlength(size_t pos, size_t start)
     {
       const uint16_t len = static_cast<uint16_t>(data.size() - start);
-      data[pos]     = len >> 8;
+      data[pos] = len >> 8;
       data[pos + 1] = len & 0xFF;
     }
   };
 
   std::vector<uint8_t> BuildResponse(uint32_t ttl) const;
 
-  static int  MakeMdnsSocket();
-  static int  EphemeralPort();
+  static int MakeMdnsSocket();
+  static int EphemeralPort();
   static uint32_t GetLocalIp();
   static bool IsPtrQueryForUs(const uint8_t* buf, ssize_t len);
-  void        SendToMulticast(const std::vector<uint8_t>& pkt) const;
-  void        SendAnnouncement(uint32_t ttl) const;
+  void SendToMulticast(const std::vector<uint8_t>& pkt) const;
+  void SendAnnouncement(uint32_t ttl) const;
 
   void QueryLoop();
 
-  static constexpr const char* MDNS_ADDR     = "224.0.0.1";
-  static constexpr uint16_t    MDNS_PORT     = 5353;
-  static constexpr const char* SERVICE_TYPE  = "_wlogin._tcp.local.";
-  static constexpr uint32_t    ANNOUNCE_TTL  = 4500;
-  static constexpr int         ANNOUNCE_SECS = 10;
+  static constexpr const char* MDNS_ADDR = "224.0.0.1";
+  static constexpr uint16_t MDNS_PORT = 5353;
+  static constexpr const char* SERVICE_TYPE = "_wlogin._tcp.local.";
+  static constexpr uint32_t ANNOUNCE_TTL = 4500;
+  static constexpr int ANNOUNCE_SECS = 10;
 
-  std::string             m_serviceName;
-  std::string             m_userCode;
-  int                     m_port{0};
-  int                     m_fd{-1};
-  std::atomic<bool>       m_running{false};
-  std::thread             m_queryThread;
+  std::string m_serviceName;
+  std::string m_userCode;
+  int m_port{0};
+  int m_fd{-1};
+  std::atomic<bool> m_running{false};
+  std::thread m_queryThread;
 };
