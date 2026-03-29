@@ -58,6 +58,6 @@ jobs:
           commit-message: Add-on version incremented to ${{ steps.required-variables.outputs.version }} from Weblate
           title: Add-on version incremented to ${{ steps.required-variables.outputs.version }} from Weblate
           body: Add-on version incremented triggered by ${{ github.sha }}
-          branch: inc-ver
+          branch: ${{ github.head_ref || github.ref_name }}_inc-ver
           delete-branch: true
           path: ./${{ github.event.repository.name }}

@@ -52,7 +52,7 @@ jobs:
           commit-message: Sync of addon metadata translations
           title: Sync of addon metadata translations
           body: Sync of addon metadata translations triggered by ${{ github.sha }}
-          branch: amt-sync
+          branch: ${{ github.head_ref || github.ref_name }}_amt-sync
           delete-branch: true
           path: ./project
-          reviewers: gade01
+          reviewers: flubshi
