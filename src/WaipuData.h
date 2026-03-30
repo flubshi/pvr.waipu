@@ -32,6 +32,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 // User Agent for HTTP Requests
@@ -178,7 +179,7 @@ private:
   SynchronizedQueue<EPGQueueTask> m_queue_epgtag_tasks;
   WAIPU_PROVIDER m_provider = WAIPU_PROVIDER_WAIPU;
 
-  std::vector<WaipuChannel> m_channels;
+  std::unordered_map<int, WaipuChannel> m_channels;
   std::vector<WaipuChannelGroup> m_channelGroups;
 
   JWT m_accessToken;

@@ -1016,7 +1016,7 @@ bool WaipuData::LoadChannelData()
               waipuChannel.iUniqueId, waipuChannel.strChannelName.c_str(),
               waipuChannel.strIconPath.c_str());
 
-    m_channels.emplace_back(waipuChannel);
+    m_channels.emplace(waipuChannel.iUniqueId, waipuChannel);
   }
 
   if (!cgroup_fav.channels.empty())
@@ -1056,7 +1056,7 @@ PVR_ERROR WaipuData::GetChannels(bool radio, kodi::addon::PVRChannelsResultSet& 
   kodi::Log(ADDON_LOG_DEBUG, "waipu.tv function call: [%s]", __FUNCTION__);
   LoadChannelData();
 
-  for (const auto& channel : m_channels)
+  for (const auto& [key, channel] : m_channels)
   {
     kodi::addon::PVRChannel kodiChannel;
 
@@ -1086,11 +1086,9 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     // use hls where possible, fallback to dash
     protocol = "dash";
 
-    const auto& thisChannel =
-        std::find_if(m_channels.begin(), m_channels.end(),
-                     [channel](const auto& v) { return v.iUniqueId == channel.GetUniqueId(); });
+    const auto& thisChannel = m_channels.find(channel.GetUniqueId());
 
-    if (thisChannel != m_channels.end() && m_hls_allowlist.contains((*thisChannel).waipuID))
+    if (thisChannel != m_channels.end() && m_hls_allowlist.contains(thisChannel->second.waipuID))
     {
       protocol = "hls";
     }
@@ -1118,65 +1116,63 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
     return "";
   }
 
-  for (const auto& channel : m_channels)
+  const auto& channel = m_channels.find(uniqueId);
+  if (channel != m_channels.end())
   {
-    if (channel.iUniqueId == uniqueId)
+    kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Get live URL for channel %s",
+              channel->second.strChannelName.c_str());
+
+    // ensure device token is fresh
+    RefreshDeviceCapabiltiesToken();
+
+    std::string postData = "{\"stream\": { \"station\": \"" + channel->second.waipuID +
+                           "\", \"protocol\": \"" + protocol +
+                           "\", \"requestMuxInstrumentation\": false";
+    if (!startTime.empty())
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Get live URL for channel %s",
-                channel.strChannelName.c_str());
-
-      // ensure device token is fresh
-      RefreshDeviceCapabiltiesToken();
-
-      std::string postData = "{\"stream\": { \"station\": \"" + channel.waipuID +
-                             "\", \"protocol\": \"" + protocol +
-                             "\", \"requestMuxInstrumentation\": false";
-      if (!startTime.empty())
-      {
-        postData += ", \"startTime\": " + startTime;
-      }
-      postData += "}}";
-      kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
-
-      std::string jsonStreamURL = HttpPost(
-          "https://stream-url-provider.waipu.tv/api/stream-url", postData,
-          {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"},
-           {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}},
-          true);
-
-      rapidjson::Document streamURLDoc;
-      streamURLDoc.Parse(jsonStreamURL.c_str());
-      if (streamURLDoc.HasParseError())
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
-        return "";
-      }
-
-      if (streamURLDoc.HasMember("status") && streamURLDoc["status"].GetInt() == 403 &&
-          streamURLDoc.HasMember("title") && streamURLDoc.HasMember("detail"))
-      {
-        const std::string errorTitle = streamURLDoc["title"].GetString();
-        const std::string errorDetail = streamURLDoc["detail"].GetString();
-
-        if (errorDetail == "User is not allowed to view this channel")
-        {
-          // subscription expired? we need to refresh available channels
-          m_channels.clear();
-          kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
-        }
-
-        kodi::gui::dialogs::OK::ShowAndGetInput(errorTitle, errorDetail);
-        return "";
-      }
-      if (!streamURLDoc.HasMember("streamUrl"))
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
-        kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] body: %s", jsonStreamURL.c_str());
-        return "";
-      }
-
-      return streamURLDoc["streamUrl"].GetString();
+      postData += ", \"startTime\": " + startTime;
     }
+    postData += "}}";
+    kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] Post data: %s", postData.c_str());
+
+    std::string jsonStreamURL =
+        HttpPost("https://stream-url-provider.waipu.tv/api/stream-url", postData,
+                 {{"Content-Type", "application/vnd.streamurlprovider.stream-url-request-v1+json"},
+                  {"X-Device-Token", m_deviceCapabilitiesToken.getToken().c_str()}},
+                 true);
+
+    rapidjson::Document streamURLDoc;
+    streamURLDoc.Parse(jsonStreamURL.c_str());
+    if (streamURLDoc.HasParseError())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: error while parsing json");
+      return "";
+    }
+
+    if (streamURLDoc.HasMember("status") && streamURLDoc["status"].GetInt() == 403 &&
+        streamURLDoc.HasMember("title") && streamURLDoc.HasMember("detail"))
+    {
+      const std::string errorTitle = streamURLDoc["title"].GetString();
+      const std::string errorDetail = streamURLDoc["detail"].GetString();
+
+      if (errorDetail == "User is not allowed to view this channel")
+      {
+        // subscription expired? we need to refresh available channels
+        m_channels.clear();
+        kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+      }
+
+      kodi::gui::dialogs::OK::ShowAndGetInput(errorTitle, errorDetail);
+      return "";
+    }
+    if (!streamURLDoc.HasMember("streamUrl"))
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] ERROR: missing param streamUrl");
+      kodi::Log(ADDON_LOG_ERROR, "[GetStreamURL] body: %s", jsonStreamURL.c_str());
+      return "";
+    }
+
+    return streamURLDoc["streamUrl"].GetString();
   }
   return "";
 }
@@ -1466,12 +1462,11 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
   std::vector<HttpGetRequests<WaipuChannel>> requests{};
 
-  for (const auto& channel : m_channels)
+  const auto& channel = m_channels.find(channelUid);
+  if (channel != m_channels.end())
   {
-    if (channel.iUniqueId != channelUid)
-      continue;
 
-    std::string channelid = channel.waipuID;
+    std::string channelid = channel->second.waipuID;
 
     std::transform(channelid.begin(), channelid.end(), channelid.begin(), ::tolower);
 
@@ -1493,7 +1488,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
       const std::string url =
           "https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf;
-      requests.emplace_back(this, url, channel);
+      requests.emplace_back(this, url, channel->second);
 
       start = start + grid_align_hours * 60 * 60;
       if (limit < 1)
@@ -1566,11 +1561,10 @@ PVR_ERROR WaipuData::IsEPGTagPlayable(const kodi::addon::PVREPGTag& tag, bool& i
   isPlayable = false;
 
   // check if channel is onDemand and allows playback
-  for (const auto& channel : m_channels)
+  const auto& channel = m_channels.find(tag.GetUniqueChannelId());
+  if (channel != m_channels.end())
   {
-    if (channel.iUniqueId != tag.GetUniqueChannelId())
-      continue;
-    isPlayable = channel.tvfuse;
+    isPlayable = channel->second.tvfuse;
     if (isPlayable)
     {
       return PVR_ERROR_NO_ERROR;
@@ -1650,10 +1644,10 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
 
   std::string strUrl = "";
 
-  const auto& thisChannel = std::find_if(m_channels.begin(), m_channels.end(), [tag](const auto& v)
-                                         { return v.iUniqueId == tag.GetUniqueChannelId(); });
+  const auto& thisChannel = m_channels.find(tag.GetUniqueChannelId());
+
   // check if VoD Channel and we can obtain newMediaURL
-  if (thisChannel != m_channels.end() && (*thisChannel).tvfuse)
+  if (thisChannel != m_channels.end() && thisChannel->second.tvfuse)
   {
     strUrl = GetEPGTagStreamURL(tag, protocol);
   }
@@ -2093,7 +2087,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
       // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
       std::transform(station_id.begin(), station_id.end(), station_id.begin(), ::toupper);
 
-      for (const auto& channel : m_channels)
+      for (const auto& [key, channel] : m_channels)
       {
         if (channel.waipuID != station_id)
           continue;
