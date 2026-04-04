@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.8.0"
+  version="22.8.1"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,6 +26,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v22.8.1
+- Internal improvements:
+  - JWT handling: Store extracted data instead of parsed JWT
+  - Use unsorted_map to internally store channels
+  - clang-format source code
+  - validate clang-format in pipeline
 v22.8.0
 - Load channel EPG data asynchronously. This significantly reduces EPG loading time. (Thanks to @damienruscoe )
     </news>
