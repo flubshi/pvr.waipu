@@ -25,12 +25,14 @@
 #include "Utils.h"
 #include "kodi/General.h"
 #include "kodi/tools/StringUtils.h"
+#include "rapidjson/document.h"
 
 #include <chrono>
 #include <vector>
 
 JWT::JWT(std::string token)
 {
+  this->initialized = false;
   if (token.empty())
   {
     return;
@@ -43,35 +45,55 @@ JWT::JWT(std::string token)
     std::string jwt_payload = base64_decode(jwt_arr.at(1));
     kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] payload: %s", jwt_payload.c_str());
 
-    this->parsedToken.Parse(jwt_payload.c_str());
+    rapidjson::Document jwtPayload;
+    jwtPayload.Parse(jwt_payload.c_str());
 
-    if (this->parsedToken.HasParseError())
+    if (jwtPayload.HasParseError())
     {
       kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: error while parsing json");
-      this->initialized = false;
       return;
     }
-  }
 
-  // parse iat
-  if (!this->parsedToken.HasMember("iat") || !this->parsedToken["iat"].IsInt())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'iat' missing");
-    this->initialized = false;
-    return;
-  }
-  this->iat = this->parsedToken["iat"].GetInt();
+    // parse iat
+    if (!jwtPayload.HasMember("iat") || !jwtPayload["iat"].IsInt())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'iat' missing");
+      return;
+    }
+    this->iat = jwtPayload["iat"].GetInt();
 
-  // parse exp
-  if (!this->parsedToken.HasMember("exp") || !this->parsedToken["exp"].IsInt())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'exp' missing");
-    this->initialized = false;
-    return;
-  }
-  this->exp = this->parsedToken["exp"].GetInt();
+    // parse exp
+    if (!jwtPayload.HasMember("exp") || !jwtPayload["exp"].IsInt())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'exp' missing");
+      return;
+    }
+    this->exp = jwtPayload["exp"].GetInt();
 
-  this->initialized = true;
+    // parse optional fields
+    if (jwtPayload.HasMember("userAssets"))
+    {
+      if (jwtPayload["userAssets"].HasMember("instantRestart"))
+      {
+        fieldInstantRestart = jwtPayload["userAssets"]["instantRestart"].GetBool();
+      }
+      if (jwtPayload["userAssets"].HasMember("hoursRecording"))
+      {
+        fieldHoursRecording = jwtPayload["userAssets"]["hoursRecording"].GetInt();
+      }
+      if (jwtPayload["userAssets"].HasMember("account") &&
+          jwtPayload["userAssets"]["account"].HasMember("subscription"))
+      {
+        fieldSubscription = jwtPayload["userAssets"]["account"]["subscription"].GetString();
+      }
+    }
+    if (jwtPayload.HasMember("email"))
+    {
+      fieldEmail = jwtPayload["email"].GetString();
+    }
+
+    this->initialized = true;
+  }
 }
 
 bool JWT::isExpired(int offset) const

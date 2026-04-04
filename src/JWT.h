@@ -20,8 +20,6 @@
  *
  */
 
-#include "rapidjson/document.h"
-
 #include <string>
 
 class JWT
@@ -35,11 +33,23 @@ public:
   const std::string& getToken() const { return strToken; };
   int getExp() const { return exp; };
   bool isInitialized() const { return initialized; };
-  rapidjson::Document parsedToken; // bad, I know..
+
+  // optional field getters
+  const std::string& getFieldUserHandle() const { return fieldUserHandle; };
+  const std::string& getFieldSubscription() const { return fieldSubscription; };
+  const std::string& getFieldEmail() const { return fieldEmail; };
+  bool getFieldInstantRestart() const { return fieldInstantRestart; };
+  int getFieldHoursRecording() const { return fieldHoursRecording; };
 
 private:
   std::string strToken = "";
   bool initialized = false;
   int exp = 0;
   int iat = 0;
+  // some data fields
+  std::string fieldUserHandle = "";
+  std::string fieldSubscription = "";
+  std::string fieldEmail = "";
+  bool fieldInstantRestart = false;
+  int fieldHoursRecording = 0;
 };

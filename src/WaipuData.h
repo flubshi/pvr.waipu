@@ -27,6 +27,7 @@
 #include "categories.h"
 #include "kodi/Network.h"
 #include "kodi/addon-instance/PVR.h"
+#include "rapidjson/document.h"
 
 #include <atomic>
 #include <map>
