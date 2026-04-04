@@ -298,7 +298,7 @@ bool WaipuData::ParseAccessToken()
     return false;
   }
 
-  m_userhandle = m_accessToken.parsedToken["userHandle"].GetString();
+  m_userhandle = m_accessToken.getFieldUserHandle();
   kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.c_str());
   // generate the license
   std::string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
@@ -308,41 +308,18 @@ bool WaipuData::ParseAccessToken()
   m_license = base64_encode(license_plain.c_str(), license_plain.length());
   kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
 
-  if (m_accessToken.parsedToken.HasMember("userAssets"))
-  {
-    if (m_accessToken.parsedToken["userAssets"].HasMember("instantRestart"))
-    {
-      m_account_replay_allowed =
-          m_accessToken.parsedToken["userAssets"]["instantRestart"].GetBool();
-      kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
-    }
-    if (m_accessToken.parsedToken["userAssets"].HasMember("hoursRecording"))
-    {
-      m_account_hours_recording =
-          m_accessToken.parsedToken["userAssets"]["hoursRecording"].GetInt();
-      kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
-    }
-    if (m_accessToken.parsedToken["userAssets"].HasMember("account") &&
-        m_accessToken.parsedToken["userAssets"]["account"].HasMember("subscription"))
-    {
-      const std::string account_subscription =
-          m_accessToken.parsedToken["userAssets"]["account"]["subscription"].GetString();
-      kodi::addon::SetSettingString("status_subscription", account_subscription);
-    }
-    else
-    {
-      kodi::addon::SetSettingString("status_subscription", "-");
-    }
-  }
-  if (m_accessToken.parsedToken.HasMember("email"))
-  {
-    const std::string account_email = m_accessToken.parsedToken["email"].GetString();
-    kodi::addon::SetSettingString("status_account", account_email);
-  }
-  else
-  {
-    kodi::addon::SetSettingString("status_account", "-");
-  }
+  m_account_replay_allowed = m_accessToken.getFieldInstantRestart();
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
+
+  m_account_hours_recording = m_accessToken.getFieldHoursRecording();
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account HoursReording: %i", m_account_hours_recording);
+
+  const std::string account_subscription = m_accessToken.getFieldSubscription();
+  kodi::addon::SetSettingString("status_subscription", account_subscription);
+
+  const std::string account_email = m_accessToken.getFieldEmail();
+  kodi::addon::SetSettingString("status_account", account_email);
+
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
 }
