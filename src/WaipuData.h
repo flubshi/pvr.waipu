@@ -27,7 +27,6 @@
 #include "categories.h"
 #include "kodi/Network.h"
 #include "kodi/addon-instance/PVR.h"
-#include "rapidjson/document.h"
 
 #include <atomic>
 #include <map>
@@ -35,6 +34,8 @@
 #include <thread>
 #include <unordered_map>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 // User Agent for HTTP Requests
 static std::string WAIPU_USER_AGENT = "Kodi/pvr.waipu - UA will be initialized on start";
@@ -102,7 +103,7 @@ public:
                              time_t start,
                              time_t end,
                              kodi::addon::PVREPGTagsResultSet& results) override;
-  kodi::addon::PVREPGTag ParseEPGTagEntry(const rapidjson::Value& tagEntry,
+  kodi::addon::PVREPGTag ParseEPGTagEntry(const nlohmann::json& tagEntry,
                                           const int kodiChanneliUniqueId,
                                           const std::string waipuChannelID,
                                           const bool reSchedule);
@@ -114,7 +115,7 @@ public:
       std::vector<kodi::addon::PVRStreamProperty>& properties) override;
 
   PVR_ERROR GetRecordingsAmount(bool deleted, int& amount) override;
-  kodi::addon::PVRRecording ParseRecordingEntry(const rapidjson::Value& recordingEntry);
+  kodi::addon::PVRRecording ParseRecordingEntry(const nlohmann::json& recordingEntry);
   PVR_ERROR GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results) override;
   PVR_ERROR DeleteRecording(const kodi::addon::PVRRecording& recording) override;
   PVR_ERROR GetRecordingStreamProperties(
