@@ -25,10 +25,13 @@
 #include "Utils.h"
 #include "kodi/General.h"
 #include "kodi/tools/StringUtils.h"
-#include "rapidjson/document.h"
 
 #include <chrono>
 #include <vector>
+
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 JWT::JWT(std::string token)
 {
@@ -45,53 +48,40 @@ JWT::JWT(std::string token)
     std::string jwt_payload = base64_decode(jwt_arr.at(1));
     kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] payload: %s", jwt_payload.c_str());
 
-    rapidjson::Document jwtPayload;
-    jwtPayload.Parse(jwt_payload.c_str());
-
-    if (jwtPayload.HasParseError())
+    json jwtPayload;
+    try
     {
-      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: error while parsing json");
+      jwtPayload = json::parse(jwt_payload);
+    }
+    catch (const json::parse_error& e)
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: error while parsing json: %s", e.what());
       return;
     }
 
-    // parse iat
-    if (!jwtPayload.HasMember("iat") || !jwtPayload["iat"].IsInt())
+    for (const auto& field : {"iat", "exp"})
     {
-      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'iat' missing");
-      return;
+      if (!jwtPayload.contains(field) || !jwtPayload[field].is_number_integer())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field '%s' missing", field);
+        return;
+      }
     }
-    this->iat = jwtPayload["iat"].GetInt();
-
-    // parse exp
-    if (!jwtPayload.HasMember("exp") || !jwtPayload["exp"].IsInt())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: field 'exp' missing");
-      return;
-    }
-    this->exp = jwtPayload["exp"].GetInt();
+    this->iat = jwtPayload["iat"].get<int>();
+    this->exp = jwtPayload["exp"].get<int>();
 
     // parse optional fields
-    if (jwtPayload.HasMember("userAssets"))
+    if (jwtPayload.contains("userAssets"))
     {
-      if (jwtPayload["userAssets"].HasMember("instantRestart"))
+      const auto& userAssets = jwtPayload["userAssets"];
+      fieldInstantRestart = userAssets.value("instantRestart", false);
+      fieldHoursRecording = userAssets.value("hoursRecording", 0);
+      if (userAssets.contains("account") && userAssets["account"].contains("subscription"))
       {
-        fieldInstantRestart = jwtPayload["userAssets"]["instantRestart"].GetBool();
-      }
-      if (jwtPayload["userAssets"].HasMember("hoursRecording"))
-      {
-        fieldHoursRecording = jwtPayload["userAssets"]["hoursRecording"].GetInt();
-      }
-      if (jwtPayload["userAssets"].HasMember("account") &&
-          jwtPayload["userAssets"]["account"].HasMember("subscription"))
-      {
-        fieldSubscription = jwtPayload["userAssets"]["account"]["subscription"].GetString();
+        fieldSubscription = userAssets["account"]["subscription"].get<std::string>();
       }
     }
-    if (jwtPayload.HasMember("email"))
-    {
-      fieldEmail = jwtPayload["email"].GetString();
-    }
-
+    fieldEmail = jwtPayload.value("email", "");
     this->initialized = true;
   }
 }
