@@ -1704,8 +1704,7 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
   tag.SetIsDeleted(false);
   std::string recordingId = recordingEntry["id"].get<std::string>();
   tag.SetRecordingId(recordingId);
-  if (recordingEntry.contains("fullyWatchedCount"))
-    tag.SetPlayCount(recordingEntry["fullyWatchedCount"].get<int>());
+  tag.SetPlayCount(recordingEntry.value("fullyWatchedCount", 0));
 
   const std::string rec_title = recordingEntry["title"].get<std::string>();
   tag.SetTitle(rec_title);
@@ -1718,8 +1717,7 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
     tag.SetThumbnailPath(rec_img);
   }
 
-  if (recordingEntry.contains("durationSeconds") && !recordingEntry["durationSeconds"].is_null())
-    tag.SetDuration(recordingEntry["durationSeconds"].get<int>());
+  tag.SetDuration(recordingEntry.value("durationSeconds", 0));
 
   if (recordingEntry.contains("positionPercentage") &&
       !recordingEntry["positionPercentage"].is_null() &&
