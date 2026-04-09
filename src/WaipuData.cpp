@@ -96,7 +96,7 @@ std::string WaipuData::HttpRequest(const std::string& action,
     curl.AddHeader(header.first, header.second);
   }
 
-  curl.AddHeader("Authorization", "Bearer " + m_accessToken.getToken());
+  curl.AddHeader("Authorization", "Bearer " + GetAccessToken());
 
   curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
   kodi::Log(ADDON_LOG_DEBUG, "HTTP User-Agent: %s.", WAIPU_USER_AGENT.c_str());
@@ -253,7 +253,7 @@ void WaipuData::LoginThread()
       m_login_failed_counter = 0;
     }
 
-    auto previousStatus = m_login_status;
+    auto previousStatus = m_login_status.load();
     m_login_status = Login();
 
     m_nextLoginAttempt = std::time(0) + 1;
@@ -325,6 +325,12 @@ bool WaipuData::ParseAccessToken()
 
   m_login_status = WAIPU_LOGIN_STATUS::OK;
   return true;
+}
+
+std::string WaipuData::GetAccessToken() const
+{
+  std::shared_lock<std::shared_mutex> lock(m_tokenMutex);
+  return m_accessToken.getToken();
 }
 
 const std::map<std::string, std::string> WaipuData::GetOAuthDeviceCode(const std::string& tenant)
@@ -492,15 +498,18 @@ WAIPU_LOGIN_STATUS WaipuData::OAuthRequest(const std::string& postData)
     return WAIPU_LOGIN_STATUS::UNKNOWN;
   }
 
-  m_accessToken = JWT(doc["access_token"].get<std::string>());
-  kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] accessToken: %s;", m_accessToken.getToken().c_str());
+  auto newAccessToken = JWT(doc["access_token"].get<std::string>());
   std::string refresh_token = doc["refresh_token"].get<std::string>();
-  if (!refresh_token.empty())
+
   {
-    m_refreshToken = JWT(refresh_token);
-    kodi::addon::SetSettingString("refresh_token", refresh_token);
-    kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] refreshToken: %s;", refresh_token.c_str());
+    std::unique_lock<std::shared_mutex> lock(m_tokenMutex);
+    m_accessToken = std::move(newAccessToken);
+    if (!refresh_token.empty())
+      m_refreshToken = JWT(refresh_token);
   }
+
+  if (!refresh_token.empty())
+    kodi::addon::SetSettingString("refresh_token", refresh_token);
 
   return ParseAccessToken() ? WAIPU_LOGIN_STATUS::OK : WAIPU_LOGIN_STATUS::UNKNOWN;
 }
