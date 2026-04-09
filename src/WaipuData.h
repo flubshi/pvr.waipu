@@ -31,6 +31,7 @@
 #include <atomic>
 #include <map>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -188,6 +189,8 @@ private:
   JWT m_refreshToken;
   JWT m_deviceCapabilitiesToken;
 
+  mutable std::shared_mutex m_tokenMutex;
+
   std::string m_license;
   int m_recordings_count = 0;
   bool m_recordings_backend_handle_position = false;
@@ -198,13 +201,14 @@ private:
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
   uint64_t m_finishedRecordingsSeconds = 0;
-  WAIPU_LOGIN_STATUS m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
+  std::atomic<WAIPU_LOGIN_STATUS> m_login_status{WAIPU_LOGIN_STATUS::UNKNOWN};
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
   time_t m_lastUpdate = 0;
 
   void ReadSettings();
   bool ParseAccessToken();
+  std::string GetAccessToken() const;
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id, int attributes);
 
