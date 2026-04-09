@@ -56,6 +56,28 @@
 #undef GetObject
 #endif
 
+namespace
+{
+template<typename T>
+struct HttpGetRequests
+{
+  HttpGetRequests(WaipuData* request, const std::string& url, T data)
+    : url(url), request(request), data(std::move(data))
+  {
+  }
+
+  void start()
+  {
+    f = std::async(std::launch::async, [&]() { return request->HttpGet(url); });
+  }
+
+  WaipuData* request;
+  std::string url;
+  std::future<std::string> f;
+  T data;
+};
+} // namespace
+
 std::mutex WaipuData::mutex;
 
 // BEGIN CURL helpers from zattoo addon:
@@ -179,59 +201,6 @@ WAIPU_LOGIN_STATUS WaipuData::Login()
 
   // waipu oauth device workflow
   return DeviceLogin("waipu");
-}
-
-void WaipuData::EPGTaskThread()
-{
-  nlohmann::json epgDoc;
-  while (true)
-  {
-    if (!m_EPGTaskThreadRunning)
-      return;
-
-    if (m_queue_epgtag_tasks.empty())
-    {
-      kodi::Log(ADDON_LOG_DEBUG, "Task queue empty - wait");
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      continue;
-    }
-    EPGQueueTask epgTask = m_queue_epgtag_tasks.pop();
-
-    kodi::Log(ADDON_LOG_DEBUG, "[epg-details] process %s", epgTask.epgid.c_str());
-
-    std::string jsonEpg = HttpGet("https://epg-cache.waipu.tv/api/programs/" + epgTask.epgid);
-    kodi::Log(ADDON_LOG_DEBUG, "[epg-details] %s", jsonEpg.c_str());
-    if (jsonEpg.empty())
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[epg-details] empty server response");
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      continue;
-    }
-
-    try
-    {
-      epgDoc = nlohmann::json::parse(jsonEpg);
-    }
-    catch (const nlohmann::json::parse_error&)
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[epg-details] ERROR: error while parsing json");
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      continue;
-    }
-
-    if (!epgDoc.contains("id"))
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[epg-details] ERROR: Missing epg id");
-      std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-      continue;
-    }
-
-    kodi::addon::PVREPGTag epgTag =
-        ParseEPGTagEntry(epgDoc, epgTask.kodiChannelID, epgTask.waipuChannelID, false);
-    kodi::addon::CInstancePVRClient::EpgEventStateChange(epgTag, EPG_EVENT_UPDATED);
-    kodi::Log(ADDON_LOG_DEBUG, "[epg-details] updated %s", epgTag.GetTitle().c_str());
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
 }
 
 void WaipuData::LoginThread()
@@ -1249,8 +1218,7 @@ PVR_ERROR WaipuData::GetChannelGroupMembers(const kodi::addon::PVRChannelGroup& 
 
 kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const nlohmann::json& tagEntry,
                                                    const int kodiChanneliUniqueId,
-                                                   const std::string waipuChannelID,
-                                                   const bool reSchedule)
+                                                   const std::string waipuChannelID)
 {
   kodi::addon::PVREPGTag tag;
 
@@ -1419,38 +1387,9 @@ kodi::addon::PVREPGTag WaipuData::ParseEPGTagEntry(const nlohmann::json& tagEntr
     }
   }
 
-  if (reSchedule)
-  {
-    EPGQueueTask task;
-    task.epgid = epg_id;
-    task.waipuChannelID = waipuChannelID;
-    task.kodiChannelID = kodiChanneliUniqueId;
-
-    m_queue_epgtag_tasks.push(task);
-  }
-
   tag.SetFlags(flags);
   return tag;
 }
-
-template<typename T>
-struct HttpGetRequests
-{
-  HttpGetRequests(WaipuData* request, const std::string& url, T data)
-    : url(url), request(request), data(std::move(data))
-  {
-  }
-
-  void start()
-  {
-    f = std::async(std::launch::async, [&]() { return request->HttpGet(url); });
-  }
-
-  WaipuData* request;
-  std::string url;
-  std::future<std::string> f;
-  T data;
-};
 
 PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
                                       time_t start,
@@ -1463,14 +1402,18 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
   LoadChannelData();
 
   const int grid_align_hours = 4; // align 4h
+  bool load_epg_details = false;
+  WaipuChannel channel{};
 
   std::vector<HttpGetRequests<WaipuChannel>> requests{};
 
-  const auto& channel = m_channels.find(channelUid);
-  if (channel != m_channels.end())
+  const auto& channelit = m_channels.find(channelUid);
+  if (channelit != m_channels.end())
   {
 
-    std::string channelid = channel->second.waipuID;
+    channel = channelit->second;
+    std::string channelid = channel.waipuID;
+    load_epg_details = channel.isFavorite;
 
     std::transform(channelid.begin(), channelid.end(), channelid.begin(), ::tolower);
 
@@ -1492,7 +1435,7 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
       const std::string url =
           "https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf;
-      requests.emplace_back(this, url, channel->second);
+      requests.emplace_back(this, url, channel);
 
       start = start + grid_align_hours * 60 * 60;
       if (limit < 1)
@@ -1503,7 +1446,15 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
   for (auto& request : requests)
     request.start();
 
+  struct ParsedTag
+  {
+    nlohmann::json json;
+    std::string epgId;
+  };
+
+  std::vector<ParsedTag> parsedTags;
   nlohmann::json epgDoc;
+
   for (auto& request : requests)
   {
     auto jsonEpg = request.f.get();
@@ -1534,12 +1485,56 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
     for (const auto& epgData : epgDoc)
     {
-      // we limit epg details fetching to channel.isFavorite, because it takes a lot of time
-      const auto& channel = request.data;
-      results.Add(
-          ParseEPGTagEntry(epgData, channel.iUniqueId, channel.waipuID, channel.isFavorite));
+      ParsedTag pt;
+      pt.epgId = epgData["id"].get<std::string>();
+      pt.json = epgData;
+      parsedTags.emplace_back(std::move(pt));
     }
   }
+
+  // load EPG details, if enabled
+  if (load_epg_details)
+  {
+    std::vector<HttpGetRequests<size_t>> detailRequests;
+    for (size_t i = 0; i < parsedTags.size(); ++i)
+      detailRequests.emplace_back(
+          this, "https://epg-cache.waipu.tv/api/programs/" + parsedTags[i].epgId, i);
+
+    for (auto& req : detailRequests)
+      req.start();
+
+    for (auto& req : detailRequests)
+    {
+      const std::string jsonDetail = req.f.get();
+      const size_t idx = req.data;
+
+      if (jsonDetail.empty())
+      {
+        kodi::Log(ADDON_LOG_ERROR, "[epg-details] empty response for %s",
+                  parsedTags[idx].epgId.c_str());
+        continue;
+      }
+
+      try
+      {
+        nlohmann::json detailDoc = nlohmann::json::parse(jsonDetail);
+        if (detailDoc.contains("id"))
+        {
+          parsedTags[idx].json = std::move(detailDoc);
+          kodi::Log(ADDON_LOG_DEBUG, "[epg-details] fetched details for %s",
+                    parsedTags[idx].epgId.c_str());
+        }
+      }
+      catch (const nlohmann::json::parse_error&)
+      {
+        kodi::Log(ADDON_LOG_ERROR, "[epg-details] parse error for %s",
+                  parsedTags[idx].epgId.c_str());
+      }
+    }
+  }
+
+  for (const auto& pt : parsedTags)
+    results.Add(ParseEPGTagEntry(pt.json, channel.iUniqueId, channel.waipuID));
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2353,10 +2348,6 @@ WaipuData::~WaipuData()
   m_loginThreadRunning = false;
   if (m_loginThread.joinable())
     m_loginThread.join();
-
-  m_EPGTaskThreadRunning = false;
-  if (m_EPGTaskThread.joinable())
-    m_EPGTaskThread.join();
 }
 
 ADDON_STATUS WaipuData::Create()
@@ -2379,9 +2370,6 @@ ADDON_STATUS WaipuData::Create()
 
   m_loginThreadRunning = true;
   m_loginThread = std::thread([&] { LoginThread(); });
-
-  m_EPGTaskThreadRunning = true;
-  m_EPGTaskThread = std::thread([&] { EPGTaskThread(); });
 
   kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing",
                                                          PVR_CONNECTION_STATE_CONNECTING, "");
