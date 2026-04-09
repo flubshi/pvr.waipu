@@ -820,7 +820,6 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
     // MPEG DASH
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] dash");
     properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
-    properties.emplace_back("inputstream.adaptive.manifest_type", "mpd");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/xml+dash");
 
     if (playTimeshiftBuffer)
@@ -829,12 +828,17 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
     }
 
     // get widevine license
-    std::string license = GetLicense();
-    properties.emplace_back("inputstream.adaptive.license_type", "com.widevine.alpha");
-    properties.emplace_back("inputstream.adaptive.license_key",
-                            "https://drm.wpstr.tv/license-proxy-widevine/cenc/"
-                            "|Content-Type=text%2Fxml&x-dt-custom-data=" +
-                                license + "|R{SSM}|JBlicense");
+    const std::string license = GetLicense();
+
+    nlohmann::json drmConfig = {
+        {"com.widevine.alpha",
+         {{"license",
+           {{"server_url", "https://drm.wpstr.tv/license-proxy-widevine/cenc/"},
+            {"req_headers", "Content-Type=text%2Fxml&x-dt-custom-data=" + license},
+            {"unwrapper", "json,base64"},
+            {"unwrapper_params", {{"path_data", "license"}}}}}}}};
+
+    properties.emplace_back("inputstream.adaptive.drm", drmConfig.dump());
   }
   else if ((protocol == "hls" || protocol == "HLS") &&
            kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
@@ -860,7 +864,6 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
               protocol.c_str());
 
     properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.adaptive");
-    properties.emplace_back("inputstream.adaptive.manifest_type", "hls");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
 
     if (playTimeshiftBuffer)
