@@ -1449,8 +1449,8 @@ struct HttpGetRequests
     f = std::async(std::launch::async, [&]() { return request->HttpGet(url); });
   }
 
-  WaipuData* request;
   std::string url;
+  WaipuData* request;
   std::future<std::string> f;
   T data;
 };
@@ -2126,7 +2126,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
     tag.SetTitle(rec_title);
 
-    int tag_channel;
+    int tag_channel = PVR_CHANNEL_INVALID_UID;
     // channelid
     if (timer.contains("stationId") && !timer["stationId"].is_null())
     {
