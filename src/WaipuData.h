@@ -29,6 +29,7 @@
 #include "kodi/addon-instance/PVR.h"
 
 #include <atomic>
+#include <condition_variable>
 #include <map>
 #include <mutex>
 #include <shared_mutex>
@@ -139,6 +140,8 @@ private:
   bool m_isConnected = false;
   bool m_epg_show_preview_images = false;
   std::atomic<bool> m_loginThreadRunning = {false};
+  std::mutex m_loginMutex;
+  std::condition_variable m_loginCv;
   std::thread m_loginThread;
   void LoginThread();
   std::atomic<bool> m_EPGTaskThreadRunning = {false};

@@ -238,13 +238,16 @@ void WaipuData::LoginThread()
 {
   while (true)
   {
+    {
+      std::unique_lock<std::mutex> lock(m_loginMutex);
+      m_loginCv.wait_until(lock, std::chrono::system_clock::from_time_t(m_nextLoginAttempt),
+                           [this] { return !m_loginThreadRunning.load(); });
+    }
+
     if (!m_loginThreadRunning)
       return;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-    if (m_nextLoginAttempt > std::time(0) ||
-        m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
+    if (m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
       continue;
 
     if (m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
@@ -285,7 +288,10 @@ void WaipuData::LoginThread()
                                                            PVR_CONNECTION_STATE_CONNECTING, "");
 
     if (m_login_status == WAIPU_LOGIN_STATUS::NO_NETWORK)
+    {
+      m_nextLoginAttempt = std::time(0) + 30;
       continue;
+    }
 
     if (++m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
       m_nextLoginAttempt = std::time(0) + 180;
@@ -2363,6 +2369,7 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
 WaipuData::~WaipuData()
 {
   m_loginThreadRunning = false;
+  m_loginCv.notify_one();
   if (m_loginThread.joinable())
     m_loginThread.join();
 
