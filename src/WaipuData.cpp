@@ -186,16 +186,11 @@ void WaipuData::EPGTaskThread()
   nlohmann::json epgDoc;
   while (true)
   {
-    if (!m_EPGTaskThreadRunning)
+    std::optional<EPGQueueTask> epgTaskOpt = m_queue_epgtag_tasks.pop();
+    if (!epgTaskOpt)
       return;
 
-    if (m_queue_epgtag_tasks.empty())
-    {
-      kodi::Log(ADDON_LOG_DEBUG, "Task queue empty - wait");
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      continue;
-    }
-    EPGQueueTask epgTask = m_queue_epgtag_tasks.pop();
+    EPGQueueTask epgTask = std::move(*epgTaskOpt);
 
     kodi::Log(ADDON_LOG_DEBUG, "[epg-details] process %s", epgTask.epgid.c_str());
 
@@ -2366,7 +2361,7 @@ WaipuData::~WaipuData()
   if (m_loginThread.joinable())
     m_loginThread.join();
 
-  m_EPGTaskThreadRunning = false;
+  m_queue_epgtag_tasks.shutdown();
   if (m_EPGTaskThread.joinable())
     m_EPGTaskThread.join();
 }
@@ -2392,7 +2387,6 @@ ADDON_STATUS WaipuData::Create()
   m_loginThreadRunning = true;
   m_loginThread = std::thread([&] { LoginThread(); });
 
-  m_EPGTaskThreadRunning = true;
   m_EPGTaskThread = std::thread([&] { EPGTaskThread(); });
 
   kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing",
