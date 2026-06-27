@@ -141,7 +141,6 @@ private:
   std::atomic<bool> m_loginThreadRunning = {false};
   std::thread m_loginThread;
   void LoginThread();
-  std::atomic<bool> m_EPGTaskThreadRunning = {false};
   std::thread m_EPGTaskThread;
   void EPGTaskThread();
   time_t m_nextLoginAttempt = 0;
