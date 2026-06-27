@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.9.2"
+  version="22.9.3"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,16 +26,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v22.9.3
+- Fix high CPU load
+
 v22.9.2
 - Fix build warnings (thanks @heitbaum )
 - Prevent crash due to parallel read/write of the access token
-
-v22.9.1
-- Use new inputstream.adaptive drm api
-- Update CMakeLists.txt cmake_minimum_required to 3.18 (thanks @heitbaum )
-
-v22.9.0
-- Internal improvement: Change JSON parser from RapidJSON to NLohmann JSON
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
