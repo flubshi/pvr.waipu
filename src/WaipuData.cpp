@@ -243,7 +243,13 @@ void WaipuData::LoginThread()
       return;
 
     if (m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
+    {
+      // Credentials are wrong - no point retrying until they change.
+      // Wait indefinitely for a wake-up signal (e.g. settings change or shutdown).
+      std::unique_lock<std::mutex> lock(m_loginMutex);
+      m_loginCv.wait(lock, [this] { return !m_loginThreadRunning.load(); });
       continue;
+    }
 
     if (m_login_failed_counter >= WAIPU_LOGIN_FAILED_LOCK_LIMIT)
     {
