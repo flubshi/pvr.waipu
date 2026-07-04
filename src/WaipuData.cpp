@@ -2322,14 +2322,21 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
   // it is a tv show - ask user whether to record all episodes
   if (!seriesID.empty() && !stationID.empty() && !recordingTitle.empty())
   {
+    bool bCanceled = false;
     seriesRecording = kodi::gui::dialogs::YesNo::ShowAndGetInput(
         kodi::addon::GetLocalizedString(30058), // header
-        kodi::addon::GetLocalizedString(30059), "", "",
+        kodi::addon::GetLocalizedString(30059), "", "", bCanceled,
         kodi::addon::GetLocalizedString(30060), // false label
         kodi::addon::GetLocalizedString(30061)); // true label
-    // -1 == canceled
-    kodi::Log(ADDON_LOG_DEBUG, "[add timer] Selcted recording type: %d (1 == all episodes)",
-              seriesRecording);
+    kodi::Log(ADDON_LOG_DEBUG,
+              "[add timer] Selected recording type: %d (1 == all episodes, -1 == canceled)",
+              bCanceled ? -1 : (int)seriesRecording);
+    if (bCanceled)
+    {
+      kodi::Log(ADDON_LOG_DEBUG,
+                "[add timer] User canceled recording dialog, no recording created.");
+      return PVR_ERROR_NO_ERROR;
+    }
   }
 
   if (seriesRecording)
