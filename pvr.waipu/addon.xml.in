@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.9.3"
+  version="22.9.4"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,12 +26,12 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v22.9.4
+- Fix handling of invalid credentials
+- Allow user to cancel recording creation
+
 v22.9.3
 - Fix high CPU load
-
-v22.9.2
-- Fix build warnings (thanks @heitbaum )
-- Prevent crash due to parallel read/write of the access token
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="da_DK">waipu.tv PVR-klient</summary>
