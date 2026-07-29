@@ -174,6 +174,7 @@ std::string Curl::Request(const std::string& action,
 
     if (!file->CURLOpen(ADDON_READ_NO_CACHE))
     {
+      delete file;
       statusCode = -1;
       return "";
     }
