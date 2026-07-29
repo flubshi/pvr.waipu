@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.9.4"
+  version="22.9.5"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,6 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
+v22.9.5
+- Translations updates from Weblate
+	- cs_cz
+
 v22.9.4
 - Fix handling of invalid credentials
 - Allow user to cancel recording creation
