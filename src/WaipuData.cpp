@@ -1000,6 +1000,20 @@ bool WaipuData::LoadChannelData()
     }
     waipuChannel.strIconPath = iconPath;
 
+    bool isGoogleVOD = false;
+    if ((*stationConfig).contains("feeds") && (*stationConfig)["feeds"].is_array())
+    {
+
+      const auto& feeds = (*stationConfig)["feeds"];
+      auto it = std::find(feeds.begin(), feeds.end(), "google_vod");
+
+      if (it != feeds.end())
+      {
+        isGoogleVOD = true;
+      }
+    }
+    waipuChannel.isGoogleVOD = isGoogleVOD;
+
     const auto& userSettings = channel["userSettings"];
     bool isFav = userSettings["favorite"].get<bool>();
     waipuChannel.isFavorite = isFav;
@@ -1105,7 +1119,8 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
 
     const auto& thisChannel = m_channels.find(channel.GetUniqueId());
 
-    if (thisChannel != m_channels.end() && m_hls_allowlist.contains(thisChannel->second.waipuID))
+    if (thisChannel != m_channels.end() &&
+        (thisChannel->second.isGoogleVOD || m_hls_allowlist.contains(thisChannel->second.waipuID)))
     {
       protocol = "hls";
     }
@@ -1682,6 +1697,9 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   std::string strUrl = "";
 
   const auto& thisChannel = m_channels.find(tag.GetUniqueChannelId());
+
+  if (m_protocol == "auto" && thisChannel != m_channels.end() && thisChannel->second.isGoogleVOD)
+    protocol = "hls"; // use hls for google channels in auto mode
 
   // check if VoD Channel and we can obtain newMediaURL
   if (thisChannel != m_channels.end() && thisChannel->second.tvfuse)
