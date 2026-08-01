@@ -23,6 +23,7 @@
 #include "Curl.h"
 #include "HLSAllowlist.h"
 #include "JWT.h"
+#include "LRUChannels.h"
 #include "SynchronizedQueue.h"
 #include "categories.h"
 #include "kodi/Network.h"
@@ -207,6 +208,7 @@ private:
   std::atomic<WAIPU_LOGIN_STATUS> m_login_status{WAIPU_LOGIN_STATUS::UNKNOWN};
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
+  LRUChannels m_lruChannels;
   time_t m_lastUpdate = 0;
 
   void ReadSettings();

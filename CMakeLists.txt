@@ -15,6 +15,7 @@ set(PVRWAIPU_SOURCES
                     src/HLSAllowlist.cpp
                     src/Base64.cpp
                     src/JWT.cpp
+                    src/LRUChannels.cpp
                     src/MDNS.cpp
                     src/categories.cpp
                     src/WaipuData.cpp)
@@ -25,6 +26,7 @@ set(PVRWAIPU_HEADERS
                     src/HLSAllowlist.h
                     src/Base64.h
                     src/JWT.h
+                    src/LRUChannels.h
                     src/MDNS.h
                     src/SynchronizedQueue.h
                     src/categories.h

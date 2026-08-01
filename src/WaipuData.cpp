@@ -1133,6 +1133,9 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
   if (!strUrl.empty())
   {
     SetStreamProperties(properties, strUrl, true, false, protocol);
+    const auto& lruChannel = m_channels.find(channel.GetUniqueId());
+    if (lruChannel != m_channels.end())
+      m_lruChannels.Touch(lruChannel->second.waipuID);
     ret = PVR_ERROR_NO_ERROR;
   }
   return ret;
@@ -1568,10 +1571,11 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
 
     for (const auto& epgData : epgDoc)
     {
-      // we limit epg details fetching to channel.isFavorite, because it takes a lot of time
+      // we limit epg details fetching to favorite channels and recently played channels (LRU),
+      // because it takes a lot of time
       const auto& channel = request.data;
-      results.Add(
-          ParseEPGTagEntry(epgData, channel.iUniqueId, channel.waipuID, channel.isFavorite));
+      results.Add(ParseEPGTagEntry(epgData, channel.iUniqueId, channel.waipuID,
+                                   channel.isFavorite || m_lruChannels.Contains(channel.waipuID)));
     }
   }
 
@@ -1719,6 +1723,9 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   }
 
   SetStreamProperties(properties, strUrl, true, true, protocol);
+
+  if (thisChannel != m_channels.end())
+    m_lruChannels.Touch(thisChannel->second.waipuID);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2394,6 +2401,8 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
 
 WaipuData::~WaipuData()
 {
+  m_lruChannels.Save(Utils::GetFilePath("lru_channels.json"));
+
   m_loginThreadRunning = false;
   m_loginCv.notify_one();
   if (m_loginThread.joinable())
@@ -2415,6 +2424,8 @@ ADDON_STATUS WaipuData::Create()
       Utils::Replace(ua, " ", std::string(" pvr.waipu/").append(STR(IPTV_VERSION)).append(" "));
 
   ReadSettings();
+
+  m_lruChannels.Load(Utils::GetFilePath("lru_channels.json"));
 
   if (m_provider == WAIPU_PROVIDER_WAIPU && (m_username.empty() || m_password.empty()))
   {
