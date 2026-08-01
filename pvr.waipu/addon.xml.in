@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.9.5"
+  version="22.10.0"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,12 +26,8 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-v22.9.5
-- Fix playback of VoD channels in auto stream selection mode
-
-v22.9.4
-- Fix handling of invalid credentials
-- Allow user to cancel recording creation
+v22.10.0
+- Load EPG details for top 12 recently watched channels
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="cs_CZ">Klient PVR pro waipu.tv</summary>
