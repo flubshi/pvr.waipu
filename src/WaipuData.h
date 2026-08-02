@@ -199,6 +199,10 @@ private:
   int m_recordings_count = 0;
   bool m_recordings_backend_handle_position = false;
   int m_timers_count = 0;
+  // Cache for additional recording details (plot, year) fetched via individual detail requests.
+  // Populated on demand when recordings_additional_infos setting is enabled.
+  // Entries are evicted when the corresponding recording no longer exists in the backend.
+  std::unordered_map<std::string, nlohmann::json> m_recordings_details_cache;
   int m_login_failed_counter = 0;
   time_t m_login_failed_locktime = 0;
   bool m_active_recordings_update = false;
@@ -216,6 +220,16 @@ private:
   std::string GetAccessToken() const;
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id, int attributes);
+
+  // Fetches all recording/timer entries from the API, resolving recording groups
+  // via additional requests. Returns a flat list of all individual JSON entries
+  // (unfiltered by status). Returns false on network/parse error of the initial request.
+  // Parse errors for individual group requests are logged and skipped.
+  bool FetchRecordingEntries(std::vector<nlohmann::json>& outEntries);
+
+  kodi::addon::PVRTimer ParseTimerEntry(const nlohmann::json& timerEntry,
+                                        std::vector<int>& timerGroups,
+                                        kodi::addon::PVRTimersResultSet& results);
 
   std::string GetChannelStreamURL(int uniqueId,
                                   const std::string& protocol,

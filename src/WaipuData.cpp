@@ -1730,6 +1730,72 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
   return PVR_ERROR_NO_ERROR;
 }
 
+bool WaipuData::FetchRecordingEntries(std::vector<nlohmann::json>& outEntries)
+{
+  std::string json = HttpGet("https://recording.waipu.tv/api/recordings",
+                             {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
+  kodi::Log(ADDON_LOG_DEBUG, "[FetchRecordingEntries] %s", json.c_str());
+
+  nlohmann::json doc;
+  try
+  {
+    doc = nlohmann::json::parse(json);
+  }
+  catch (const nlohmann::json::parse_error&)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: error while parsing recordings response", __FUNCTION__);
+    return false;
+  }
+
+  if (!doc.is_array())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: recordings response is not an array", __FUNCTION__);
+    return false;
+  }
+
+  // Collect group IDs and single (ungrouped) entries separately
+  std::set<int> recordingGroups;
+  for (const auto& entry : doc)
+  {
+    if (entry.contains("recordingGroup") && entry["recordingGroup"].is_number_integer())
+    {
+      int group = entry["recordingGroup"].get<int>();
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i", __FUNCTION__, group);
+      recordingGroups.insert(group);
+    }
+    else
+    {
+      outEntries.push_back(entry);
+    }
+  }
+
+  // Resolve each recording group via an additional request
+  for (const int& group : recordingGroups)
+  {
+    std::string groupJson =
+        HttpGet("https://recording.waipu.tv/api/recordings?recordingGroup=" + std::to_string(group),
+                {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[%s] group %i: %s", __FUNCTION__, group, groupJson.c_str());
+
+    nlohmann::json groupDoc;
+    try
+    {
+      groupDoc = nlohmann::json::parse(groupJson);
+    }
+    catch (const nlohmann::json::parse_error&)
+    {
+      kodi::Log(ADDON_LOG_WARNING, "[%s] WARNING: error parsing group %i, skipping", __FUNCTION__,
+                group);
+      continue;
+    }
+
+    for (const auto& entry : groupDoc)
+      outEntries.push_back(entry);
+  }
+
+  return true;
+}
+
 PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
 {
   if (!IsConnected())
@@ -1826,48 +1892,60 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
     tag.SetDirectory(rec_title);
   }
 
-  // Additional program details like year or plot are on available in an additional details request. Maybe we should provide this as settings option?
+  // Additional program details like year or plot are only available in an additional details
+  // request. Results are cached in m_recordings_details_cache to avoid redundant requests
+  // across multiple GetRecordings calls.
   if (kodi::addon::GetSettingBoolean("recordings_additional_infos", false))
   {
-
-    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
-                               {{"Accept", "application/vnd.waipu.recording-v4+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
-
-    nlohmann::json doc;
-    try
+    nlohmann::json detailDoc;
+    auto cacheIt = m_recordings_details_cache.find(recordingId);
+    if (cacheIt != m_recordings_details_cache.end())
     {
-      doc = nlohmann::json::parse(json);
-      if (doc.contains("programDetails"))
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] detail cache hit for %s", recordingId.c_str());
+      detailDoc = cacheIt->second;
+    }
+    else
+    {
+      std::string detailJson = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
+                                       {{"Accept", "application/vnd.waipu.recording-v4+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", detailJson.c_str());
+      try
       {
-        if (doc["programDetails"].contains("textContent"))
-        {
-          if (doc["programDetails"]["textContent"].contains("descLong"))
-          {
-            std::string descr = doc["programDetails"]["textContent"]["descLong"].get<std::string>();
-            tag.SetPlot(descr);
-            tag.SetPlotOutline(descr);
-          }
-          else if (doc["programDetails"]["textContent"].contains("descShort"))
-          {
-            std::string descr =
-                doc["programDetails"]["textContent"]["descShort"].get<std::string>();
-            tag.SetPlot(descr);
-            tag.SetPlotOutline(descr);
-          }
-        }
-        if (doc["programDetails"].contains("production"))
-        {
-          if (doc["programDetails"]["production"].contains("year"))
-          {
-            std::string year = doc["programDetails"]["production"]["year"].get<std::string>();
-            tag.SetYear(Utils::StringToInt(year, 1970));
-          }
-        }
+        detailDoc = nlohmann::json::parse(detailJson);
+        m_recordings_details_cache[recordingId] = detailDoc;
+      }
+      catch (const nlohmann::json::parse_error&)
+      {
       }
     }
-    catch (const nlohmann::json::parse_error&)
+
+    if (detailDoc.contains("programDetails"))
     {
+      if (detailDoc["programDetails"].contains("textContent"))
+      {
+        if (detailDoc["programDetails"]["textContent"].contains("descLong"))
+        {
+          std::string descr =
+              detailDoc["programDetails"]["textContent"]["descLong"].get<std::string>();
+          tag.SetPlot(descr);
+          tag.SetPlotOutline(descr);
+        }
+        else if (detailDoc["programDetails"]["textContent"].contains("descShort"))
+        {
+          std::string descr =
+              detailDoc["programDetails"]["textContent"]["descShort"].get<std::string>();
+          tag.SetPlot(descr);
+          tag.SetPlotOutline(descr);
+        }
+      }
+      if (detailDoc["programDetails"].contains("production"))
+      {
+        if (detailDoc["programDetails"]["production"].contains("year"))
+        {
+          std::string year = detailDoc["programDetails"]["production"]["year"].get<std::string>();
+          tag.SetYear(Utils::StringToInt(year, 1970));
+        }
+      }
     }
   }
   return tag;
@@ -1881,85 +1959,54 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
   m_active_recordings_update = true;
 
   {
-    std::string recordingGroupsJSON =
-        HttpGet("https://recording.waipu.tv/api/recordings",
-                {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordingGroupsJSON] %s", recordingGroupsJSON.c_str());
-
-    nlohmann::json recordingGroupsDoc;
-    try
+    std::vector<nlohmann::json> entries;
+    if (!FetchRecordingEntries(entries))
     {
-      recordingGroupsDoc = nlohmann::json::parse(recordingGroupsJSON);
-    }
-    catch (const nlohmann::json::parse_error&)
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing recordingGroupsJSON");
+      m_active_recordings_update = false;
       return PVR_ERROR_SERVER_ERROR;
     }
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] getGroups");
-    std::set<int> recordingGroups;
+
     int recordings_count = 0;
+    // Track IDs present in the current backend response to evict stale cache entries
+    std::set<std::string> activeIds;
 
-    for (const auto& recordingEntry : recordingGroupsDoc)
+    for (const auto& recordingEntry : entries)
     {
-      // skip not FINISHED entries
+      if (!recordingEntry.contains("status"))
+        continue;
+
       std::string status = recordingEntry["status"].get<std::string>();
+      if (status != "FINISHED" && status != "RECORDING")
+        continue;
 
-      if (recordingEntry.contains("recordingGroup") &&
-          recordingEntry["recordingGroup"].is_number_integer())
+      if (recordingEntry.contains("locked") && recordingEntry["locked"].get<bool>())
       {
-        int recordingGroup = recordingEntry["recordingGroup"].get<int>();
-        kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i;", __FUNCTION__, recordingGroup);
-        recordingGroups.insert(recordingGroup);
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
+        continue;
       }
-      else if (status == "FINISHED" || status == "RECORDING")
-      {
-        if (recordingEntry.contains("locked") && recordingEntry["locked"].get<bool>())
-        {
-          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
-          continue;
-        }
-        recordings_count++;
-        results.Add(ParseRecordingEntry(recordingEntry));
-      }
+
+      if (recordingEntry.contains("id"))
+        activeIds.insert(recordingEntry["id"].get<std::string>());
+
+      recordings_count++;
+      results.Add(ParseRecordingEntry(recordingEntry));
     }
 
-    for (const int& recordingGroup : recordingGroups)
+    // Evict detail cache entries for recordings that no longer exist in the backend
+    for (auto it = m_recordings_details_cache.begin(); it != m_recordings_details_cache.end();)
     {
-      std::string json = HttpGet("https://recording.waipu.tv/api/recordings?recordingGroup=" +
-                                     std::to_string(recordingGroup),
-                                 {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
-
-      nlohmann::json doc;
-      try
+      if (activeIds.find(it->first) == activeIds.end())
       {
-        doc = nlohmann::json::parse(json);
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] Evicting detail cache for removed recording %s",
+                  __FUNCTION__, it->first.c_str());
+        it = m_recordings_details_cache.erase(it);
       }
-      catch (const nlohmann::json::parse_error&)
+      else
       {
-        kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
-        return PVR_ERROR_SERVER_ERROR;
-      }
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.size());
-
-      for (const auto& recordingEntry : doc)
-      {
-        // skip not FINISHED entries
-        std::string status = recordingEntry["status"].get<std::string>();
-        if (status != "FINISHED" && status != "RECORDING")
-          continue;
-
-        if (recordingEntry.contains("locked") && recordingEntry["locked"].get<bool>())
-        {
-          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
-          continue;
-        }
-        recordings_count++;
-        results.Add(ParseRecordingEntry(recordingEntry));
+        ++it;
       }
     }
+
     m_recordings_count = recordings_count;
   }
 
@@ -2097,6 +2144,89 @@ PVR_ERROR WaipuData::GetTimersAmount(int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
+kodi::addon::PVRTimer WaipuData::ParseTimerEntry(const nlohmann::json& timerEntry,
+                                                 std::vector<int>& timerGroups,
+                                                 kodi::addon::PVRTimersResultSet& results)
+{
+  kodi::addon::PVRTimer tag;
+
+  std::string status = timerEntry["status"].get<std::string>();
+  if (status == "SCHEDULED")
+    tag.SetState(PVR_TIMER_STATE_SCHEDULED);
+  else if (status == "RECORDING")
+    tag.SetState(PVR_TIMER_STATE_RECORDING);
+
+  tag.SetLifetime(0);
+
+  std::string rec_title = timerEntry["title"].get<std::string>();
+  kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
+  tag.SetTitle(rec_title);
+
+  int tag_channel = PVR_CHANNEL_INVALID_UID;
+  if (timerEntry.contains("stationId") && !timerEntry["stationId"].is_null())
+  {
+    std::string station_id = timerEntry["stationId"].get<std::string>();
+    // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
+    std::transform(station_id.begin(), station_id.end(), station_id.begin(), ::toupper);
+    for (const auto& [key, channel] : m_channels)
+    {
+      if (channel.waipuID != station_id)
+        continue;
+      tag_channel = channel.iUniqueId;
+      tag.SetClientChannelUid(tag_channel);
+      break;
+    }
+  }
+
+  if (timerEntry.contains("recordingGroup") && timerEntry["recordingGroup"].is_number_integer())
+  {
+    int group = timerEntry["recordingGroup"].get<int>();
+    tag.SetRecordingGroup(group);
+    if (std::find(timerGroups.begin(), timerGroups.end(), group) == timerGroups.end())
+    {
+      // Emit a parent group timer once per group
+      kodi::addon::PVRTimer tagGroup;
+      tagGroup.SetTimerType(2);
+      tagGroup.SetTitle(rec_title);
+      tagGroup.SetClientIndex(group);
+      tagGroup.SetClientChannelUid(tag_channel);
+      kodi::Log(ADDON_LOG_DEBUG, "[timers] add timer group: %i;", group);
+      results.Add(tagGroup);
+      timerGroups.emplace_back(group);
+    }
+  }
+
+  tag.SetTimerType(1);
+
+  // set timer id
+  std::string rec_id = timerEntry["id"].get<std::string>();
+  tag.SetClientIndex(Utils::StringToInt(rec_id, 0));
+  tag.SetEPGUid(Utils::StringToInt(rec_id, 0));
+
+  // get recording time
+  time_t epgStartTime = 0;
+  if (timerEntry.contains("epgStartTime") && !timerEntry["epgStartTime"].is_null())
+  {
+    epgStartTime = Utils::StringToTime(timerEntry["epgStartTime"].get<std::string>());
+    tag.SetStartTime(epgStartTime);
+  }
+  if (epgStartTime > 0 && timerEntry.contains("durationSeconds") &&
+      !timerEntry["durationSeconds"].is_null())
+  {
+    int durationSeconds = timerEntry["durationSeconds"].get<int>();
+    tag.SetEndTime(epgStartTime + durationSeconds);
+  }
+
+  // epg mapping
+  if (timerEntry.contains("programId") && !timerEntry["programId"].is_null())
+  {
+    std::string epg_id = timerEntry["programId"].get<std::string>();
+    tag.SetEPGUid(Utils::GetIDDirty(epg_id));
+  }
+
+  return tag;
+}
+
 PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 {
   if (!IsConnected())
@@ -2104,152 +2234,41 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
   LoadChannelData();
 
-  std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
-                                       {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-  kodi::Log(ADDON_LOG_DEBUG, "[Timers] %s", jsonRecordings.c_str());
+  std::vector<nlohmann::json> entries;
+  if (!FetchRecordingEntries(entries))
+    return PVR_ERROR_SERVER_ERROR;
 
-  nlohmann::json timersDoc;
-  try
-  {
-    timersDoc = nlohmann::json::parse(jsonRecordings);
-  }
-  catch (const nlohmann::json::parse_error&)
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
-  }
-  if (!timersDoc.is_array())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
-  }
   kodi::Log(ADDON_LOG_DEBUG, "[timers] iterate entries");
-  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc.size());
+  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %zu;", entries.size());
 
   int recordings_count = 0;
   int timers_count = 0;
-
   std::vector<int> timerGroups;
 
-  for (const auto& timer : timersDoc)
+  for (const auto& timerEntry : entries)
   {
-    // skip if missing epgdata
-    if (!timer.contains("status") || !timer.contains("stationId") || !timer.contains("title"))
+    // skip if missing required fields
+    if (!timerEntry.contains("status") || !timerEntry.contains("stationId") ||
+        !timerEntry.contains("title"))
     {
       kodi::Log(ADDON_LOG_DEBUG, "[timers] Skip due to missing status/station/title");
       continue;
     }
 
-    // skip not FINISHED entries
-    std::string status = timer["status"].get<std::string>();
+    std::string status = timerEntry["status"].get<std::string>();
     if (status != "SCHEDULED" && status != "RECORDING")
     {
       ++recordings_count;
       continue;
     }
 
-    // new tag
-    kodi::addon::PVRTimer tag;
     ++timers_count;
-
-    if (status == "SCHEDULED")
-    {
-      tag.SetState(PVR_TIMER_STATE_SCHEDULED);
-    }
-    else if (status == "RECORDING")
-    {
-      tag.SetState(PVR_TIMER_STATE_RECORDING);
-    }
-    tag.SetLifetime(0);
-
-    // set recording title
-    std::string rec_title = timer["title"].get<std::string>();
-    kodi::Log(ADDON_LOG_DEBUG, "[timers] Add: %s;", rec_title.c_str());
-    tag.SetTitle(rec_title);
-
-    int tag_channel = PVR_CHANNEL_INVALID_UID;
-    // channelid
-    if (timer.contains("stationId") && !timer["stationId"].is_null())
-    {
-      std::string station_id = timer["stationId"].get<std::string>();
-
-      // workaround: transform Station ID to uppercase, since old API (for recordings/timers) needs this
-      std::transform(station_id.begin(), station_id.end(), station_id.begin(), ::toupper);
-
-      for (const auto& [key, channel] : m_channels)
-      {
-        if (channel.waipuID != station_id)
-          continue;
-        tag_channel = channel.iUniqueId;
-        tag.SetClientChannelUid(tag_channel);
-        break;
-      }
-    }
-
-    if (timer.contains("recordingGroup"))
-    {
-
-      int group = timer["recordingGroup"].get<int>();
-      tag.SetRecordingGroup(group);
-      if (std::find(timerGroups.begin(), timerGroups.end(), group) == timerGroups.end())
-      {
-        // add group
-        kodi::addon::PVRTimer tagGroup;
-        tagGroup.SetTimerType(2);
-        tagGroup.SetTitle(rec_title);
-        tagGroup.SetClientIndex(group);
-        tagGroup.SetClientChannelUid(tag_channel);
-        tag.SetRecordingGroup(group);
-        kodi::Log(ADDON_LOG_DEBUG, "[add timer group] group: %i;", group);
-
-        results.Add(tagGroup);
-        timerGroups.emplace_back(group);
-      }
-    }
-
-    tag.SetTimerType(1);
-
-    // set recording id
-    std::string rec_id = timer["id"].get<std::string>();
-    tag.SetClientIndex(Utils::StringToInt(rec_id, 0));
-    tag.SetEPGUid(Utils::StringToInt(rec_id, 0));
-
-    // get recording time
-    time_t epgStartTime = 0;
-    if (timer.contains("epgStartTime") && !timer["epgStartTime"].is_null())
-    {
-      epgStartTime = Utils::StringToTime(timer["epgStartTime"].get<std::string>());
-      tag.SetStartTime(epgStartTime);
-    }
-    if (epgStartTime > 0 && timer.contains("durationSeconds") &&
-        !timer["durationSeconds"].is_null())
-    {
-      int durationSeconds = timer["durationSeconds"].get<int>();
-      tag.SetEndTime(epgStartTime + durationSeconds);
-    }
-
-    // get plot
-    //if (epgData.HasMember("description") && !epgData["description"].IsNull())
-    //{
-    //  std::string rec_plot = epgData["description"].GetString();
-    //  tag.SetSummary(rec_plot);
-    //}
-
-    // epg mapping
-    if (timer.contains("programId") && !timer["programId"].is_null())
-    {
-      std::string epg_id = timer["programId"].get<std::string>();
-      int dirtyID = Utils::GetIDDirty(epg_id);
-      tag.SetEPGUid(dirtyID);
-    }
-
-    results.Add(tag);
+    results.Add(ParseTimerEntry(timerEntry, timerGroups, results));
   }
 
   if (recordings_count != m_recordings_count && !m_active_recordings_update)
   {
-    // we detected another amount of recordings.
-    // tell kodi about it
+    // we detected another amount of recordings - tell kodi about it
     m_active_recordings_update = true;
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   }
