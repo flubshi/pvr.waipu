@@ -914,7 +914,7 @@ bool WaipuData::LoadChannelData()
   if (m_channels.size() > 0)
     return true;
 
-  std::string stationConfigJson = HttpGet("https://web-proxy.waipu.tv/station-config");
+  std::string stationConfigJson = HttpGet("https://web-proxy.waipu.tv/v2/station-config");
   kodi::Log(ADDON_LOG_DEBUG, "[%s] Station config JSON: %s", __FUNCTION__,
             stationConfigJson.c_str());
 
@@ -1993,7 +1993,8 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   kodi::Log(ADDON_LOG_DEBUG, "play recording -> %s", recording_id.c_str());
 
   std::string rec_resp =
-      HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id + "/streamingdetails");
+      HttpGet("https://recording.waipu.tv/api/recordings/" + recording_id + "/streamingdetails",
+              {{"Accept", "application/vnd.waipu.recording-streaming-detail-v4+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "recording resp -> %s", rec_resp.c_str());
 
   nlohmann::json recordingDoc;
