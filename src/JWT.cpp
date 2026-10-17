@@ -81,6 +81,7 @@ JWT::JWT(std::string token)
         fieldSubscription = userAssets["account"]["subscription"].get<std::string>();
       }
     }
+    fieldUserHandle = jwtPayload.value("userHandle", "");
     fieldEmail = jwtPayload.value("email", "");
     this->initialized = true;
   }
