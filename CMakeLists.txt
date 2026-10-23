@@ -16,6 +16,7 @@ set(PVRWAIPU_SOURCES
                     src/Base64.cpp
                     src/JWT.cpp
                     src/LRUChannels.cpp
+                    src/LoginDialog.cpp
                     src/MDNS.cpp
                     src/categories.cpp
                     src/WaipuData.cpp)
@@ -27,6 +28,7 @@ set(PVRWAIPU_HEADERS
                     src/Base64.h
                     src/JWT.h
                     src/LRUChannels.h
+                    src/LoginDialog.h
                     src/MDNS.h
                     src/SynchronizedQueue.h
                     src/categories.h
