@@ -120,7 +120,8 @@ kodi::vfs::CFile* Curl::PrepareRequest(const std::string& action,
 
   file->CURLAddOption(ADDON_CURL_OPTION_HEADER, "acceptencoding", "gzip");
 
-  if (!postData.empty())
+  // also set (empty) post data for POST requests without body to send 'Content-Length: 0'
+  if (!postData.empty() || action == "POST")
   {
     const std::string base64 = Base64Encode(postData, false);
     file->CURLAddOption(ADDON_CURL_OPTION_PROTOCOL, "postdata", base64);

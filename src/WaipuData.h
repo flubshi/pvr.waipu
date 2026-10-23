@@ -43,6 +43,12 @@
 // User Agent for HTTP Requests
 static std::string WAIPU_USER_AGENT = "Kodi/pvr.waipu - UA will be initialized on start";
 static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
+// time (in seconds) a network status check (direct or no access) is cached
+static const int WAIPU_NETWORK_STATUS_CACHE_TIME = 30 * 60;
+// time (in seconds) after a failed network status check is retried
+static const int WAIPU_NETWORK_STATUS_RETRY_TIME = 60;
+// time (in seconds) the login thread renews the network status before it expires
+static const int WAIPU_NETWORK_STATUS_RENEW_TIME = 2 * 60;
 
 enum WAIPU_PROVIDER
 {
@@ -65,6 +71,14 @@ enum class WAIPU_LOGIN_STATUS
   INVALID_CREDENTIALS,
   NO_NETWORK,
   UNKNOWN
+};
+
+enum class WAIPU_NETWORK_ACCESS
+{
+  UNKNOWN,
+  OK,
+  EU_DENIED,
+  NO_ACCESS
 };
 
 static const unsigned int EPG_TAG_FLAG_IS_RECORDABLE_WAIPU = (1 << 28);
@@ -176,6 +190,17 @@ private:
     std::vector<WaipuChannel> channels;
   };
 
+  struct WaipuNetworkStatus
+  {
+    bool isClosedNetwork = false; // direct access, e.g. within germany
+    bool isEuMobilityNetwork = false; // access can be requested via EU mobility
+    bool isOpenViaOverflow = false; // access granted via EU mobility
+    time_t openUntil = 0; // expiration of EU mobility access
+    int statusCode = 0;
+    std::string countryCode;
+    std::string statusText;
+  };
+
   static std::mutex mutex;
   std::string m_username;
   std::string m_password;
@@ -210,6 +235,9 @@ private:
   Categories m_categories;
   LRUChannels m_lruChannels;
   time_t m_lastUpdate = 0;
+  std::mutex m_networkMutex;
+  std::atomic<WAIPU_NETWORK_ACCESS> m_networkAccess{WAIPU_NETWORK_ACCESS::UNKNOWN};
+  std::atomic<time_t> m_networkAccessValidUntil{0};
 
   void ReadSettings();
   bool ParseAccessToken();
@@ -262,4 +290,7 @@ private:
   WAIPU_LOGIN_STATUS OAuthRequest(const std::string& postData);
   bool LoadChannelData();
   bool RefreshDeviceCapabiltiesToken();
+  bool GetNetworkStatus(WaipuNetworkStatus& status);
+  void UpdateNetworkAccess(int renewBefore);
+  void CheckNetworkAccess();
 };
