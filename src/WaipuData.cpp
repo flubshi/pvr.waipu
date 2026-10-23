@@ -56,6 +56,44 @@
 #undef GetObject
 #endif
 
+namespace
+{
+// Safe JSON accessors for API responses. Unlike json::value() they do not throw on null or
+// mismatching types, and unlike the const operator[] they are defined for missing keys.
+
+// Returns obj[key] as T, or defaultValue if obj is not an object or key is missing or mistyped.
+template<typename T>
+T JsonValue(const nlohmann::json& obj, const char* key, const T& defaultValue)
+{
+  if (!obj.is_object())
+    return defaultValue;
+
+  const auto it = obj.find(key);
+  if (it == obj.end())
+    return defaultValue;
+
+  try
+  {
+    return it->get<T>();
+  }
+  catch (const nlohmann::json::type_error&)
+  {
+    return defaultValue;
+  }
+}
+
+// Returns obj[key], or a null value if obj is not an object or key is missing.
+const nlohmann::json& JsonChild(const nlohmann::json& obj, const char* key)
+{
+  static const nlohmann::json null;
+  if (!obj.is_object())
+    return null;
+
+  const auto it = obj.find(key);
+  return it != obj.end() ? *it : null;
+}
+} // namespace
+
 std::mutex WaipuData::mutex;
 
 // BEGIN CURL helpers from zattoo addon:
@@ -929,6 +967,11 @@ bool WaipuData::LoadChannelData()
     m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
     return false;
   }
+  if (!stationConfigDoc.contains("stations") || !stationConfigDoc["stations"].is_array())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] Station config JSON contains no stations", __FUNCTION__);
+    return false;
+  }
   const auto& stationConfigs = stationConfigDoc["stations"];
 
   std::string userStationsJson =
@@ -946,6 +989,11 @@ bool WaipuData::LoadChannelData()
     m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
     return false;
   }
+  if (!doc.is_array())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] User stations JSON is not an array", __FUNCTION__);
+    return false;
+  }
 
   m_channelGroups.clear();
 
@@ -961,8 +1009,14 @@ bool WaipuData::LoadChannelData()
   for (size_t i = 0; i < doc.size(); i++)
   {
     const auto& channel = doc[i];
-    const std::string waipuId = channel["stationId"].get<std::string>();
-    if (channel.contains("locked") && channel["locked"].get<bool>())
+    const std::string waipuId = JsonValue<std::string>(channel, "stationId", "");
+    if (waipuId.empty())
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip channel without stationId at position %i", __FUNCTION__,
+                static_cast<int>(i));
+      continue;
+    }
+    if (JsonValue(channel, "locked", false))
     {
       kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked channel '%s'", __FUNCTION__, waipuId.c_str());
       continue;
@@ -970,9 +1024,13 @@ bool WaipuData::LoadChannelData()
 
     const auto& stationConfig =
         std::find_if(stationConfigs.begin(), stationConfigs.end(), [waipuId](const auto& v)
-                     { return v["id"].template get<std::string>() == waipuId; });
+                     { return JsonValue<std::string>(v, "id", "") == waipuId; });
     if (stationConfig == stationConfigs.end())
+    {
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip channel '%s' without station config", __FUNCTION__,
+                waipuId.c_str());
       continue;
+    }
 
     WaipuChannel waipuChannel;
 
@@ -982,21 +1040,30 @@ bool WaipuData::LoadChannelData()
     std::transform(waipuChannel.waipuID.begin(), waipuChannel.waipuID.end(),
                    waipuChannel.waipuID.begin(), ::toupper);
     waipuChannel.iUniqueId = Utils::Hash(waipuId);
-    waipuChannel.strChannelName = channel["displayName"].get<std::string>(); // waipu[displayName]
-
-    std::string iconUrl = (*stationConfig)["logoTemplateUrl"].get<std::string>();
-    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"),
-                                 channel["streamQuality"].get<std::string>());
-    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
-    iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
+    waipuChannel.strChannelName =
+        JsonValue<std::string>(channel, "displayName", waipuId); // waipu[displayName]
 
     std::string iconPath =
         "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuChannel.waipuID + ".png";
     if (!kodi::vfs::FileExists(iconPath, true))
     {
-      kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__,
-                iconUrl.c_str(), iconPath.c_str());
-      Utils::FileDownload(iconUrl, iconPath);
+      std::string iconUrl = JsonValue<std::string>(*stationConfig, "logoTemplateUrl", "");
+      if (iconUrl.empty())
+      {
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] No logo template for channel '%s'", __FUNCTION__,
+                  waipuId.c_str());
+      }
+      else
+      {
+        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"),
+                                     JsonValue<std::string>(channel, "streamQuality", ""));
+        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
+        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
+
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__,
+                  iconUrl.c_str(), iconPath.c_str());
+        Utils::FileDownload(iconUrl, iconPath);
+      }
     }
     waipuChannel.strIconPath = iconPath;
 
@@ -1014,11 +1081,11 @@ bool WaipuData::LoadChannelData()
     }
     waipuChannel.isGoogleVOD = isGoogleVOD;
 
-    const auto& userSettings = channel["userSettings"];
-    bool isFav = userSettings["favorite"].get<bool>();
+    const auto& userSettings = JsonChild(channel, "userSettings");
+    bool isFav = JsonValue(userSettings, "favorite", false);
     waipuChannel.isFavorite = isFav;
-    bool isVisible = userSettings["visible"].get<bool>();
-    waipuChannel.tvfuse = (*stationConfig)["newTv"].get<bool>();
+    bool isVisible = JsonValue(userSettings, "visible", true);
+    waipuChannel.tvfuse = JsonValue(*stationConfig, "newTv", false);
 
     // skip if we do not enforce to show all
     if (m_channel_filter != CHANNEL_FILTER_ALL && !isVisible)
@@ -2009,23 +2076,29 @@ std::string WaipuData::GetRecordingURL(const kodi::addon::PVRRecording& recordin
   }
   kodi::Log(ADDON_LOG_DEBUG, "[recording] streams");
   // check if streams there
-  if (!recordingDoc.contains("streams"))
+  if (!recordingDoc.contains("streams") || !recordingDoc["streams"].is_array())
   {
     kodi::Log(ADDON_LOG_ERROR, "[getRecordingURL] ERROR: missing streams");
     return "";
   }
 
-  kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", recordingDoc["streams"].size());
+  kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;",
+            static_cast<int>(recordingDoc["streams"].size()));
 
   std::string protocol_fix = protocol == "dash" ? "MPEG_DASH" : "HLS";
 
   for (const auto& stream : recordingDoc["streams"])
   {
-    std::string current_protocol = stream["protocol"].get<std::string>();
+    std::string current_protocol = JsonValue<std::string>(stream, "protocol", "");
     kodi::Log(ADDON_LOG_DEBUG, "[stream] protocol: %s;", current_protocol.c_str());
     if (current_protocol == protocol_fix)
     {
-      std::string href = stream["href"].get<std::string>();
+      std::string href = JsonValue<std::string>(stream, "href", "");
+      if (href.empty())
+      {
+        kodi::Log(ADDON_LOG_DEBUG, "[stream] skip stream without href;");
+        continue;
+      }
       kodi::Log(ADDON_LOG_DEBUG, "[stream] selected href: %s;", href.c_str());
       return href;
     }
