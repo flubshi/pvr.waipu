@@ -278,9 +278,8 @@ void WaipuData::LoginThread()
         kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
       }
 
-      // check network access early, to speed up the first playback
-      if (previousStatus != m_login_status)
-        CheckNetworkAccess();
+      // check network access in background, to avoid requests on playback
+      UpdateNetworkAccess(WAIPU_NETWORK_STATUS_RENEW_TIME);
 
       continue;
     }
@@ -701,7 +700,7 @@ bool WaipuData::GetNetworkStatus(WaipuNetworkStatus& status)
   return true;
 }
 
-void WaipuData::CheckNetworkAccess()
+void WaipuData::UpdateNetworkAccess(int renewBefore)
 {
   // waipu.tv streaming servers are only reachable from within germany by default.
   // Within other EU countries, access has to be requested first (EU mobility).
@@ -712,28 +711,31 @@ void WaipuData::CheckNetworkAccess()
   std::lock_guard<std::mutex> lock(m_networkMutex);
 
   const time_t now = std::time(0);
-  if (m_networkAccessValidUntil > now)
-  {
-    kodi::Log(ADDON_LOG_DEBUG, "[network] access still valid, no need to check");
+  if (m_networkAccessValidUntil - renewBefore > now)
     return;
-  }
 
   WaipuNetworkStatus status;
   if (!GetNetworkStatus(status))
+  {
+    m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_RETRY_TIME;
     return;
+  }
 
   if (status.isClosedNetwork || (status.statusCode == 200 && !status.isOpenViaOverflow))
   {
     kodi::Log(ADDON_LOG_DEBUG, "[network] direct access (%s)", status.countryCode.c_str());
+    m_networkAccess = WAIPU_NETWORK_ACCESS::OK;
     m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_CACHE_TIME;
     return;
   }
 
-  if (status.isOpenViaOverflow && status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME > now)
+  if (status.isOpenViaOverflow && status.openUntil > now)
   {
+    // do not request access again while it is still open
     kodi::Log(ADDON_LOG_DEBUG, "[network] EU mobility access open until %s (%s)",
               Utils::TimeToString(status.openUntil).c_str(), status.countryCode.c_str());
-    m_networkAccessValidUntil = status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME;
+    m_networkAccess = WAIPU_NETWORK_ACCESS::OK;
+    m_networkAccessValidUntil = status.openUntil;
     return;
   }
 
@@ -741,7 +743,8 @@ void WaipuData::CheckNetworkAccess()
   {
     kodi::Log(ADDON_LOG_ERROR, "[network] no access to waipu.tv network (%s): %s",
               status.countryCode.c_str(), status.statusText.c_str());
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30065));
+    m_networkAccess = WAIPU_NETWORK_ACCESS::NO_ACCESS;
+    m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_CACHE_TIME;
     return;
   }
 
@@ -759,7 +762,8 @@ void WaipuData::CheckNetworkAccess()
   if (statusCode == 403)
   {
     kodi::Log(ADDON_LOG_ERROR, "[network] EU mobility access not allowed");
-    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30066));
+    m_networkAccess = WAIPU_NETWORK_ACCESS::EU_DENIED;
+    m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_CACHE_TIME;
     return;
   }
 
@@ -767,12 +771,26 @@ void WaipuData::CheckNetworkAccess()
   if (!GetNetworkStatus(status) || !status.isOpenViaOverflow)
   {
     kodi::Log(ADDON_LOG_ERROR, "[network] ERROR: open EU network failed (HTTP %i)", statusCode);
+    m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_RETRY_TIME;
     return;
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "[network] EU mobility access opened until %s",
             Utils::TimeToString(status.openUntil).c_str());
-  m_networkAccessValidUntil = status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME;
+  m_networkAccess = WAIPU_NETWORK_ACCESS::OK;
+  m_networkAccessValidUntil = status.openUntil;
+}
+
+void WaipuData::CheckNetworkAccess()
+{
+  // usually updated in background by the login thread, so no requests are needed on playback
+  if (m_networkAccessValidUntil <= std::time(0))
+    UpdateNetworkAccess(0);
+
+  if (m_networkAccess == WAIPU_NETWORK_ACCESS::NO_ACCESS)
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30065));
+  else if (m_networkAccess == WAIPU_NETWORK_ACCESS::EU_DENIED)
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30066));
 }
 
 void WaipuData::ReadSettings()
@@ -2578,6 +2596,7 @@ PVR_ERROR WaipuData::OnSystemWake()
 {
   m_accessToken = JWT();
   m_deviceCapabilitiesToken = JWT();
+  m_networkAccess = WAIPU_NETWORK_ACCESS::UNKNOWN;
   m_networkAccessValidUntil = 0;
   m_nextLoginAttempt = 0;
   m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
