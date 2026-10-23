@@ -43,6 +43,10 @@
 // User Agent for HTTP Requests
 static std::string WAIPU_USER_AGENT = "Kodi/pvr.waipu - UA will be initialized on start";
 static const int WAIPU_LOGIN_FAILED_LOCK_LIMIT = 3;
+// time (in seconds) a successful network status check is cached
+static const int WAIPU_NETWORK_STATUS_CACHE_TIME = 15 * 60;
+// EU mobility access is renewed if it expires within this time (in seconds)
+static const int WAIPU_NETWORK_EU_RENEW_TIME = 5 * 60;
 
 enum WAIPU_PROVIDER
 {
@@ -176,6 +180,17 @@ private:
     std::vector<WaipuChannel> channels;
   };
 
+  struct WaipuNetworkStatus
+  {
+    bool isClosedNetwork = false; // direct access, e.g. within germany
+    bool isEuMobilityNetwork = false; // access can be requested via EU mobility
+    bool isOpenViaOverflow = false; // access granted via EU mobility
+    time_t openUntil = 0; // expiration of EU mobility access
+    int statusCode = 0;
+    std::string countryCode;
+    std::string statusText;
+  };
+
   static std::mutex mutex;
   std::string m_username;
   std::string m_password;
@@ -210,6 +225,8 @@ private:
   Categories m_categories;
   LRUChannels m_lruChannels;
   time_t m_lastUpdate = 0;
+  std::mutex m_networkMutex;
+  std::atomic<time_t> m_networkAccessValidUntil{0};
 
   void ReadSettings();
   bool ParseAccessToken();
@@ -262,4 +279,6 @@ private:
   WAIPU_LOGIN_STATUS OAuthRequest(const std::string& postData);
   bool LoadChannelData();
   bool RefreshDeviceCapabiltiesToken();
+  bool GetNetworkStatus(WaipuNetworkStatus& status);
+  void CheckNetworkAccess();
 };

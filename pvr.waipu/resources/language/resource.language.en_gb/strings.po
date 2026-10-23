@@ -245,3 +245,15 @@ msgstr ""
 msgctxt "#30063"
 msgid "Subscription"
 msgstr ""
+
+msgctxt "#30064"
+msgid "Network status"
+msgstr ""
+
+msgctxt "#30065"
+msgid "No access to waipu.tv from this network"
+msgstr ""
+
+msgctxt "#30066"
+msgid "Access to waipu.tv within the EU was denied"
+msgstr ""

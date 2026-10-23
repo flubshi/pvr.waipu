@@ -278,6 +278,10 @@ void WaipuData::LoginThread()
         kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
       }
 
+      // check network access early, to speed up the first playback
+      if (previousStatus != m_login_status)
+        CheckNetworkAccess();
+
       continue;
     }
     else if (m_login_status == WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS)
@@ -658,6 +662,117 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
 
   kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] unknown error :(");
   return false;
+}
+
+bool WaipuData::GetNetworkStatus(WaipuNetworkStatus& status)
+{
+  std::string jsonStatus =
+      HttpGet("https://status.wpstr.tv/status?uh=" + Utils::UrlEncode(m_userhandle), {}, true);
+  kodi::Log(ADDON_LOG_DEBUG, "[network] status response: %s", jsonStatus.c_str());
+
+  // {"isEuMobilityNetwork":true,"isClosedNetwork":false,"countryCode":"PL","statusText":"...",
+  //  "statusCode":200,"openViaOverflow":{"isOpen":true,"openUntilUnixTimestamp":1591128255},...}
+  try
+  {
+    nlohmann::json statusDoc = nlohmann::json::parse(jsonStatus);
+
+    status.isClosedNetwork = statusDoc.value("isClosedNetwork", false);
+    status.isEuMobilityNetwork = statusDoc.value("isEuMobilityNetwork", false);
+    status.statusCode = statusDoc.value("statusCode", 0);
+    status.countryCode = statusDoc.value("countryCode", "");
+    status.statusText = statusDoc.value("statusText", "");
+    status.isOpenViaOverflow = false;
+    status.openUntil = 0;
+    if (statusDoc.contains("openViaOverflow") && statusDoc["openViaOverflow"].is_object())
+    {
+      const auto& openViaOverflow = statusDoc["openViaOverflow"];
+      status.isOpenViaOverflow = openViaOverflow.value("isOpen", false);
+      status.openUntil = openViaOverflow.value("openUntilUnixTimestamp", static_cast<time_t>(0));
+    }
+  }
+  catch (const nlohmann::json::exception&)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[network] ERROR: error while parsing status json");
+    return false;
+  }
+
+  kodi::addon::SetSettingString("status_network", status.countryCode + ": " + status.statusText);
+
+  return true;
+}
+
+void WaipuData::CheckNetworkAccess()
+{
+  // waipu.tv streaming servers are only reachable from within germany by default.
+  // Within other EU countries, access has to be requested first (EU mobility).
+
+  if (!IsConnected())
+    return;
+
+  std::lock_guard<std::mutex> lock(m_networkMutex);
+
+  const time_t now = std::time(0);
+  if (m_networkAccessValidUntil > now)
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[network] access still valid, no need to check");
+    return;
+  }
+
+  WaipuNetworkStatus status;
+  if (!GetNetworkStatus(status))
+    return;
+
+  if (status.isClosedNetwork || (status.statusCode == 200 && !status.isOpenViaOverflow))
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[network] direct access (%s)", status.countryCode.c_str());
+    m_networkAccessValidUntil = now + WAIPU_NETWORK_STATUS_CACHE_TIME;
+    return;
+  }
+
+  if (status.isOpenViaOverflow && status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME > now)
+  {
+    kodi::Log(ADDON_LOG_DEBUG, "[network] EU mobility access open until %s (%s)",
+              Utils::TimeToString(status.openUntil).c_str(), status.countryCode.c_str());
+    m_networkAccessValidUntil = status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME;
+    return;
+  }
+
+  if (!status.isEuMobilityNetwork)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[network] no access to waipu.tv network (%s): %s",
+              status.countryCode.c_str(), status.statusText.c_str());
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30065));
+    return;
+  }
+
+  // request access via EU mobility
+  kodi::Log(ADDON_LOG_DEBUG, "[network] open EU network (%s) ...", status.countryCode.c_str());
+  Curl curl;
+  int statusCode = 0;
+  curl.AddHeader("Authorization", "Bearer " + GetAccessToken());
+  curl.AddHeader("User-Agent", WAIPU_USER_AGENT);
+  std::string response = HttpRequestToCurl(
+      curl, "POST", "https://eunet.waipu.tv/api/open-eu-network", "", statusCode, true);
+  kodi::Log(ADDON_LOG_DEBUG, "[network] open EU network response: (HTTP %i) %s", statusCode,
+            response.c_str());
+
+  if (statusCode == 403)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[network] EU mobility access not allowed");
+    kodi::QueueNotification(QUEUE_ERROR, "", kodi::addon::GetLocalizedString(30066));
+    return;
+  }
+
+  // success is HTTP 201, but verify access and get its expiration via status
+  if (!GetNetworkStatus(status) || !status.isOpenViaOverflow)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[network] ERROR: open EU network failed (HTTP %i)", statusCode);
+    return;
+  }
+
+  kodi::Log(ADDON_LOG_DEBUG, "[network] EU mobility access opened until %s",
+            Utils::TimeToString(status.openUntil).c_str());
+  m_networkAccessValidUntil = status.openUntil - WAIPU_NETWORK_EU_RENEW_TIME;
 }
 
 void WaipuData::ReadSettings()
@@ -1126,6 +1241,8 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     }
     kodi::Log(ADDON_LOG_DEBUG, "protocol auto select: %s", protocol.c_str());
   }
+
+  CheckNetworkAccess();
 
   std::string strUrl = GetChannelStreamURL(channel.GetUniqueId(), protocol, "");
   kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
@@ -1693,6 +1810,7 @@ PVR_ERROR WaipuData::GetEPGTagStreamProperties(
 {
   kodi::Log(ADDON_LOG_DEBUG, "[EPG TAG] play it...");
   LoadChannelData();
+  CheckNetworkAccess();
 
   std::string protocol = m_protocol;
   if (protocol == "auto")
@@ -2055,6 +2173,7 @@ PVR_ERROR WaipuData::GetRecordingStreamProperties(
 {
   kodi::Log(ADDON_LOG_DEBUG, "[recordings] play it...");
   LoadChannelData();
+  CheckNetworkAccess();
 
   std::string protocol = m_protocol;
   if (protocol == "auto")
@@ -2459,6 +2578,7 @@ PVR_ERROR WaipuData::OnSystemWake()
 {
   m_accessToken = JWT();
   m_deviceCapabilitiesToken = JWT();
+  m_networkAccessValidUntil = 0;
   m_nextLoginAttempt = 0;
   m_login_status = WAIPU_LOGIN_STATUS::UNKNOWN;
 

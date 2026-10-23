@@ -70,6 +70,17 @@
                  <dependency type="visible" operator="gt" setting="provider_select">0</dependency>
                </dependencies>
             </setting>
+            <setting id="status_network" type="string" label="30064" help="">
+               <level>0</level>
+               <default />
+               <constraints>
+                  <allowempty>true</allowempty>
+               </constraints>
+               <control type="edit" format="string">
+                  <heading>30064</heading>
+               </control>
+               <enable>false</enable>
+            </setting>
 				
 				<setting id="refresh_reset" type="boolean" label="30037" help="">
                <level>0</level>
