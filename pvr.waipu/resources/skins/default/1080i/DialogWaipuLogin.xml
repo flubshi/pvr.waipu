@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Device login dialog of pvr.waipu (see src/LoginDialog.cpp)
+
+  Window properties set by the add-on:
+    heading           - dialog heading
+    verification_uri  - URL for the browser login
+    user_code         - code to enter on the login page
+
+  Control ids used by the add-on:
+    20 - progress bar (remaining time)
+    30 - cancel button
+-->
+<window>
+  <defaultcontrol always="true">30</defaultcontrol>
+  <animation effect="fade" time="200">WindowOpen</animation>
+  <animation effect="fade" time="200">WindowClose</animation>
+  <controls>
+    <!-- dim background -->
+    <control type="image">
+      <left>0</left>
+      <top>0</top>
+      <width>1920</width>
+      <height>1080</height>
+      <texture colordiffuse="B3000000">waipu-white.png</texture>
+    </control>
+
+    <control type="group">
+      <left>210</left>
+      <top>180</top>
+      <width>1500</width>
+      <height>720</height>
+
+      <!-- dialog background and header -->
+      <control type="image">
+        <left>0</left>
+        <top>0</top>
+        <width>1500</width>
+        <height>720</height>
+        <texture colordiffuse="FF1A2123">waipu-white.png</texture>
+      </control>
+      <control type="image">
+        <left>0</left>
+        <top>0</top>
+        <width>1500</width>
+        <height>90</height>
+        <texture colordiffuse="FF147995">waipu-white.png</texture>
+      </control>
+      <control type="label">
+        <left>40</left>
+        <top>0</top>
+        <width>1420</width>
+        <height>90</height>
+        <aligny>center</aligny>
+        <font>font14</font>
+        <textcolor>FFFFFFFF</textcolor>
+        <label>$INFO[Window.Property(heading)]</label>
+      </control>
+
+      <!-- either / or hint -->
+      <control type="label">
+        <left>40</left>
+        <top>105</top>
+        <width>1420</width>
+        <height>60</height>
+        <aligny>center</aligny>
+        <font>font13</font>
+        <textcolor>FFCCCCCC</textcolor>
+        <label>$ADDON[pvr.waipu 30064]</label>
+      </control>
+
+      <!-- option 1: browser login with user code -->
+      <control type="group">
+        <left>40</left>
+        <top>180</top>
+        <control type="image">
+          <left>0</left>
+          <top>0</top>
+          <width>620</width>
+          <height>400</height>
+          <texture colordiffuse="FF263033">waipu-white.png</texture>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>20</top>
+          <width>560</width>
+          <height>50</height>
+          <aligny>center</aligny>
+          <font>font14</font>
+          <textcolor>FF12A0C7</textcolor>
+          <label>[B]$ADDON[pvr.waipu 30065][/B]</label>
+        </control>
+        <control type="textbox">
+          <left>30</left>
+          <top>85</top>
+          <width>560</width>
+          <height>120</height>
+          <font>font12</font>
+          <textcolor>FFFFFFFF</textcolor>
+          <label>$ADDON[pvr.waipu 30066]</label>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>215</top>
+          <width>560</width>
+          <height>30</height>
+          <aligny>center</aligny>
+          <font>font12</font>
+          <textcolor>FFAAAAAA</textcolor>
+          <label>$ADDON[pvr.waipu 30039]</label>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>245</top>
+          <width>560</width>
+          <height>45</height>
+          <aligny>center</aligny>
+          <font>font14</font>
+          <textcolor>FFFFFFFF</textcolor>
+          <label>[B]$INFO[Window.Property(verification_uri)][/B]</label>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>300</top>
+          <width>560</width>
+          <height>30</height>
+          <aligny>center</aligny>
+          <font>font12</font>
+          <textcolor>FFAAAAAA</textcolor>
+          <label>$ADDON[pvr.waipu 30041]</label>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>330</top>
+          <width>560</width>
+          <height>55</height>
+          <aligny>center</aligny>
+          <font>font45</font>
+          <textcolor>FF12A0C7</textcolor>
+          <label>[B]$INFO[Window.Property(user_code)][/B]</label>
+        </control>
+      </control>
+
+      <!-- separator between both options -->
+      <control type="image">
+        <left>749</left>
+        <top>200</top>
+        <width>2</width>
+        <height>150</height>
+        <texture colordiffuse="FF4A5558">waipu-white.png</texture>
+      </control>
+      <control type="label">
+        <left>690</left>
+        <top>350</top>
+        <width>120</width>
+        <height>60</height>
+        <align>center</align>
+        <aligny>center</aligny>
+        <font>font14</font>
+        <textcolor>FFCCCCCC</textcolor>
+        <label>[B]$ADDON[pvr.waipu 30069][/B]</label>
+      </control>
+      <control type="image">
+        <left>749</left>
+        <top>410</top>
+        <width>2</width>
+        <height>150</height>
+        <texture colordiffuse="FF4A5558">waipu-white.png</texture>
+      </control>
+
+      <!-- option 2: Magic Login in the waipu.tv app -->
+      <control type="group">
+        <left>840</left>
+        <top>180</top>
+        <control type="image">
+          <left>0</left>
+          <top>0</top>
+          <width>620</width>
+          <height>400</height>
+          <texture colordiffuse="FF263033">waipu-white.png</texture>
+        </control>
+        <control type="label">
+          <left>30</left>
+          <top>20</top>
+          <width>560</width>
+          <height>50</height>
+          <aligny>center</aligny>
+          <font>font14</font>
+          <textcolor>FF12A0C7</textcolor>
+          <label>[B]$ADDON[pvr.waipu 30067][/B]</label>
+        </control>
+        <control type="textbox">
+          <left>30</left>
+          <top>85</top>
+          <width>560</width>
+          <height>295</height>
+          <font>font12</font>
+          <textcolor>FFFFFFFF</textcolor>
+          <label>$ADDON[pvr.waipu 30068]</label>
+        </control>
+      </control>
+
+      <!-- remaining time -->
+      <control type="progress" id="20">
+        <left>40</left>
+        <top>638</top>
+        <width>1120</width>
+        <height>14</height>
+        <texturebg colordiffuse="FF3A4447">waipu-white.png</texturebg>
+        <midtexture colordiffuse="FF12A0C7">waipu-white.png</midtexture>
+      </control>
+
+      <control type="button" id="30">
+        <left>1200</left>
+        <top>610</top>
+        <width>260</width>
+        <height>70</height>
+        <label>222</label>
+        <font>font13</font>
+        <textcolor>FFFFFFFF</textcolor>
+        <focusedcolor>FFFFFFFF</focusedcolor>
+        <align>center</align>
+        <aligny>center</aligny>
+        <texturefocus colordiffuse="FF12A0C7">waipu-white.png</texturefocus>
+        <texturenofocus colordiffuse="FF3A4447">waipu-white.png</texturenofocus>
+      </control>
+    </control>
+  </controls>
+</window>

@@ -245,3 +245,28 @@ msgstr ""
 msgctxt "#30063"
 msgid "Subscription"
 msgstr ""
+
+msgctxt "#30064"
+msgid "Please log in using one of the following two options:"
+msgstr ""
+
+msgctxt "#30065"
+msgid "Option 1: Login with browser"
+msgstr ""
+
+msgctxt "#30066"
+msgid "On another device (smartphone, computer), open the following URL in a browser and enter the code:"
+msgstr ""
+
+msgctxt "#30067"
+msgid "Option 2: Login with waipu.tv app"
+msgstr ""
+
+msgctxt "#30068"
+msgid "Open the waipu.tv app on your smartphone and select \"Magic Login\" in the app settings."
+msgstr ""
+
+#. Separator between the two login options
+msgctxt "#30069"
+msgid "or"
+msgstr ""

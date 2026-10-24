@@ -33,6 +33,7 @@
 #endif
 
 #include "Base64.h"
+#include "LoginDialog.h"
 #include "MDNS.h"
 #include "Utils.h"
 #include "WaipuData.h"
@@ -48,7 +49,6 @@
 #include <thread>
 
 #include <kodi/gui/dialogs/OK.h>
-#include <kodi/gui/dialogs/Progress.h>
 #include <kodi/gui/dialogs/YesNo.h>
 #include <nlohmann/json.hpp>
 
@@ -541,20 +541,22 @@ WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
   std::string code_req =
       "device_code=" + deviceCodeMap.find("device_code")->second +
       "&grant_type=urn:ietf:params:oauth:grant-type:device_code&waipu_device_id=" + m_device_id;
-  kodi::Log(ADDON_LOG_DEBUG, "Create Login Progress");
-  kodi::gui::dialogs::CProgress* progress = new kodi::gui::dialogs::CProgress;
-  progress->SetHeading("pvr.waipu - " + tenant + " Login");
-  progress->SetLine(1, "1) " + kodi::addon::GetLocalizedString(30039) + " " +
-                           deviceCodeMap.find("verification_uri")->second);
-  progress->SetLine(2, "2) " + kodi::addon::GetLocalizedString(30040));
-  progress->SetLine(3, "3) " + kodi::addon::GetLocalizedString(30041) + " " +
-                           deviceCodeMap.find("user_code")->second);
-  progress->SetCanCancel(true);
-  progress->ShowProgressBar(true);
-  progress->Open();
+  kodi::Log(ADDON_LOG_DEBUG, "Create Login Dialog");
+  // Dialog shows both login options: browser with user code and "Magic Login" in the
+  // waipu.tv app (found via mDNS announcement)
+  LoginDialog dialog("pvr.waipu - " + tenant + " Login",
+                     deviceCodeMap.find("verification_uri")->second,
+                     deviceCodeMap.find("user_code")->second);
+  if (!dialog.Open())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[DeviceLogin] failed to open login dialog");
+    mdns.StopRegistrationService();
+    return ret;
+  }
+
   for (unsigned int i = 0; i < 100; i += 1)
   {
-    progress->SetPercentage(i);
+    dialog.SetPercentage(i);
     if (OAuthRequest(code_req) == WAIPU_LOGIN_STATUS::OK)
     {
       ret = WAIPU_LOGIN_STATUS::OK;
@@ -564,9 +566,8 @@ WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
 
     kodi::Log(ADDON_LOG_DEBUG, "OAuth pending");
 
-    if (progress->IsCanceled())
+    if (dialog.IsCanceled() || !m_loginThreadRunning)
     {
-      progress->Abort();
       ret = WAIPU_LOGIN_STATUS::INVALID_CREDENTIALS;
       kodi::Log(ADDON_LOG_DEBUG, "OAuth login canceled");
       break;
@@ -574,8 +575,7 @@ WAIPU_LOGIN_STATUS WaipuData::DeviceLogin(const std::string& tenant)
     std::this_thread::sleep_for(std::chrono::seconds(3));
   }
 
-  progress->Abort();
-  delete progress;
+  dialog.Abort();
 
   mdns.StopRegistrationService();
 
