@@ -709,6 +709,7 @@ void WaipuData::ReadSettings()
   m_channel_filter = kodi::addon::GetSettingEnum<WAIPU_CHANNEL_IMPORT_FILTER>(
       "channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
+  m_channel_icons_cache = kodi::addon::GetSettingBoolean("channel_icons_cache");
   m_recordings_backend_handle_position =
       kodi::addon::GetSettingBoolean("recordings_backend_handle_position");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
@@ -760,6 +761,18 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
   {
     m_epg_show_preview_images = settingValue.GetBoolean();
     return ADDON_STATUS_OK;
+  }
+  else if (settingName == "channel_icons_cache")
+  {
+    const bool tmpChannelIconsCache = settingValue.GetBoolean();
+    if (tmpChannelIconsCache != m_channel_icons_cache)
+    {
+      m_channel_icons_cache = tmpChannelIconsCache;
+      // reload channels to update icon paths
+      m_channels.clear();
+      kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
+      return ADDON_STATUS_OK;
+    }
   }
   else if (settingName == "provider_select")
   {
@@ -1006,6 +1019,10 @@ bool WaipuData::LoadChannelData()
   WaipuChannelGroup cgroup_vod;
   cgroup_vod.name = "VoD";
 
+  const std::string iconCacheDir = Utils::GetFilePath("channel_icons/");
+  if (m_channel_icons_cache && !kodi::vfs::DirectoryExists(iconCacheDir))
+    kodi::vfs::CreateDirectory(iconCacheDir);
+
   for (size_t i = 0; i < doc.size(); i++)
   {
     const auto& channel = doc[i];
@@ -1043,29 +1060,21 @@ bool WaipuData::LoadChannelData()
     waipuChannel.strChannelName =
         JsonValue<std::string>(channel, "displayName", waipuId); // waipu[displayName]
 
-    std::string iconPath =
-        "special://home/addons/pvr.waipu/resources/channel_icons/" + waipuChannel.waipuID + ".png";
-    if (!kodi::vfs::FileExists(iconPath, true))
+    std::string iconUrl = JsonValue<std::string>(*stationConfig, "logoTemplateUrl", "");
+    if (iconUrl.empty())
     {
-      std::string iconUrl = JsonValue<std::string>(*stationConfig, "logoTemplateUrl", "");
-      if (iconUrl.empty())
-      {
-        kodi::Log(ADDON_LOG_DEBUG, "[%s] No logo template for channel '%s'", __FUNCTION__,
-                  waipuId.c_str());
-      }
-      else
-      {
-        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"),
-                                     JsonValue<std::string>(channel, "streamQuality", ""));
-        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
-        iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
-
-        kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__,
-                  iconUrl.c_str(), iconPath.c_str());
-        Utils::FileDownload(iconUrl, iconPath);
-      }
+      kodi::Log(ADDON_LOG_DEBUG, "[%s] No logo template for channel '%s'", __FUNCTION__,
+                waipuId.c_str());
     }
-    waipuChannel.strIconPath = iconPath;
+    else
+    {
+      iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{streamQuality\\}"),
+                                   JsonValue<std::string>(channel, "streamQuality", ""));
+      iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{shape\\}"), "standard");
+      iconUrl = std::regex_replace(iconUrl, std::regex("\\$\\{resolution\\}"), "320x180");
+    }
+    // pass remote URL, Kodi's texture cache takes care of downloading and caching the icon
+    waipuChannel.strIconPath = iconUrl;
 
     bool isGoogleVOD = false;
     if ((*stationConfig).contains("feeds") && (*stationConfig)["feeds"].is_array())
@@ -1098,6 +1107,25 @@ bool WaipuData::LoadChannelData()
     // Apply Favourites filter
     if (m_channel_filter == CHANNEL_FILTER_FAVOURITES && !isFav)
       continue;
+
+    // optional: keep a local copy of the icon in addon user data (survives addon updates and
+    // can be replaced by a custom icon); fall back to the remote URL if the download fails
+    if (m_channel_icons_cache)
+    {
+      const std::string iconPath = iconCacheDir + waipuChannel.waipuID + ".png";
+      bool iconAvailable = kodi::vfs::FileExists(iconPath, true);
+      if (!iconAvailable && !iconUrl.empty())
+      {
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] Downloading channel logo %s to %s", __FUNCTION__,
+                  iconUrl.c_str(), iconPath.c_str());
+        iconAvailable = Utils::FileDownload(iconUrl, iconPath);
+        if (!iconAvailable)
+          kodi::Log(ADDON_LOG_ERROR, "[%s] Failed to download channel logo %s", __FUNCTION__,
+                    iconUrl.c_str());
+      }
+      if (iconAvailable)
+        waipuChannel.strIconPath = iconPath;
+    }
 
     // user added channel to favorites
     if (isFav)
