@@ -220,6 +220,11 @@
                <default>false</default>
                <control type="toggle"/>
             </setting>
+            <setting id="channel_icons_cache" type="boolean" label="30070" help="">
+               <level>2</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
             <setting id="refresh_token" type="string" label="30034" help="">
                <level>3</level>
                <default />

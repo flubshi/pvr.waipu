@@ -140,6 +140,7 @@ public:
 private:
   bool m_isConnected = false;
   bool m_epg_show_preview_images = false;
+  bool m_channel_icons_cache = false;
   std::atomic<bool> m_loginThreadRunning = {false};
   std::mutex m_loginMutex;
   std::condition_variable m_loginCv;
