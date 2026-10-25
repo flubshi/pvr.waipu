@@ -251,6 +251,10 @@ msgctxt "#30063"
 msgid "Subscription"
 msgstr "Abonnement"
 
+msgctxt "#30070"
+msgid "Cache channel icons"
+msgstr ""
+
 #~ msgctxt "#30010"
 #~ msgid "O2 TV"
 #~ msgstr "O2 TV"

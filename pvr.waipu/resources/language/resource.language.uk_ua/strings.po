@@ -250,3 +250,7 @@ msgstr "Початковий номер каналу"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr "Підписка"
+
+msgctxt "#30070"
+msgid "Cache channel icons"
+msgstr ""

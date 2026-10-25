@@ -250,3 +250,7 @@ msgstr "Počáteční číslo kanálu"
 msgctxt "#30063"
 msgid "Subscription"
 msgstr "Předplatné"
+
+msgctxt "#30070"
+msgid "Cache channel icons"
+msgstr ""
