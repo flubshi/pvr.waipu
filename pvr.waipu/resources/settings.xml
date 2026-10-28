@@ -225,6 +225,11 @@
                <default>false</default>
                <control type="toggle"/>
             </setting>
+            <setting id="live_timeshift_program_start" type="boolean" label="30071" help="30072">
+               <level>2</level>
+               <default>false</default>
+               <control type="toggle"/>
+            </setting>
             <setting id="refresh_token" type="string" label="30034" help="">
                <level>3</level>
                <default />
