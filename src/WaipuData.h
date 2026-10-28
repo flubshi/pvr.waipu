@@ -33,6 +33,7 @@
 #include <condition_variable>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
@@ -141,6 +142,7 @@ private:
   bool m_isConnected = false;
   bool m_epg_show_preview_images = false;
   bool m_channel_icons_cache = false;
+  bool m_live_timeshift_program_start = false;
   std::atomic<bool> m_loginThreadRunning = {false};
   std::mutex m_loginMutex;
   std::condition_variable m_loginCv;
@@ -220,7 +222,9 @@ private:
 
   std::string GetChannelStreamURL(int uniqueId,
                                   const std::string& protocol,
-                                  const std::string& startTime);
+                                  const std::string& startTime,
+                                  bool silent = false);
+  std::optional<kodi::addon::PVREPGTag> GetCurrentEPGTag(const WaipuChannel& channel);
   std::string GetRecordingURL(const kodi::addon::PVRRecording& recording,
                               const std::string& protocol);
   const std::string& GetLicense();
