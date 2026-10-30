@@ -710,6 +710,7 @@ void WaipuData::ReadSettings()
       "channel_import_filter", CHANNEL_FILTER_ALL_VISIBLE);
   m_epg_show_preview_images = kodi::addon::GetSettingBoolean("epg_show_preview_images");
   m_channel_icons_cache = kodi::addon::GetSettingBoolean("channel_icons_cache");
+  m_live_timeshift_program_start = kodi::addon::GetSettingBoolean("live_timeshift_program_start");
   m_recordings_backend_handle_position =
       kodi::addon::GetSettingBoolean("recordings_backend_handle_position");
   m_refreshToken = JWT(kodi::addon::GetSettingString("refresh_token", ""));
@@ -773,6 +774,11 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
       kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
       return ADDON_STATUS_OK;
     }
+  }
+  else if (settingName == "live_timeshift_program_start")
+  {
+    m_live_timeshift_program_start = settingValue.GetBoolean();
+    return ADDON_STATUS_OK;
   }
   else if (settingName == "provider_select")
   {
@@ -1235,11 +1241,40 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
     kodi::Log(ADDON_LOG_DEBUG, "protocol auto select: %s", protocol.c_str());
   }
 
-  std::string strUrl = GetChannelStreamURL(channel.GetUniqueId(), protocol, "");
+  // optional: request the stream from the start of the running program (like playing an epg tag)
+  // to get a timeshift buffer, but start playback at the live position
+  std::string startTime = "";
+  if (m_live_timeshift_program_start && m_account_replay_allowed)
+  {
+    const auto& liveChannel = m_channels.find(channel.GetUniqueId());
+    if (liveChannel != m_channels.end() && !liveChannel->second.tvfuse)
+    {
+      const auto currentTag = GetCurrentEPGTag(liveChannel->second);
+      bool isPlayable = false;
+      if (currentTag && IsEPGTagPlayable(*currentTag, isPlayable) == PVR_ERROR_NO_ERROR &&
+          isPlayable)
+      {
+        startTime = std::to_string(currentTag->GetStartTime());
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] timeshift from program start: %s", __FUNCTION__,
+                  startTime.c_str());
+      }
+    }
+  }
+
+  // request silently if startTime is set: errors are handled by the fallback request
+  std::string strUrl =
+      GetChannelStreamURL(channel.GetUniqueId(), protocol, startTime, !startTime.empty());
+  if (strUrl.empty() && !startTime.empty())
+  {
+    // fallback: plain live stream
+    kodi::Log(ADDON_LOG_DEBUG, "[%s] fallback to live stream without timeshift", __FUNCTION__);
+    strUrl = GetChannelStreamURL(channel.GetUniqueId(), protocol, "");
+  }
   kodi::Log(ADDON_LOG_DEBUG, "Stream URL -> %s", strUrl.c_str());
 
   if (!strUrl.empty())
   {
+    // do not play timeshift buffer: playback starts at the live position
     SetStreamProperties(properties, strUrl, true, false, protocol);
     const auto& lruChannel = m_channels.find(channel.GetUniqueId());
     if (lruChannel != m_channels.end())
@@ -1251,7 +1286,8 @@ PVR_ERROR WaipuData::GetChannelStreamProperties(
 
 std::string WaipuData::GetChannelStreamURL(int uniqueId,
                                            const std::string& protocol,
-                                           const std::string& startTime)
+                                           const std::string& startTime,
+                                           bool silent)
 {
   if (!IsConnected())
   {
@@ -1300,6 +1336,13 @@ std::string WaipuData::GetChannelStreamURL(int uniqueId,
     {
       const std::string errorTitle = streamURLDoc["title"].get<std::string>();
       const std::string errorDetail = streamURLDoc["detail"].get<std::string>();
+
+      if (silent)
+      {
+        // caller handles the error, e.g. by falling back to the live stream
+        kodi::Log(ADDON_LOG_DEBUG, "[GetStreamURL] request denied: %s", errorDetail.c_str());
+        return "";
+      }
 
       if (errorDetail == "User is not allowed to view this channel")
       {
@@ -1688,6 +1731,73 @@ PVR_ERROR WaipuData::GetEPGForChannel(int channelUid,
   }
 
   return PVR_ERROR_NO_ERROR;
+}
+
+std::optional<kodi::addon::PVREPGTag> WaipuData::GetCurrentEPGTag(const WaipuChannel& channel)
+{
+  const int grid_align_hours = 4; // align 4h
+
+  std::string channelid = channel.waipuID;
+  std::transform(channelid.begin(), channelid.end(), channelid.begin(), ::tolower);
+
+  const time_t current_time = time(NULL);
+  char startTimeBuf[30];
+
+  // the running program may have started in the previous grid window
+  for (const time_t gridTime : {current_time, current_time - grid_align_hours * 60 * 60})
+  {
+    struct tm* tm = std::gmtime(&gridTime);
+    tm->tm_hour -= tm->tm_hour % grid_align_hours; // align to grid window
+
+    // 2024-05-17T17:00:00.000Z
+    strftime(startTimeBuf, 30, "%Y-%m-%dT%H:00:00.000Z", tm);
+
+    const std::string jsonEpg =
+        HttpGet("https://epg-cache.waipu.tv/api/grid/" + channelid + "/" + startTimeBuf);
+
+    nlohmann::json epgDoc;
+    try
+    {
+      epgDoc = nlohmann::json::parse(jsonEpg);
+    }
+    catch (const nlohmann::json::parse_error&)
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: error while parsing json", __FUNCTION__);
+      return std::nullopt;
+    }
+    if (!epgDoc.is_array())
+    {
+      kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: epg grid is not an array", __FUNCTION__);
+      return std::nullopt;
+    }
+
+    for (const auto& epgData : epgDoc)
+    {
+      const std::string entryStartTime = JsonValue<std::string>(epgData, "startTime", "");
+      const std::string entryEndTime = JsonValue<std::string>(epgData, "stopTime", "");
+      if (JsonValue<std::string>(epgData, "id", "").empty() || entryStartTime.empty() ||
+          entryEndTime.empty())
+        continue;
+
+      if (Utils::StringToTime(entryStartTime) <= current_time &&
+          current_time < Utils::StringToTime(entryEndTime))
+      {
+        try
+        {
+          return ParseEPGTagEntry(epgData, channel.iUniqueId, channel.waipuID, false);
+        }
+        catch (const nlohmann::json::exception&)
+        {
+          kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: invalid epg entry", __FUNCTION__);
+          return std::nullopt;
+        }
+      }
+    }
+  }
+
+  kodi::Log(ADDON_LOG_DEBUG, "[%s] no running program found for channel '%s'", __FUNCTION__,
+            channel.waipuID.c_str());
+  return std::nullopt;
 }
 
 PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable)
