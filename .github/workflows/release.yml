@@ -14,7 +14,7 @@ jobs:
 
       # Checkout the current repository into a directory (repositories name)
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           path: ${{ github.event.repository.name }}
@@ -53,14 +53,14 @@ jobs:
       # - tag and release name format: {steps.required-variables.outputs.version}-{steps.required-variables.outputs.branch} ie. 21.0.0-Omega
       # - release body: {steps.required-variables.outputs.changes}
       - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.required-variables.outputs.version }}-${{ steps.required-variables.outputs.branch }}
-          release_name: ${{ steps.required-variables.outputs.version }}-${{ steps.required-variables.outputs.branch }}
-          body: ${{ steps.required-variables.outputs.changes }}
-          draft: false
-          prerelease: false
-          commitish: ${{ steps.required-variables.outputs.branch }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ steps.required-variables.outputs.version }}-${{ steps.required-variables.outputs.branch }}
+          CHANGES: ${{ steps.required-variables.outputs.changes }}
+          BRANCH: ${{ steps.required-variables.outputs.branch }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "$CHANGES" \
+            --target "$BRANCH"
