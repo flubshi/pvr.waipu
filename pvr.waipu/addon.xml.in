@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon
   id="pvr.waipu"
-  version="22.10.2"
+  version="22.10.3"
   name="waipu.tv PVR Client"
   provider-name="flubshi">
   <requires>@ADDON_DEPENDS@
@@ -26,9 +26,10 @@
       <screenshot>resources/screenshots/screenshot-02.jpg</screenshot>
     </assets>
     <news>
-v22.10.2
-- Channel logos are now loaded directly by Kodi; caching icons locally is optional
-- Improve robustness when parsing channel list and recording stream data
+v22.10.3
+- Fix HLS playback via inputstream.ffmpegdirect failing with HTTP 406 on some channels (e.g. FAST channels)
+- Fall back to inputstream.adaptive if inputstream.ffmpegdirect is enabled but not installed
+- Do not use inputstream.ffmpegdirect by default for HLS streams
     </news>
     <summary lang="bs_BA">waipu.tv PVR klijent</summary>
     <summary lang="cs_CZ">Klient PVR pro waipu.tv</summary>
