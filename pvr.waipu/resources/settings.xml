@@ -175,7 +175,7 @@
 				</setting>
             <setting id="streaming_use_ffmpegdirect" type="boolean" label="30048" help="30054">
                <level>2</level>
-               <default>true</default>
+               <default>false</default>
                <control type="toggle"/>
                <dependencies>
                   <dependency type="visible" operator="!is" setting="protocol">dash</dependency>
