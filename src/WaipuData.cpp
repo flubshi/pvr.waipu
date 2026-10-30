@@ -878,8 +878,19 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 {
   kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] url: %s", url.c_str());
 
-  properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, url);
+  std::string streamUrl = url;
   properties.emplace_back(PVR_STREAM_PROPERTY_ISREALTIMESTREAM, realtime ? "true" : "false");
+
+  const bool isHls = protocol == "hls" || protocol == "HLS";
+  bool useFfmpegDirect =
+      isHls && kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false);
+  if (useFfmpegDirect && !Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
+  {
+    // fall back to inputstream.adaptive instead of letting Kodi's internal demuxer
+    // open the stream (which fails the same way as ffmpegdirect without headers)
+    kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
+    useFfmpegDirect = false;
+  }
 
   if ((protocol == "dash" || protocol == "MPEG_DASH") &&
       Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
@@ -907,24 +918,24 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
 
     properties.emplace_back("inputstream.adaptive.drm", drmConfig.dump());
   }
-  else if ((protocol == "hls" || protocol == "HLS") &&
-           kodi::addon::GetSettingBoolean("streaming_use_ffmpegdirect", false))
+  else if (useFfmpegDirect)
   {
-    if (!Utils::CheckInputstreamInstalledAndEnabled("inputstream.ffmpegdirect"))
-    {
-      kodi::addon::SetSettingBoolean("streaming_use_ffmpegdirect", false);
-      return;
-    }
     // HLS
     kodi::Log(ADDON_LOG_DEBUG, "[PLAY STREAM] hls using inputstream.ffmpegdirect");
+
+    // waipu.tv's edge answers HLS playlist requests without gzip support with
+    // HTTP 406 ("client must support gzip encoding"). FFmpeg does not send
+    // Accept-Encoding by default, and ffmpegdirect only forwards headers outside
+    // its allowlist when they are prefixed with '!'.
+    streamUrl += (streamUrl.find('|') == std::string::npos ? "|" : "&");
+    streamUrl += "!Accept-Encoding=gzip";
     properties.emplace_back(PVR_STREAM_PROPERTY_INPUTSTREAM, "inputstream.ffmpegdirect");
     properties.emplace_back("inputstream.ffmpegdirect.manifest_type", "hls");
     properties.emplace_back(PVR_STREAM_PROPERTY_MIMETYPE, "application/x-mpegURL");
     properties.emplace_back("inputstream.ffmpegdirect.is_realtime_stream",
                             realtime ? "true" : "false");
   }
-  else if ((protocol == "hls" || protocol == "HLS") &&
-           Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
+  else if (isHls && Utils::CheckInputstreamInstalledAndEnabled("inputstream.adaptive"))
   {
     kodi::Log(ADDON_LOG_DEBUG,
               "[SetStreamProperties] play protocol '%s' using inputstream adaptive",
@@ -945,6 +956,8 @@ void WaipuData::SetStreamProperties(std::vector<kodi::addon::PVRStreamProperty>&
         "[SetStreamProperties] called with invalid protocol '%s' or missing inputstream addon.",
         protocol.c_str());
   }
+
+  properties.emplace_back(PVR_STREAM_PROPERTY_STREAMURL, streamUrl);
 }
 
 bool WaipuData::LoadChannelData()
