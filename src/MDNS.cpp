@@ -78,8 +78,7 @@ void MDNS::StartRegistrationService(const std::string& userCode)
   // query thread for incoming PTR queries
   m_queryThread = std::thread(&MDNS::QueryLoop, this);
 
-  kodi::Log(ADDON_LOG_INFO, "[mDNS] onServiceRegistered – name: %s | user code: %s",
-            m_serviceName.c_str(), m_userCode.c_str());
+  kodi::Log(ADDON_LOG_INFO, "[mDNS] onServiceRegistered – name: %s", m_serviceName.c_str());
 }
 
 void MDNS::StopRegistrationService()

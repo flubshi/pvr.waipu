@@ -199,7 +199,7 @@ WAIPU_LOGIN_STATUS WaipuData::Login()
     // refresh API token
     std::string req = "refresh_token=" + Utils::UrlEncode(m_refreshToken.getToken()) +
                       "&grant_type=refresh_token" + "&waipu_device_id=" + m_device_id;
-    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh): %s;", req.c_str());
+    kodi::Log(ADDON_LOG_DEBUG, "[login check] Login-Request (refresh)");
     return OAuthRequest(req);
   }
 
@@ -347,14 +347,12 @@ bool WaipuData::ParseAccessToken()
   }
 
   m_userhandle = m_accessToken.getFieldUserHandle();
-  kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.c_str());
+  kodi::Log(ADDON_LOG_DEBUG, "[jwt] userHandle: %s", m_userhandle.empty() ? "missing" : "present");
   // generate the license
   std::string license_plain = "{\"merchant\" : \"exaring\", \"sessionId\" : \"default\", "
                               "\"userId\" : \"" +
                               m_userhandle + "\"}";
-  kodi::Log(ADDON_LOG_DEBUG, "[jwt] license_plain: %s", license_plain.c_str());
   m_license = base64_encode(license_plain.c_str(), license_plain.length());
-  kodi::Log(ADDON_LOG_DEBUG, "[jwt] license: %s", m_license.c_str());
 
   m_account_replay_allowed = m_accessToken.getFieldInstantRestart();
   kodi::Log(ADDON_LOG_DEBUG, "[jwt] Account InstantStart: %i", m_account_replay_allowed);
@@ -394,8 +392,7 @@ const std::map<std::string, std::string> WaipuData::GetOAuthDeviceCode(const std
                                      m_device_id + "\"}",
                                  statusCode);
 
-  kodi::Log(ADDON_LOG_DEBUG, "[login check] GetOAuthDeviceCode-response: (HTTP %i) %s;", statusCode,
-            jsonString.c_str());
+  kodi::Log(ADDON_LOG_DEBUG, "[login check] GetOAuthDeviceCode-response: (HTTP %i)", statusCode);
 
   if (jsonString.empty() && statusCode == -1)
   {
@@ -422,7 +419,7 @@ const std::map<std::string, std::string> WaipuData::GetOAuthDeviceCode(const std
       if (doc.contains(key))
       {
         const std::string value = doc[key].get<std::string>();
-        kodi::Log(ADDON_LOG_DEBUG, "[GetOAuthDeviceCode] found %s: %s", key.c_str(), value.c_str());
+        kodi::Log(ADDON_LOG_DEBUG, "[GetOAuthDeviceCode] found %s", key.c_str());
         result[key] = value;
       }
     }
@@ -446,8 +443,7 @@ const std::map<std::string, std::string> WaipuData::CheckOAuthState(const std::s
           "&grant_type=urn:ietf:params:oauth:grant-type:device_code&waipu_device_id=" + m_device_id,
       statusCode);
 
-  kodi::Log(ADDON_LOG_DEBUG, "[login check] CheckOAuthState-response: (HTTP %i) %s;", statusCode,
-            jsonString.c_str());
+  kodi::Log(ADDON_LOG_DEBUG, "[login check] CheckOAuthState-response: (HTTP %i)", statusCode);
 
   if (jsonString.empty() && statusCode == -1)
   {
@@ -473,7 +469,7 @@ const std::map<std::string, std::string> WaipuData::CheckOAuthState(const std::s
       if (doc.contains(key))
       {
         const std::string value = doc[key].get<std::string>();
-        kodi::Log(ADDON_LOG_DEBUG, "[CheckOAuthState] found %s: %s", key.c_str(), value.c_str());
+        kodi::Log(ADDON_LOG_DEBUG, "[CheckOAuthState] found %s", key.c_str());
         result[key] = value;
       }
     }
@@ -483,7 +479,6 @@ const std::map<std::string, std::string> WaipuData::CheckOAuthState(const std::s
 
 WAIPU_LOGIN_STATUS WaipuData::OAuthRequest(const std::string& postData)
 {
-  kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] Body: %s;", postData.c_str());
   std::string jsonString;
   // curl request
   Curl curl;
@@ -494,8 +489,7 @@ WAIPU_LOGIN_STATUS WaipuData::OAuthRequest(const std::string& postData)
   jsonString =
       HttpRequestToCurl(curl, "POST", "https://auth.waipu.tv/oauth/token", postData, statusCode);
 
-  kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] Login-response: (HTTP %i) %s;", statusCode,
-            jsonString.c_str());
+  kodi::Log(ADDON_LOG_DEBUG, "[OAuthRequest] Login-response: (HTTP %i)", statusCode);
 
   if (statusCode == -1)
   {
@@ -673,8 +667,6 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
                {{"Content-Type", "application/vnd.dc.device-info-v1+json"},
                 {"X-USERCONTEXT-USERHANDLE", m_userhandle.c_str()}});
 
-  kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] response: %s", jsonDeviceToken.c_str());
-
   nlohmann::json deviceTokenDoc;
   try
   {
@@ -689,8 +681,8 @@ bool WaipuData::RefreshDeviceCapabiltiesToken()
   if (deviceTokenDoc.contains("token"))
   {
     m_deviceCapabilitiesToken = JWT(deviceTokenDoc["token"].get<std::string>());
-    kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token: %s",
-              m_deviceCapabilitiesToken.getToken().c_str());
+    kodi::Log(ADDON_LOG_DEBUG, "[X-Device-Token] discovered token, exp: %i",
+              m_deviceCapabilitiesToken.getExp());
     return true;
   }
 
