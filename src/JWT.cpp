@@ -44,9 +44,8 @@ JWT::JWT(std::string token)
   std::vector<std::string> jwt_arr = kodi::tools::StringUtils::Split(strToken, ".", 3);
   if (jwt_arr.size() == 3)
   {
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] middle: %s", jwt_arr.at(1).c_str());
+    // Do not log the token or its payload: it contains account data (e-mail, user handle, ...)
     std::string jwt_payload = base64_decode(jwt_arr.at(1));
-    kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] payload: %s", jwt_payload.c_str());
 
     json jwtPayload;
     try
@@ -55,7 +54,9 @@ JWT::JWT(std::string token)
     }
     catch (const json::parse_error& e)
     {
-      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: error while parsing json: %s", e.what());
+      // e.what() quotes parts of the payload, so only log the position
+      kodi::Log(ADDON_LOG_ERROR, "[jwt parse doc] ERROR: error while parsing json at byte %zu",
+                e.byte);
       return;
     }
 
@@ -84,6 +85,7 @@ JWT::JWT(std::string token)
     fieldUserHandle = jwtPayload.value("userHandle", "");
     fieldEmail = jwtPayload.value("email", "");
     this->initialized = true;
+    kodi::Log(ADDON_LOG_DEBUG, "[jwt parse] iat: %i, exp: %i", iat, exp);
   }
 }
 
