@@ -1,0 +1,290 @@
+name: Update pvr.waipu in LibreELEC
+
+# Manually triggered. Checks whether the latest pvr.waipu release of the selected
+# major version is contained in the mapped LibreELEC.tv branch. If not, the
+# package.mk is updated on a branch in the token owner's LibreELEC.tv fork and a
+# pull request against LibreELEC/LibreELEC.tv is opened (or the open one updated).
+#
+# Setup:
+#   - Secret LIBREELEC_PR_TOKEN: classic PAT with scope "public_repo".
+#     Fine-grained PATs cannot open pull requests in repositories the user is not a member of.
+#   - The token owner needs a fork of LibreELEC/LibreELEC.tv. If it is not named
+#     <owner>/LibreELEC.tv, set the repository variable LIBREELEC_FORK (e.g. "flubshi/LibreELEC.tv").
+#   - When LibreELEC branches off a release, update BRANCH_MAP and the "major" choices.
+
+on:
+  workflow_dispatch:
+    inputs:
+      major:
+        description: pvr.waipu major version
+        type: choice
+        options:
+          - "22"
+          - "21"
+        default: "22"
+      dry_run:
+        description: Only check, do not push or open a pull request
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: libreelec-update-${{ inputs.major }}
+
+env:
+  # Fixed mapping: pvr.waipu major version -> LibreELEC.tv branch
+  BRANCH_MAP: '{"22": "master", "21": "libreelec-12.2"}'
+  UPSTREAM_REPO: LibreELEC/LibreELEC.tv
+  PKG_PATH: packages/mediacenter/kodi-binary-addons/pvr.waipu/package.mk
+  ADDON_REPO: flubshi/pvr.waipu
+  CHANGELOG_MAX_ENTRIES: 15
+
+jobs:
+  update:
+    name: pvr.waipu ${{ inputs.major }} -> LibreELEC
+    # Never run in forks of pvr.waipu (job is shown as skipped there)
+    if: github.repository == 'flubshi/pvr.waipu'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    env:
+      MAJOR: ${{ inputs.major }}
+      LIBREELEC_FORK: ${{ vars.LIBREELEC_FORK }}
+
+    steps:
+      # Read-only: resolve branch/fork, compare the LibreELEC version with the latest release
+      - name: Compare LibreELEC with latest release
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.LIBREELEC_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::Secret LIBREELEC_PR_TOKEN is not set"
+            exit 1
+          fi
+
+          le_branch=$(jq -r --arg m "$MAJOR" '.[$m] // empty' <<<"$BRANCH_MAP")
+          if [[ -z "$le_branch" ]]; then
+            echo "::error::No LibreELEC branch mapped for major version $MAJOR"
+            exit 1
+          fi
+          base_sha=$(gh api "repos/$UPSTREAM_REPO/git/ref/heads/$le_branch" --jq .object.sha)
+
+          # package.mk as currently in LibreELEC
+          gh api "repos/$UPSTREAM_REPO/contents/$PKG_PATH?ref=$base_sha" > contents.json
+          jq -r .content contents.json | base64 -d > package.mk
+          blob_sha=$(jq -r .sha contents.json)
+          current=$(sed -n 's/^PKG_VERSION="\(.*\)"$/\1/p' package.mk)
+          if [[ -z "$current" ]]; then
+            echo "::error::PKG_VERSION not found in $PKG_PATH on $le_branch"
+            exit 1
+          fi
+
+          # Published releases of the selected major version, oldest first
+          gh api --paginate "repos/$ADDON_REPO/releases?per_page=100" \
+            --jq '.[] | select((.draft or .prerelease) | not) | {tag: .tag_name, url: .html_url, body: (.body // "")}' \
+            | jq -s --argjson major "$MAJOR" '
+                map(. + {ver: (.tag | capture("^v?(?<v>[0-9]+\\.[0-9]+\\.[0-9]+)").v | split(".") | map(tonumber))})
+                | map(select(.ver[0] == $major))
+                | sort_by(.ver)' > releases.json
+
+          latest=$(jq -r 'last.tag // empty' releases.json)
+          if [[ -z "$latest" ]]; then
+            echo "::error::No release found for major version $MAJOR in $ADDON_REPO"
+            exit 1
+          fi
+
+          # Releases newer than the version in LibreELEC, newest first
+          jq --arg cur "$current" '
+              (($cur | capture("^v?(?<v>[0-9]+\\.[0-9]+\\.[0-9]+)").v | split(".") | map(tonumber)) // [0, 0, 0]) as $c
+              | map(select(.ver > $c))
+              | reverse' releases.json > newer.json
+
+          needs_update=false
+          [[ $(jq length newer.json) -gt 0 ]] && needs_update=true
+
+          # Fork for the pull request branch
+          fork="${LIBREELEC_FORK:-$(gh api user --jq .login)/LibreELEC.tv}"
+          fork_owner="${fork%%/*}"
+          pr_branch="pvr.waipu-$le_branch"
+          blocked_by=""
+
+          if [[ "$needs_update" == true ]]; then
+            if ! parent=$(gh api "repos/$fork" --jq '.parent.full_name // ""' 2>/dev/null); then
+              echo "::error::Fork $fork not found. Create it (gh repo fork $UPSTREAM_REPO --clone=false) or set the variable LIBREELEC_FORK."
+              exit 1
+            fi
+            if [[ "$parent" != "$UPSTREAM_REPO" ]]; then
+              echo "::error::$fork is not a fork of $UPSTREAM_REPO"
+              exit 1
+            fi
+
+            # Someone else (e.g. a LibreELEC maintainer) may already have opened a PR for this version.
+            # Other addons share the version scheme (e.g. pvr.zattoo 22.10.3-Piers), so require both strings.
+            blocked_by=$(gh pr list --repo "$UPSTREAM_REPO" --state open --search "pvr.waipu \"$latest\"" \
+                           --json url,title,body,headRefName,headRepositoryOwner \
+                         | jq -r --arg own "$fork_owner:$pr_branch" --arg v "$latest" '
+                             [.[]
+                              | select((.headRepositoryOwner.login + ":" + .headRefName) != $own)
+                              | select((.title + "\n" + (.body // "")) | contains("pvr.waipu") and contains($v))
+                              | .url] | join(" ")')
+          fi
+
+          {
+            echo "le_branch=$le_branch"
+            echo "base_sha=$base_sha"
+            echo "blob_sha=$blob_sha"
+            echo "current=$current"
+            echo "latest=$latest"
+            echo "needs_update=$needs_update"
+            echo "fork=$fork"
+            echo "fork_owner=$fork_owner"
+            echo "pr_branch=$pr_branch"
+            echo "blocked_by=$blocked_by"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### pvr.waipu $MAJOR → LibreELEC \`$le_branch\`"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Version in LibreELEC | \`$current\` |"
+            echo "| Latest release | \`$latest\` |"
+            echo "| Update needed | $needs_update |"
+            [[ -n "$blocked_by" ]] && echo "| Already proposed in | $blocked_by |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -n "$blocked_by" ]]; then
+            echo "::notice::$latest is already proposed in: $blocked_by"
+          elif [[ "$needs_update" == false ]]; then
+            echo "::notice::LibreELEC $le_branch already contains $current (latest release: $latest)"
+          fi
+
+      - name: Prepare package.mk and pull request text
+        if: steps.check.outputs.needs_update == 'true'
+        env:
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          set -euo pipefail
+
+          # Download URL as LibreELEC builds it (only plain variable substitution, no eval)
+          site=$(sed -n 's/^PKG_SITE="\(.*\)"$/\1/p' package.mk)
+          if [[ "$site" != "https://github.com/$ADDON_REPO" ]]; then
+            echo "::error::PKG_SITE in LibreELEC ($site) does not point to $ADDON_REPO"
+            exit 1
+          fi
+          url=$(sed -n 's/^PKG_URL="\(.*\)"$/\1/p' package.mk)
+          # shellcheck disable=SC2016  # literal ${...} placeholders
+          url=${url//'${PKG_SITE}'/$site}
+          # shellcheck disable=SC2016
+          url=${url//'${PKG_VERSION}'/$LATEST}
+          if [[ "$url" == *'$'* || -z "$url" ]]; then
+            echo "::error::Cannot resolve PKG_URL: $url"
+            exit 1
+          fi
+          sha256=$(curl -fsSL --retry 3 "$url" | sha256sum | cut -d' ' -f1)
+
+          sed -i -e "s|^PKG_VERSION=\".*\"|PKG_VERSION=\"$LATEST\"|" \
+                 -e "s|^PKG_SHA256=\".*\"|PKG_SHA256=\"$sha256\"|" package.mk
+          grep -qx "PKG_VERSION=\"$LATEST\"" package.mk
+          grep -qx "PKG_SHA256=\"$sha256\"" package.mk
+
+          total=$(jq length newer.json)
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          {
+            echo "Update pvr.waipu from \`$CURRENT\` to \`$LATEST\`."
+            echo
+            echo "## Changelog"
+            echo
+            # Release body = news entry; drop its leading "vX.Y.Z" line (the heading carries the tag)
+            # and turn "#123" into "flubshi/pvr.waipu#123", otherwise it would link to LibreELEC issues
+            jq -r --argjson n "$CHANGELOG_MAX_ENTRIES" --arg repo "$ADDON_REPO" '
+                .[:$n][]
+                | (.body
+                   | gsub("\r"; "")
+                   | sub("^v?[0-9]+\\.[0-9]+\\.[0-9]+[^\n]*\n"; "")
+                   | gsub("(?<p>^|[\\s(\\[])#(?<n>[0-9]+)\\b"; "\(.p)\($repo)#\(.n)")
+                   | rtrimstr("\n")) as $notes
+                | "### [\(.tag)](\(.url))\n\($notes)\n"' newer.json
+            if (( total > CHANGELOG_MAX_ENTRIES )); then
+              echo "_… and $((total - CHANGELOG_MAX_ENTRIES)) older releases: https://github.com/$ADDON_REPO/releases_"
+              echo
+            fi
+            echo "---"
+            echo "<sub>Created by the [LibreELEC update workflow]($run_url) of $ADDON_REPO.</sub>"
+          } > body.md
+
+          {
+            echo "<details><summary>package.mk / pull request text</summary>"
+            echo
+            echo '```'
+            head -n 12 package.mk
+            echo '```'
+            echo
+            cat body.md
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Create or update pull request
+        if: >-
+          steps.check.outputs.needs_update == 'true'
+          && steps.check.outputs.blocked_by == ''
+          && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ secrets.LIBREELEC_PR_TOKEN }}
+          LE_BRANCH: ${{ steps.check.outputs.le_branch }}
+          BASE_SHA: ${{ steps.check.outputs.base_sha }}
+          BLOB_SHA: ${{ steps.check.outputs.blob_sha }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+          FORK: ${{ steps.check.outputs.fork }}
+          FORK_OWNER: ${{ steps.check.outputs.fork_owner }}
+          PR_BRANCH: ${{ steps.check.outputs.pr_branch }}
+        run: |
+          set -euo pipefail
+
+          title="pvr.waipu: update $CURRENT to $LATEST"
+          head="$FORK_OWNER:$PR_BRANCH"
+
+          existing=$(gh api "repos/$UPSTREAM_REPO/pulls?state=open&head=$head" --jq '.[0] // {}')
+          number=$(jq -r '.number // empty' <<<"$existing")
+          if [[ -n "$number" && "$(jq -r .title <<<"$existing")" == "$title" ]]; then
+            echo "::notice::Pull request #$number already proposes $LATEST"
+            echo "Pull request already up to date: https://github.com/$UPSTREAM_REPO/pull/$number" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Point the PR branch in the fork at the current head of the LibreELEC branch
+          # (forks share their object store with the parent, so the upstream SHA is valid there)
+          if gh api "repos/$FORK/git/ref/heads/$PR_BRANCH" --silent 2>/dev/null; then
+            gh api -X PATCH "repos/$FORK/git/refs/heads/$PR_BRANCH" -f sha="$BASE_SHA" -F force=true --silent
+          else
+            gh api -X POST "repos/$FORK/git/refs" -f ref="refs/heads/$PR_BRANCH" -f sha="$BASE_SHA" --silent
+          fi
+
+          # Commit the updated package.mk on top of it
+          gh api -X PUT "repos/$FORK/contents/$PKG_PATH" \
+            -f message="$title" \
+            -f content="$(base64 -w0 package.mk)" \
+            -f sha="$BLOB_SHA" \
+            -f branch="$PR_BRANCH" --silent
+
+          if [[ -n "$number" ]]; then
+            pr_url=$(gh api -X PATCH "repos/$UPSTREAM_REPO/pulls/$number" \
+                       -f title="$title" -F body=@body.md --jq .html_url)
+            echo "::notice::Updated pull request: $pr_url"
+          else
+            pr_url=$(gh api "repos/$UPSTREAM_REPO/pulls" \
+                       -f title="$title" -f head="$head" -f base="$LE_BRANCH" \
+                       -F body=@body.md -F maintainer_can_modify=true --jq .html_url)
+            echo "::notice::Created pull request: $pr_url"
+          fi
+          echo "Pull request: $pr_url" >> "$GITHUB_STEP_SUMMARY"
