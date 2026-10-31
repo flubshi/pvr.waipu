@@ -254,3 +254,11 @@ msgstr "Předplatné"
 msgctxt "#30070"
 msgid "Cache channel icons"
 msgstr "Mezipaměť ikon kanálu"
+
+msgctxt "#30071"
+msgid "Allow rewinding live TV to start of program"
+msgstr ""
+
+msgctxt "#30072"
+msgid "Pause and rewind live TV up to the start of the current program. Requires Instant Restart."
+msgstr ""

@@ -255,6 +255,14 @@ msgctxt "#30070"
 msgid "Cache channel icons"
 msgstr "Cachear iconos de canales"
 
+msgctxt "#30071"
+msgid "Allow rewinding live TV to start of program"
+msgstr ""
+
+msgctxt "#30072"
+msgid "Pause and rewind live TV up to the start of the current program. Requires Instant Restart."
+msgstr ""
+
 #~ msgctxt "#30010"
 #~ msgid "O2 TV"
 #~ msgstr "O2 TV"
