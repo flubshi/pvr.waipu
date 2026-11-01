@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2026-10-26 09:36+0000\n"
+"PO-Revision-Date: 2026-11-01 01:12+0000\n"
 "Last-Translator: Michal Várady <miko.vaji@gmail.com>\n"
 "Language-Team: Czech <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/cs_cz/>\n"
 "Language: cs_cz\n"
@@ -73,7 +73,7 @@ msgstr "Zvukové kodeky"
 
 msgctxt "#30014"
 msgid "SD-PALp25: h264; 720x540; 25fps"
-msgstr "SD-PALp50: h264; 720x540; 25fps"
+msgstr "SD-PALp25: h264; 720x540; 25fps"
 
 msgctxt "#30015"
 msgid "SD-PALp50: h264; 720x540; 50fps"
@@ -253,12 +253,12 @@ msgstr "Předplatné"
 
 msgctxt "#30070"
 msgid "Cache channel icons"
-msgstr "Mezipaměť ikon kanálu"
+msgstr "Ukládat ikony kanálů do mezipaměti"
 
 msgctxt "#30071"
 msgid "Allow rewinding live TV to start of program"
-msgstr ""
+msgstr "Povolit přetáčení živé TV zpět až na začátek pořadu"
 
 msgctxt "#30072"
 msgid "Pause and rewind live TV up to the start of the current program. Requires Instant Restart."
-msgstr ""
+msgstr "Umožňuje pozastavit živou TV a přetáčet ji zpět až na začátek právě vysílaného pořadu. Vyžaduje funkci Instant Restart."
