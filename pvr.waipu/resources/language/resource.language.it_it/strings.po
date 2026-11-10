@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: translations@kodi.tv\n"
-"PO-Revision-Date: 2026-10-26 08:07+0000\n"
+"PO-Revision-Date: 2026-11-01 03:44+0000\n"
 "Last-Translator: Massimo Pissarello <mapi68@gmail.com>\n"
 "Language-Team: Italian <https://kodi.weblate.cloud/projects/kodi-add-ons-pvr-clients/pvr-waipu/it_it/>\n"
 "Language: it_it\n"
@@ -257,11 +257,11 @@ msgstr "Memorizza nella cache le icone dei canali"
 
 msgctxt "#30071"
 msgid "Allow rewinding live TV to start of program"
-msgstr ""
+msgstr "Consenti il riavvolgimento della Live TV all'inizio del programma"
 
 msgctxt "#30072"
 msgid "Pause and rewind live TV up to the start of the current program. Requires Instant Restart."
-msgstr ""
+msgstr "Metti in pausa e riavvolgi la Live TV fino all'inizio del programma in corso. Richiede il riavvio immediato."
 
 #~ msgctxt "#30010"
 #~ msgid "O2 TV"
