@@ -41,6 +41,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <ctime>
 #include <functional>
 #include <future>
@@ -313,8 +314,8 @@ void WaipuData::LoginThread()
       {
         m_lastUpdate = std::time(0);
         kodi::addon::CInstancePVRClient::TriggerChannelUpdate();
-        kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-        kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+        if (previousStatus != m_login_status)
+          RequestRecordingsRefresh(false);
       }
 
       continue;
@@ -822,7 +823,7 @@ ADDON_STATUS WaipuData::SetSetting(const std::string& settingName,
   }
   else if (settingName == "recordings_additional_infos")
   {
-    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+    RequestRecordingsRefresh(true);
   }
   else if (settingName == "recordings_backend_handle_position")
   {
@@ -1946,7 +1947,8 @@ PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  amount = m_recordings_count;
+  std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+  amount = static_cast<int>(m_cachedRecordings.size());
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -2050,48 +2052,52 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
     tag.SetDirectory(RecordingFolderName(groupTitle.empty() ? rec_title : groupTitle));
   }
 
-  // Additional program details like year or plot are on available in an additional details request. Maybe we should provide this as settings option?
   if (kodi::addon::GetSettingBoolean("recordings_additional_infos", false))
   {
-
-    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
-                               {{"Accept", "application/vnd.waipu.recording-v4+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
-
-    nlohmann::json doc;
-    try
+    auto details = m_recordingDetails.find(recordingId);
+    if (details == m_recordingDetails.end())
     {
-      doc = nlohmann::json::parse(json);
-      if (doc.contains("programDetails"))
+      std::string json = HttpGet("https://recording.waipu.tv/api/recordings/" + recordingId,
+                                 {{"Accept", "application/vnd.waipu.recording-v4+json"}});
+      kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
+
+      try
       {
-        if (doc["programDetails"].contains("textContent"))
+        const nlohmann::json doc = nlohmann::json::parse(json);
+        RecordingDetails parsed;
+        if (doc.contains("programDetails"))
         {
-          if (doc["programDetails"]["textContent"].contains("descLong"))
+          const auto& programDetails = doc["programDetails"];
+          if (programDetails.contains("textContent"))
           {
-            std::string descr = doc["programDetails"]["textContent"]["descLong"].get<std::string>();
-            tag.SetPlot(descr);
-            tag.SetPlotOutline(descr);
+            if (programDetails["textContent"].contains("descLong"))
+              parsed.plot = programDetails["textContent"]["descLong"].get<std::string>();
+            else if (programDetails["textContent"].contains("descShort"))
+              parsed.plot = programDetails["textContent"]["descShort"].get<std::string>();
           }
-          else if (doc["programDetails"]["textContent"].contains("descShort"))
+          if (programDetails.contains("production") &&
+              programDetails["production"].contains("year"))
           {
-            std::string descr =
-                doc["programDetails"]["textContent"]["descShort"].get<std::string>();
-            tag.SetPlot(descr);
-            tag.SetPlotOutline(descr);
+            parsed.year =
+                Utils::StringToInt(programDetails["production"]["year"].get<std::string>(), 1970);
           }
         }
-        if (doc["programDetails"].contains("production"))
-        {
-          if (doc["programDetails"]["production"].contains("year"))
-          {
-            std::string year = doc["programDetails"]["production"]["year"].get<std::string>();
-            tag.SetYear(Utils::StringToInt(year, 1970));
-          }
-        }
+        details = m_recordingDetails.emplace(recordingId, std::move(parsed)).first;
+      }
+      catch (const nlohmann::json::exception&)
+      {
       }
     }
-    catch (const nlohmann::json::parse_error&)
+
+    if (details != m_recordingDetails.end())
     {
+      if (!details->second.plot.empty())
+      {
+        tag.SetPlot(details->second.plot);
+        tag.SetPlotOutline(details->second.plot);
+      }
+      if (details->second.year > 0)
+        tag.SetYear(details->second.year);
     }
   }
   return tag;
@@ -2099,19 +2105,36 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
 
 namespace
 {
-// Counting entries misses changes: a recording group is one entry in the top-level list but
-// several recordings in GetRecordings().
+// Light refresh: one request for the top-level list, detects changes and rebuilds the timers.
+constexpr std::chrono::minutes RECORDINGS_REFRESH_INTERVAL{5};
+// Full refresh: also reloads all recording groups, catches changes the top-level list does not
+// show (e.g. a new episode in an existing group, watched state, play position).
+constexpr time_t RECORDINGS_FULL_REFRESH_SECONDS = 30 * 60;
+constexpr time_t RECORDINGS_MIN_REFRESH_SECONDS = 60;
+constexpr time_t RECORDING_POSITION_MAX_AGE_SECONDS = 60;
+constexpr size_t RECORDING_GROUPS_PARALLEL_REQUESTS = 6;
+
+const std::map<std::string, std::string> RECORDINGS_ACCEPT_HEADER = {
+    {"Accept", "application/vnd.waipu.recordings-v4+json"}};
+
+std::string GetStatus(const nlohmann::json& entry)
+{
+  return entry.contains("status") && entry["status"].is_string()
+             ? entry["status"].get<std::string>()
+             : "";
+}
+
+bool IsLocked(const nlohmann::json& entry)
+{
+  return entry.contains("locked") && entry["locked"].is_boolean() && entry["locked"].get<bool>();
+}
+
 size_t RecordingsFingerprint(const nlohmann::json& list)
 {
   std::string signature;
-  if (!list.is_array())
-    return 0;
-
   for (const auto& entry : list)
   {
-    const std::string status = entry.contains("status") && entry["status"].is_string()
-                                   ? entry["status"].get<std::string>()
-                                   : "";
+    const std::string status = GetStatus(entry);
     if (status == "SCHEDULED")
       continue;
 
@@ -2119,7 +2142,7 @@ size_t RecordingsFingerprint(const nlohmann::json& list)
     signature += ':' + status + ':';
     if (entry.contains("recordingGroup") && entry["recordingGroup"].is_number_integer())
       signature += std::to_string(entry["recordingGroup"].get<int>());
-    if (entry.contains("locked") && entry["locked"].is_boolean() && entry["locked"].get<bool>())
+    if (IsLocked(entry))
       signature += ":locked";
     // group summaries change with new or watched episodes
     for (const char* field : {"totalEpisodeCount", "newEpisodeCount", "fullyWatchedCount",
@@ -2133,143 +2156,308 @@ size_t RecordingsFingerprint(const nlohmann::json& list)
   return std::hash<std::string>{}(signature);
 }
 
-// Resets the flag on every exit path, so a failed request cannot disable change detection.
-class ScopedFlag
+size_t TimersFingerprint(const nlohmann::json& list)
 {
-public:
-  explicit ScopedFlag(std::atomic<bool>& flag) : m_flag(flag) { m_flag = true; }
-  ~ScopedFlag() { m_flag = false; }
-  ScopedFlag(const ScopedFlag&) = delete;
-  ScopedFlag& operator=(const ScopedFlag&) = delete;
-
-private:
-  std::atomic<bool>& m_flag;
-};
+  std::string signature;
+  for (const auto& entry : list)
+  {
+    const std::string status = GetStatus(entry);
+    if (status != "SCHEDULED" && status != "RECORDING")
+      continue;
+    signature += entry.dump() + ';';
+  }
+  return std::hash<std::string>{}(signature);
+}
 } // namespace
+
+bool WaipuData::RefreshRecordings(bool force, bool notifyKodi)
+{
+  try
+  {
+    return DoRefreshRecordings(force, notifyKodi);
+  }
+  catch (const nlohmann::json::exception& e)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: %s", __FUNCTION__, e.what());
+    return false;
+  }
+}
+
+bool WaipuData::DoRefreshRecordings(bool force, bool notifyKodi)
+{
+  std::lock_guard<std::mutex> refreshLock(m_recordingsRefreshMutex);
+
+  if (!IsConnected())
+    return false;
+
+  if (!notifyKodi)
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    if (m_recordingsCacheValid)
+      return true;
+  }
+
+  LoadChannelData();
+
+  const std::string listJSON =
+      HttpGet("https://recording.waipu.tv/api/recordings", RECORDINGS_ACCEPT_HEADER);
+  kodi::Log(ADDON_LOG_DEBUG, "[recordingGroupsJSON] %s", listJSON.c_str());
+
+  nlohmann::json listDoc;
+  try
+  {
+    listDoc = nlohmann::json::parse(listJSON);
+  }
+  catch (const nlohmann::json::parse_error&)
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: error while parsing recordings list", __FUNCTION__);
+    return false;
+  }
+  if (!listDoc.is_array())
+  {
+    kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: recordings list is not an array", __FUNCTION__);
+    return false;
+  }
+
+  const time_t now = std::time(nullptr);
+  const size_t recordingsFingerprint = RecordingsFingerprint(listDoc);
+  const size_t timersFingerprint = TimersFingerprint(listDoc);
+
+  bool cacheValid;
+  bool recordingsListChanged;
+  bool fullRefreshDue;
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    cacheValid = m_recordingsCacheValid;
+    recordingsListChanged = recordingsFingerprint != m_recordings_fingerprint;
+    fullRefreshDue = now - m_lastRecordingsFullRefresh >= RECORDINGS_FULL_REFRESH_SECONDS;
+  }
+
+  std::vector<kodi::addon::PVRTimer> timers;
+  BuildTimers(listDoc, timers);
+
+  std::vector<kodi::addon::PVRRecording> recordings;
+  size_t recordingsContent = 0;
+  std::optional<uint64_t> finishedRecordingsSeconds;
+  const bool rebuildRecordings = force || !cacheValid || recordingsListChanged || fullRefreshDue;
+  if (rebuildRecordings)
+  {
+    std::string contentSignature;
+    std::vector<int> recordingGroups;
+    std::map<int, std::string> recordingGroupTitles;
+
+    for (const auto& entry : listDoc)
+    {
+      if (entry.contains("recordingGroup") && entry["recordingGroup"].is_number_integer())
+      {
+        const int recordingGroup = entry["recordingGroup"].get<int>();
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i;", __FUNCTION__, recordingGroup);
+        if (std::find(recordingGroups.begin(), recordingGroups.end(), recordingGroup) ==
+            recordingGroups.end())
+          recordingGroups.emplace_back(recordingGroup);
+        if (entry.contains("title") && entry["title"].is_string())
+          recordingGroupTitles.emplace(recordingGroup, entry["title"].get<std::string>());
+        continue;
+      }
+
+      const std::string status = GetStatus(entry);
+      if (status != "FINISHED" && status != "RECORDING")
+        continue;
+      if (IsLocked(entry))
+      {
+        kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
+        continue;
+      }
+      contentSignature += entry.dump() + ';';
+      recordings.emplace_back(ParseRecordingEntry(entry));
+    }
+
+    for (size_t first = 0; first < recordingGroups.size();
+         first += RECORDING_GROUPS_PARALLEL_REQUESTS)
+    {
+      const size_t last =
+          std::min(first + RECORDING_GROUPS_PARALLEL_REQUESTS, recordingGroups.size());
+      std::vector<std::pair<int, std::future<std::string>>> requests;
+      for (size_t i = first; i < last; ++i)
+      {
+        const std::string url = "https://recording.waipu.tv/api/recordings?recordingGroup=" +
+                                std::to_string(recordingGroups[i]);
+        requests.emplace_back(recordingGroups[i],
+                              std::async(std::launch::async, [this, url]()
+                                         { return HttpGet(url, RECORDINGS_ACCEPT_HEADER); }));
+      }
+
+      for (auto& [recordingGroup, request] : requests)
+      {
+        const std::string groupJSON = request.get();
+        const auto groupTitle = recordingGroupTitles.find(recordingGroup);
+        const std::string folder =
+            groupTitle != recordingGroupTitles.end() ? groupTitle->second : std::string();
+        kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", groupJSON.c_str());
+
+        nlohmann::json groupDoc;
+        try
+        {
+          groupDoc = nlohmann::json::parse(groupJSON);
+        }
+        catch (const nlohmann::json::parse_error&)
+        {
+          // keep the previous cache, a partial list would make kodi drop recordings
+          kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: error while parsing recording group",
+                    __FUNCTION__);
+          return false;
+        }
+
+        for (const auto& entry : groupDoc)
+        {
+          const std::string status = GetStatus(entry);
+          if (status != "FINISHED" && status != "RECORDING")
+            continue;
+          if (IsLocked(entry))
+          {
+            kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
+            continue;
+          }
+          contentSignature += entry.dump() + ';';
+          recordings.emplace_back(ParseRecordingEntry(entry, folder));
+        }
+      }
+    }
+    recordingsContent = std::hash<std::string>{}(contentSignature);
+
+    for (auto it = m_recordingDetails.begin(); it != m_recordingDetails.end();)
+    {
+      const bool exists = std::any_of(recordings.begin(), recordings.end(),
+                                      [&it](const kodi::addon::PVRRecording& recording)
+                                      { return recording.GetRecordingId() == it->first; });
+      it = exists ? std::next(it) : m_recordingDetails.erase(it);
+    }
+
+    const std::string summaryJSON =
+        HttpGet("https://recording.waipu.tv/api/recordings/summary",
+                {{"Accept", "application/vnd.waipu.recording-summary-v2+json"}});
+    kodi::Log(ADDON_LOG_DEBUG, "[recordings summary] %s", summaryJSON.c_str());
+    try
+    {
+      const nlohmann::json summaryDoc = nlohmann::json::parse(summaryJSON);
+      if (summaryDoc.contains("finishedRecordingsSeconds") &&
+          summaryDoc["finishedRecordingsSeconds"].is_number_unsigned())
+        finishedRecordingsSeconds = summaryDoc["finishedRecordingsSeconds"].get<uint64_t>();
+      if (summaryDoc.contains("availableRecordingHours") &&
+          summaryDoc["availableRecordingHours"].is_number_integer())
+        m_backend_hours_recording = summaryDoc["availableRecordingHours"].get<int>();
+    }
+    catch (const nlohmann::json::parse_error&)
+    {
+    }
+  }
+
+  bool recordingsChanged = false;
+  bool timersChanged = false;
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    if (rebuildRecordings)
+    {
+      recordingsChanged =
+          force || !m_recordingsCacheValid || recordingsContent != m_recordingsContent;
+      UpdateCachedPositions(recordings);
+      m_cachedRecordings = std::move(recordings);
+      m_recordings_fingerprint = recordingsFingerprint;
+      m_recordingsContent = recordingsContent;
+      m_lastRecordingsFullRefresh = now;
+      // also when it dropped to 0 because all recordings were deleted
+      if (finishedRecordingsSeconds)
+        m_finishedRecordingsSeconds = *finishedRecordingsSeconds;
+    }
+    timersChanged = force || !m_recordingsCacheValid || timersFingerprint != m_timersFingerprint;
+    m_cachedTimers = std::move(timers);
+    m_timersFingerprint = timersFingerprint;
+    m_recordingsCacheValid = true;
+    m_lastRecordingsRefresh = now;
+  }
+
+  kodi::Log(ADDON_LOG_DEBUG, "[%s] done (rebuild: %d, recordings changed: %d, timers changed: %d)",
+            __FUNCTION__, rebuildRecordings, recordingsChanged, timersChanged);
+
+  if (notifyKodi)
+  {
+    if (recordingsChanged)
+      kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+    if (timersChanged)
+      kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+  }
+  return true;
+}
+
+void WaipuData::RequestRecordingsRefresh(bool force)
+{
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsThreadMutex);
+    m_recordingsRefreshRequested = true;
+    m_recordingsRefreshForced = m_recordingsRefreshForced || force;
+  }
+  m_recordingsThreadCv.notify_one();
+}
+
+void WaipuData::RecordingsThread()
+{
+  while (true)
+  {
+    bool requested;
+    bool forced;
+    {
+      std::unique_lock<std::mutex> lock(m_recordingsThreadMutex);
+      m_recordingsThreadCv.wait_for(
+          lock, RECORDINGS_REFRESH_INTERVAL,
+          [this] { return !m_recordingsThreadRunning.load() || m_recordingsRefreshRequested; });
+      if (!m_recordingsThreadRunning)
+        return;
+      requested = m_recordingsRefreshRequested;
+      forced = m_recordingsRefreshForced;
+      m_recordingsRefreshRequested = false;
+      m_recordingsRefreshForced = false;
+    }
+
+    if (!IsConnected())
+      continue;
+
+    if (requested && !forced)
+    {
+      std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+      if (m_recordingsCacheValid &&
+          std::time(nullptr) - m_lastRecordingsRefresh < RECORDINGS_MIN_REFRESH_SECONDS)
+        continue;
+    }
+
+    RefreshRecordings(forced, true);
+  }
+}
+
+bool WaipuData::EnsureRecordingsCache()
+{
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    if (m_recordingsCacheValid)
+      return true;
+  }
+  return RefreshRecordings(false, false);
+}
 
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  ScopedFlag activeUpdate(m_active_recordings_update);
-  size_t fingerprint = 0;
+  if (!EnsureRecordingsCache())
+    return PVR_ERROR_SERVER_ERROR;
 
+  std::vector<kodi::addon::PVRRecording> recordings;
   {
-    std::string recordingGroupsJSON =
-        HttpGet("https://recording.waipu.tv/api/recordings",
-                {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordingGroupsJSON] %s", recordingGroupsJSON.c_str());
-
-    nlohmann::json recordingGroupsDoc;
-    try
-    {
-      recordingGroupsDoc = nlohmann::json::parse(recordingGroupsJSON);
-    }
-    catch (const nlohmann::json::parse_error&)
-    {
-      kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing recordingGroupsJSON");
-      return PVR_ERROR_SERVER_ERROR;
-    }
-    fingerprint = RecordingsFingerprint(recordingGroupsDoc);
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings] getGroups");
-    std::set<int> recordingGroups;
-    std::map<int, std::string> recordingGroupTitles;
-    int recordings_count = 0;
-
-    for (const auto& recordingEntry : recordingGroupsDoc)
-    {
-      // skip not FINISHED entries
-      std::string status = recordingEntry["status"].get<std::string>();
-
-      if (recordingEntry.contains("recordingGroup") &&
-          recordingEntry["recordingGroup"].is_number_integer())
-      {
-        int recordingGroup = recordingEntry["recordingGroup"].get<int>();
-        kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i;", __FUNCTION__, recordingGroup);
-        recordingGroups.insert(recordingGroup);
-        if (recordingEntry.contains("title") && recordingEntry["title"].is_string())
-          recordingGroupTitles.emplace(recordingGroup, recordingEntry["title"].get<std::string>());
-      }
-      else if (status == "FINISHED" || status == "RECORDING")
-      {
-        if (recordingEntry.contains("locked") && recordingEntry["locked"].get<bool>())
-        {
-          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
-          continue;
-        }
-        recordings_count++;
-        results.Add(ParseRecordingEntry(recordingEntry));
-      }
-    }
-
-    for (const int& recordingGroup : recordingGroups)
-    {
-      std::string json = HttpGet("https://recording.waipu.tv/api/recordings?recordingGroup=" +
-                                     std::to_string(recordingGroup),
-                                 {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] %s", json.c_str());
-
-      nlohmann::json doc;
-      try
-      {
-        doc = nlohmann::json::parse(json);
-      }
-      catch (const nlohmann::json::parse_error&)
-      {
-        kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing json");
-        return PVR_ERROR_SERVER_ERROR;
-      }
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
-      kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.size());
-
-      const auto groupTitle = recordingGroupTitles.find(recordingGroup);
-      const std::string folder =
-          groupTitle != recordingGroupTitles.end() ? groupTitle->second : std::string();
-
-      for (const auto& recordingEntry : doc)
-      {
-        // skip not FINISHED entries
-        std::string status = recordingEntry["status"].get<std::string>();
-        if (status != "FINISHED" && status != "RECORDING")
-          continue;
-
-        if (recordingEntry.contains("locked") && recordingEntry["locked"].get<bool>())
-        {
-          kodi::Log(ADDON_LOG_DEBUG, "[%s] Skip locked recording", __FUNCTION__);
-          continue;
-        }
-        recordings_count++;
-        results.Add(ParseRecordingEntry(recordingEntry, folder));
-      }
-    }
-    m_recordings_count = recordings_count;
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    recordings = m_cachedRecordings;
   }
-
-  {
-    std::string json = HttpGet("https://recording.waipu.tv/api/recordings/summary",
-                               {{"Accept", "application/vnd.waipu.recording-summary-v2+json"}});
-    kodi::Log(ADDON_LOG_DEBUG, "[recordings summary] %s", json.c_str());
-    nlohmann::json doc;
-    try
-    {
-      doc = nlohmann::json::parse(json);
-      if (doc.contains("finishedRecordingsSeconds"))
-      {
-        m_finishedRecordingsSeconds = doc["finishedRecordingsSeconds"].get<int>();
-      }
-      if (doc.contains("availableRecordingHours") &&
-          doc["availableRecordingHours"].is_number_integer())
-      {
-        m_backend_hours_recording = doc["availableRecordingHours"].get<int>();
-      }
-    }
-    catch (const nlohmann::json::parse_error&)
-    {
-    }
-  }
-
-  m_recordings_fingerprint = fingerprint;
+  for (const auto& recording : recordings)
+    results.Add(recording);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2340,7 +2528,15 @@ PVR_ERROR WaipuData::DeleteRecording(const kodi::addon::PVRRecording& recording)
       HttpDelete("https://recording.waipu.tv/api/recordings", request_data,
                  {{"Content-Type", "application/vnd.waipu.recording-ids-v4+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "[delete recording] response: %s;", deleted.c_str());
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    m_cachedRecordings.erase(std::remove_if(m_cachedRecordings.begin(), m_cachedRecordings.end(),
+                                            [&recording_id](const kodi::addon::PVRRecording& cached)
+                                            { return cached.GetRecordingId() == recording_id; }),
+                             m_cachedRecordings.end());
+  }
   kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+  RequestRecordingsRefresh(true);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -2388,44 +2584,20 @@ PVR_ERROR WaipuData::GetTimersAmount(int& amount)
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  amount = m_timers_count;
+  std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+  amount = static_cast<int>(std::count_if(m_cachedTimers.begin(), m_cachedTimers.end(),
+                                          [](const kodi::addon::PVRTimer& timer)
+                                          { return timer.GetTimerType() == 1; }));
   return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
+void WaipuData::BuildTimers(const nlohmann::json& list, std::vector<kodi::addon::PVRTimer>& timers)
 {
-  if (!IsConnected())
-    return PVR_ERROR_SERVER_ERROR;
-
-  LoadChannelData();
-
-  std::string jsonRecordings = HttpGet("https://recording.waipu.tv/api/recordings",
-                                       {{"Accept", "application/vnd.waipu.recordings-v4+json"}});
-  kodi::Log(ADDON_LOG_DEBUG, "[Timers] %s", jsonRecordings.c_str());
-
-  nlohmann::json timersDoc;
-  try
-  {
-    timersDoc = nlohmann::json::parse(jsonRecordings);
-  }
-  catch (const nlohmann::json::parse_error&)
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
-  }
-  if (!timersDoc.is_array())
-  {
-    kodi::Log(ADDON_LOG_ERROR, "[timers] ERROR: error while parsing json");
-    return PVR_ERROR_SERVER_ERROR;
-  }
-  kodi::Log(ADDON_LOG_DEBUG, "[timers] iterate entries");
-  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc.size());
-
-  int timers_count = 0;
+  kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", list.size());
 
   std::vector<int> timerGroups;
 
-  for (const auto& timer : timersDoc)
+  for (const auto& timer : list)
   {
     // skip if missing epgdata
     if (!timer.contains("status") || !timer.contains("stationId") || !timer.contains("title"))
@@ -2441,7 +2613,6 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
 
     // new tag
     kodi::addon::PVRTimer tag;
-    ++timers_count;
 
     if (status == "SCHEDULED")
     {
@@ -2493,7 +2664,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
         tag.SetRecordingGroup(group);
         kodi::Log(ADDON_LOG_DEBUG, "[add timer group] group: %i;", group);
 
-        results.Add(tagGroup);
+        timers.emplace_back(tagGroup);
         timerGroups.emplace_back(group);
       }
     }
@@ -2534,16 +2705,25 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
       tag.SetEPGUid(dirtyID);
     }
 
-    results.Add(tag);
+    timers.emplace_back(tag);
   }
+}
 
-  if (RecordingsFingerprint(timersDoc) != m_recordings_fingerprint && !m_active_recordings_update)
+PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
+{
+  if (!IsConnected())
+    return PVR_ERROR_SERVER_ERROR;
+
+  if (!EnsureRecordingsCache())
+    return PVR_ERROR_SERVER_ERROR;
+
+  std::vector<kodi::addon::PVRTimer> timers;
   {
-    kodi::Log(ADDON_LOG_DEBUG, "[timers] recordings changed, trigger recording update");
-    m_active_recordings_update = true;
-    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    timers = m_cachedTimers;
   }
-  m_timers_count = timers_count;
+  for (const auto& timer : timers)
+    results.Add(timer);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2564,8 +2744,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
                    {{"Content-Type", "application/vnd.waipu.recording-ids-v4+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete single timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Deleted");
-    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-    kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+    RequestRecordingsRefresh(true);
     return PVR_ERROR_NO_ERROR;
   }
   else
@@ -2583,8 +2762,7 @@ PVR_ERROR WaipuData::DeleteTimer(const kodi::addon::PVRTimer& timer, bool forceD
                    "application/vnd.waipu.recording-scheduler-delete-serial-recordings-v1+json"}});
     kodi::Log(ADDON_LOG_DEBUG, "[delete multi timer] response: %s;", deleted.c_str());
     kodi::QueueNotification(QUEUE_INFO, "Recording", "Rule Deleted");
-    kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
-    kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+    RequestRecordingsRefresh(true);
     return PVR_ERROR_NO_ERROR;
   }
 }
@@ -2684,7 +2862,7 @@ PVR_ERROR WaipuData::AddTimer(const kodi::addon::PVRTimer& timer)
   }
   kodi::QueueNotification(QUEUE_INFO, "Recording", "Recording Created");
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
-  kodi::addon::CInstancePVRClient::TriggerTimerUpdate();
+  RequestRecordingsRefresh(true);
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2701,6 +2879,18 @@ WaipuData::~WaipuData()
   m_queue_epgtag_tasks.shutdown();
   if (m_EPGTaskThread.joinable())
     m_EPGTaskThread.join();
+
+  {
+    std::lock_guard<std::mutex> lock(m_recordingsThreadMutex);
+    m_recordingsThreadRunning = false;
+  }
+  m_recordingsThreadCv.notify_one();
+  if (m_recordingsThread.joinable())
+    m_recordingsThread.join();
+
+  m_queue_position_tasks.shutdown();
+  if (m_positionTaskThread.joinable())
+    m_positionTaskThread.join();
 }
 
 ADDON_STATUS WaipuData::Create()
@@ -2727,6 +2917,10 @@ ADDON_STATUS WaipuData::Create()
   m_loginThread = std::thread([&] { LoginThread(); });
 
   m_EPGTaskThread = std::thread([&] { EPGTaskThread(); });
+
+  m_recordingsThreadRunning = true;
+  m_recordingsThread = std::thread([&] { RecordingsThread(); });
+  m_positionTaskThread = std::thread([&] { PositionTaskThread(); });
 
   kodi::addon::CInstancePVRClient::ConnectionStateChange("Initializing",
                                                          PVR_CONNECTION_STATE_CONNECTING, "");
@@ -2768,14 +2962,42 @@ PVR_ERROR WaipuData::OnSystemWake()
   return PVR_ERROR_NO_ERROR;
 }
 
-PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
-                                                    int& position)
+void WaipuData::UpdateCachedPositions(const std::vector<kodi::addon::PVRRecording>& recordings)
 {
-  if (!IsConnected())
-    return PVR_ERROR_FAILED;
+  // called with m_recordingsCacheMutex held
+  std::unordered_map<std::string, RecordingPosition> positions;
+  for (const auto& recording : recordings)
+  {
+    // the list only provides a percentage, an exact position is fetched on first access
+    RecordingPosition position;
+    position.position = std::max(recording.GetLastPlayedPosition(), 0);
 
+    const auto cached = m_positions.find(recording.GetRecordingId());
+    if (cached != m_positions.end() && cached->second.exact)
+    {
+      // keep the exact position unless it was changed on another device
+      const int tolerance = std::max(60, recording.GetDuration() / 100 + 1);
+      if (std::abs(cached->second.position - position.position) <= tolerance)
+        position = cached->second;
+    }
+    positions.emplace(recording.GetRecordingId(), position);
+  }
+  m_positions = std::move(positions);
+}
+
+void WaipuData::StoreRecordingPosition(const std::string& recordingId, int position)
+{
+  std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+  RecordingPosition& cached = m_positions[recordingId];
+  cached.position = position;
+  cached.exact = true;
+  cached.checked = std::time(nullptr);
+}
+
+bool WaipuData::FetchRecordingPosition(const std::string& recordingId, int& position)
+{
   std::string responseJSON =
-      HttpGet("https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
+      HttpGet("https://stream-position.waipu.tv/api/stream-positions/" + recordingId,
               {{"Content-Type", "application/json"}}, true);
 
   // body: {"type":"stream-position/not-found","title":"Stream Position Not Found","status":404,"...
@@ -2785,7 +3007,7 @@ PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
     kodi::Log(ADDON_LOG_DEBUG, "%s - No StreamPosition stored on backend - start from beginning.",
               __FUNCTION__);
     position = 0;
-    return PVR_ERROR_NO_ERROR;
+    return true;
   }
 
   if (responseJSON.empty())
@@ -2793,7 +3015,7 @@ PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
     kodi::Log(ADDON_LOG_DEBUG, "%s - Empty StreamPosition retrieved - start from beginning.",
               __FUNCTION__);
     position = 0;
-    return PVR_ERROR_NO_ERROR;
+    return true;
   }
 
   kodi::Log(ADDON_LOG_DEBUG, "%s - Response: %s", __FUNCTION__, responseJSON.c_str());
@@ -2806,12 +3028,66 @@ PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
   catch (const nlohmann::json::parse_error&)
   {
     kodi::Log(ADDON_LOG_ERROR, "[%s] ERROR: Parsing StreamPosition JSON", __FUNCTION__);
-    return PVR_ERROR_SERVER_ERROR;
+    return false;
   }
   // {"streamId":"1036499352","position":5040,"changed":"2024-06-21T17:54:52.000+00:00"}
+  position = 0;
   if (recordingPosDoc.contains("position") && recordingPosDoc["position"].is_number_integer())
     position = recordingPosDoc["position"].get<int>();
 
+  return true;
+}
+
+void WaipuData::PositionTaskThread()
+{
+  while (true)
+  {
+    const std::optional<std::string> recordingId = m_queue_position_tasks.pop();
+    if (!recordingId)
+      return;
+
+    int position = 0;
+    const bool fetched = IsConnected() && FetchRecordingPosition(*recordingId, position);
+
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    m_pendingPositions.erase(*recordingId);
+    const auto cached = m_positions.find(*recordingId);
+    if (cached == m_positions.end())
+      continue;
+    cached->second.checked = std::time(nullptr);
+    if (fetched)
+    {
+      cached->second.position = position;
+      cached->second.exact = true;
+    }
+  }
+}
+
+PVR_ERROR WaipuData::GetRecordingLastPlayedPosition(const kodi::addon::PVRRecording& recording,
+                                                    int& position)
+{
+  if (!IsConnected())
+    return PVR_ERROR_FAILED;
+
+  const std::string recordingId = recording.GetRecordingId();
+  {
+    // kodi calls this on its GUI thread for every visible list item: answer from the cache and
+    // refresh outdated positions in the background
+    std::lock_guard<std::mutex> lock(m_recordingsCacheMutex);
+    const auto cached = m_positions.find(recordingId);
+    if (cached != m_positions.end())
+    {
+      position = cached->second.position;
+      if (std::time(nullptr) - cached->second.checked > RECORDING_POSITION_MAX_AGE_SECONDS &&
+          m_pendingPositions.insert(recordingId).second)
+        m_queue_position_tasks.push(recordingId);
+      return PVR_ERROR_NO_ERROR;
+    }
+  }
+
+  if (!FetchRecordingPosition(recordingId, position))
+    return PVR_ERROR_SERVER_ERROR;
+  StoreRecordingPosition(recordingId, position);
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -2829,6 +3105,8 @@ PVR_ERROR WaipuData::SetRecordingLastPlayedPosition(const kodi::addon::PVRRecord
       "PUT", "https://stream-position.waipu.tv/api/stream-positions/" + recording.GetRecordingId(),
       request_data, {{"Content-Type", "application/vnd.waipu.stream-position-request.v1+json"}});
   kodi::Log(ADDON_LOG_DEBUG, "%s - Response: %s", __FUNCTION__, response.c_str());
+
+  StoreRecordingPosition(recording.GetRecordingId(), lastplayedposition);
 
   return PVR_ERROR_NO_ERROR;
 }
