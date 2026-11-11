@@ -42,6 +42,7 @@
 #include <algorithm>
 #include <chrono>
 #include <ctime>
+#include <functional>
 #include <future>
 #include <regex>
 #include <set>
@@ -2083,12 +2084,63 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
   return tag;
 }
 
+namespace
+{
+// Counting entries misses changes: a recording group is one entry in the top-level list but
+// several recordings in GetRecordings().
+size_t RecordingsFingerprint(const nlohmann::json& list)
+{
+  std::string signature;
+  if (!list.is_array())
+    return 0;
+
+  for (const auto& entry : list)
+  {
+    const std::string status = entry.contains("status") && entry["status"].is_string()
+                                   ? entry["status"].get<std::string>()
+                                   : "";
+    if (status == "SCHEDULED")
+      continue;
+
+    signature += entry.contains("id") ? entry["id"].dump() : "";
+    signature += ':' + status + ':';
+    if (entry.contains("recordingGroup") && entry["recordingGroup"].is_number_integer())
+      signature += std::to_string(entry["recordingGroup"].get<int>());
+    if (entry.contains("locked") && entry["locked"].is_boolean() && entry["locked"].get<bool>())
+      signature += ":locked";
+    // group summaries change with new or watched episodes
+    for (const char* field : {"totalEpisodeCount", "newEpisodeCount", "fullyWatchedCount",
+                              "partiallyWatchedCount", "positionPercentage"})
+    {
+      if (entry.contains(field))
+        signature += ':' + entry[field].dump();
+    }
+    signature += ';';
+  }
+  return std::hash<std::string>{}(signature);
+}
+
+// Resets the flag on every exit path, so a failed request cannot disable change detection.
+class ScopedFlag
+{
+public:
+  explicit ScopedFlag(std::atomic<bool>& flag) : m_flag(flag) { m_flag = true; }
+  ~ScopedFlag() { m_flag = false; }
+  ScopedFlag(const ScopedFlag&) = delete;
+  ScopedFlag& operator=(const ScopedFlag&) = delete;
+
+private:
+  std::atomic<bool>& m_flag;
+};
+} // namespace
+
 PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResultSet& results)
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  m_active_recordings_update = true;
+  ScopedFlag activeUpdate(m_active_recordings_update);
+  size_t fingerprint = 0;
 
   {
     std::string recordingGroupsJSON =
@@ -2106,6 +2158,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
       kodi::Log(ADDON_LOG_ERROR, "[GetRecordings] ERROR: error while parsing recordingGroupsJSON");
       return PVR_ERROR_SERVER_ERROR;
     }
+    fingerprint = RecordingsFingerprint(recordingGroupsDoc);
     kodi::Log(ADDON_LOG_DEBUG, "[recordings] getGroups");
     std::set<int> recordingGroups;
     int recordings_count = 0;
@@ -2191,7 +2244,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     }
   }
 
-  m_active_recordings_update = false;
+  m_recordings_fingerprint = fingerprint;
 
   return PVR_ERROR_NO_ERROR;
 }
@@ -2343,7 +2396,6 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
   kodi::Log(ADDON_LOG_DEBUG, "[timers] iterate entries");
   kodi::Log(ADDON_LOG_DEBUG, "[timers] size: %i;", timersDoc.size());
 
-  int recordings_count = 0;
   int timers_count = 0;
 
   std::vector<int> timerGroups;
@@ -2360,10 +2412,7 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     // skip not FINISHED entries
     std::string status = timer["status"].get<std::string>();
     if (status != "SCHEDULED" && status != "RECORDING")
-    {
-      ++recordings_count;
       continue;
-    }
 
     // new tag
     kodi::addon::PVRTimer tag;
@@ -2463,10 +2512,9 @@ PVR_ERROR WaipuData::GetTimers(kodi::addon::PVRTimersResultSet& results)
     results.Add(tag);
   }
 
-  if (recordings_count != m_recordings_count && !m_active_recordings_update)
+  if (RecordingsFingerprint(timersDoc) != m_recordings_fingerprint && !m_active_recordings_update)
   {
-    // we detected another amount of recordings.
-    // tell kodi about it
+    kodi::Log(ADDON_LOG_DEBUG, "[timers] recordings changed, trigger recording update");
     m_active_recordings_update = true;
     kodi::addon::CInstancePVRClient::TriggerRecordingUpdate();
   }

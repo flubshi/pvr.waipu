@@ -200,11 +200,12 @@ private:
 
   std::string m_license;
   int m_recordings_count = 0;
+  std::atomic<size_t> m_recordings_fingerprint{0};
   bool m_recordings_backend_handle_position = false;
   int m_timers_count = 0;
   int m_login_failed_counter = 0;
   time_t m_login_failed_locktime = 0;
-  bool m_active_recordings_update = false;
+  std::atomic<bool> m_active_recordings_update{false};
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
   uint64_t m_finishedRecordingsSeconds = 0;
