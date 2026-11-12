@@ -1795,7 +1795,7 @@ std::optional<kodi::addon::PVREPGTag> WaipuData::GetCurrentEPGTag(const WaipuCha
 PVR_ERROR WaipuData::IsEPGTagRecordable(const kodi::addon::PVREPGTag& tag, bool& isRecordable)
 {
   LoadChannelData();
-  if (m_account_hours_recording == 0)
+  if (GetRecordingHours() == 0)
   {
     // recording option not available
     isRecordable = false;
@@ -2184,6 +2184,11 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
       if (doc.contains("finishedRecordingsSeconds"))
       {
         m_finishedRecordingsSeconds = doc["finishedRecordingsSeconds"].get<int>();
+      }
+      if (doc.contains("availableRecordingHours") &&
+          doc["availableRecordingHours"].is_number_integer())
+      {
+        m_backend_hours_recording = doc["availableRecordingHours"].get<int>();
       }
     }
     catch (const nlohmann::json::parse_error&)
@@ -2661,13 +2666,26 @@ ADDON_STATUS WaipuData::Create()
   return ADDON_STATUS_OK;
 }
 
+int WaipuData::GetRecordingHours() const
+{
+  const int backendHours = m_backend_hours_recording;
+  return backendHours > 0 ? backendHours : m_account_hours_recording;
+}
+
 PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
 {
   if (!IsConnected())
     return PVR_ERROR_SERVER_ERROR;
 
-  total = m_account_hours_recording * 1024l * 1024l;
-  used = m_finishedRecordingsSeconds > 0 ? m_finishedRecordingsSeconds * 1024 * 1024 / 3600 : 0;
+  // Kodi expects KiB, one recording hour is shown as 1 GiB
+  const uint64_t hours = static_cast<uint64_t>(GetRecordingHours());
+  total = hours * 1024 * 1024;
+  used = m_finishedRecordingsSeconds * 1024 * 1024 / 3600;
+
+  // Recordings may run past the quota. Kodi computes free = total - used, which must not wrap.
+  if (total == 0 && used > 0)
+    total = used;
+  used = std::min(used, total);
 
   return PVR_ERROR_NO_ERROR;
 }

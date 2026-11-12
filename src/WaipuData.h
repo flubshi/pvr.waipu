@@ -207,6 +207,7 @@ private:
   bool m_active_recordings_update = false;
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
+  std::atomic<int> m_backend_hours_recording{0};
   uint64_t m_finishedRecordingsSeconds = 0;
   std::atomic<WAIPU_LOGIN_STATUS> m_login_status{WAIPU_LOGIN_STATUS::UNKNOWN};
   HLSAllowlist m_hls_allowlist;
@@ -262,6 +263,7 @@ public:
 
 private:
   bool IsConnected();
+  int GetRecordingHours() const;
   WAIPU_LOGIN_STATUS Login();
   WAIPU_LOGIN_STATUS DeviceLogin(const std::string& tenant);
   WAIPU_LOGIN_STATUS OAuthRequest(const std::string& postData);
