@@ -1949,7 +1949,20 @@ PVR_ERROR WaipuData::GetRecordingsAmount(bool deleted, int& amount)
   return PVR_ERROR_NO_ERROR;
 }
 
-kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& recordingEntry)
+namespace
+{
+// Kodi splits recording folders at '/', which would turn e.g. "Show 1/2" into nested folders.
+std::string RecordingFolderName(const std::string& title)
+{
+  // U+2215 DIVISION SLASH looks like a slash but is no path separator
+  std::string folder = title;
+  kodi::tools::StringUtils::Replace(folder, "/", "\xE2\x88\x95");
+  return folder;
+}
+} // namespace
+
+kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& recordingEntry,
+                                                         const std::string& groupTitle)
 {
 
   kodi::addon::PVRRecording tag;
@@ -2033,7 +2046,7 @@ kodi::addon::PVRRecording WaipuData::ParseRecordingEntry(const nlohmann::json& r
   if (isSeries)
   {
     tag.SetFlags(PVR_RECORDING_FLAG_IS_SERIES);
-    tag.SetDirectory(rec_title);
+    tag.SetDirectory(RecordingFolderName(groupTitle.empty() ? rec_title : groupTitle));
   }
 
   // Additional program details like year or plot are on available in an additional details request. Maybe we should provide this as settings option?
@@ -2108,6 +2121,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
     }
     kodi::Log(ADDON_LOG_DEBUG, "[recordings] getGroups");
     std::set<int> recordingGroups;
+    std::map<int, std::string> recordingGroupTitles;
     int recordings_count = 0;
 
     for (const auto& recordingEntry : recordingGroupsDoc)
@@ -2121,6 +2135,8 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
         int recordingGroup = recordingEntry["recordingGroup"].get<int>();
         kodi::Log(ADDON_LOG_DEBUG, "[%s] found group: %i;", __FUNCTION__, recordingGroup);
         recordingGroups.insert(recordingGroup);
+        if (recordingEntry.contains("title") && recordingEntry["title"].is_string())
+          recordingGroupTitles.emplace(recordingGroup, recordingEntry["title"].get<std::string>());
       }
       else if (status == "FINISHED" || status == "RECORDING")
       {
@@ -2154,6 +2170,10 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
       kodi::Log(ADDON_LOG_DEBUG, "[recordings] iterate entries");
       kodi::Log(ADDON_LOG_DEBUG, "[recordings] size: %i;", doc.size());
 
+      const auto groupTitle = recordingGroupTitles.find(recordingGroup);
+      const std::string folder =
+          groupTitle != recordingGroupTitles.end() ? groupTitle->second : std::string();
+
       for (const auto& recordingEntry : doc)
       {
         // skip not FINISHED entries
@@ -2167,7 +2187,7 @@ PVR_ERROR WaipuData::GetRecordings(bool deleted, kodi::addon::PVRRecordingsResul
           continue;
         }
         recordings_count++;
-        results.Add(ParseRecordingEntry(recordingEntry));
+        results.Add(ParseRecordingEntry(recordingEntry, folder));
       }
     }
     m_recordings_count = recordings_count;
