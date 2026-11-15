@@ -848,6 +848,8 @@ PVR_ERROR WaipuData::GetCapabilities(kodi::addon::PVRCapabilities& capabilities)
       kodi::addon::GetSettingBoolean("recordings_backend_handle_position", false);
   capabilities.SetSupportsLastPlayedPosition(handle_position);
 
+  capabilities.SetDriveSpaceUnit(PVR_DRIVE_SPACE_UNIT_SECONDS);
+
   return PVR_ERROR_NO_ERROR;
 }
 
@@ -2699,8 +2701,8 @@ PVR_ERROR WaipuData::GetDriveSpace(uint64_t& total, uint64_t& used)
 
   // Kodi expects KiB, one recording hour is shown as 1 GiB
   const uint64_t hours = static_cast<uint64_t>(GetRecordingHours());
-  total = hours * 1024 * 1024;
-  used = m_finishedRecordingsSeconds * 1024 * 1024 / 3600;
+  total = hours * 60 * 60;
+  used = m_finishedRecordingsSeconds;
 
   // Recordings may run past the quota. Kodi computes free = total - used, which must not wrap.
   if (total == 0 && used > 0)
