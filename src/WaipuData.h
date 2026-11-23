@@ -34,7 +34,9 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <shared_mutex>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <vector>
@@ -200,16 +202,13 @@ private:
   mutable std::shared_mutex m_tokenMutex;
 
   std::string m_license;
-  int m_recordings_count = 0;
   bool m_recordings_backend_handle_position = false;
-  int m_timers_count = 0;
   int m_login_failed_counter = 0;
   time_t m_login_failed_locktime = 0;
-  bool m_active_recordings_update = false;
   bool m_account_replay_allowed = false;
   int m_account_hours_recording = 0;
   std::atomic<int> m_backend_hours_recording{0};
-  uint64_t m_finishedRecordingsSeconds = 0;
+  std::atomic<uint64_t> m_finishedRecordingsSeconds{0};
   std::atomic<WAIPU_LOGIN_STATUS> m_login_status{WAIPU_LOGIN_STATUS::UNKNOWN};
   HLSAllowlist m_hls_allowlist;
   Categories m_categories;
@@ -221,6 +220,58 @@ private:
   std::string GetAccessToken() const;
 
   void AddTimerType(std::vector<kodi::addon::PVRTimerType>& types, int id, int attributes);
+
+  // Recordings and timers are served from a cache that RecordingsThread() refreshes in the
+  // background. Kodi holds its recordings lock while it calls GetRecordings(), so network
+  // requests there block Kodi's GUI.
+  struct RecordingPosition
+  {
+    int position = 0;
+    bool exact = false; // from the stream position API, not derived from a percentage
+    time_t checked = 0;
+  };
+  struct RecordingDetails
+  {
+    std::string plot;
+    int year = 0;
+  };
+
+  bool RefreshRecordings(bool force, bool notifyKodi);
+  bool DoRefreshRecordings(bool force, bool notifyKodi);
+  bool EnsureRecordingsCache();
+  void RequestRecordingsRefresh(bool force);
+  void RecordingsThread();
+  void BuildTimers(const nlohmann::json& list, std::vector<kodi::addon::PVRTimer>& timers);
+  void UpdateCachedPositions(const std::vector<kodi::addon::PVRRecording>& recordings);
+  void StoreRecordingPosition(const std::string& recordingId, int position);
+  bool FetchRecordingPosition(const std::string& recordingId, int& position);
+  void PositionTaskThread();
+
+  std::thread m_recordingsThread;
+  std::mutex m_recordingsThreadMutex;
+  std::condition_variable m_recordingsThreadCv;
+  std::atomic<bool> m_recordingsThreadRunning{false};
+  bool m_recordingsRefreshRequested = false;
+  bool m_recordingsRefreshForced = false;
+
+  // serializes refreshes; m_recordingDetails is only used while holding it
+  std::mutex m_recordingsRefreshMutex;
+  std::unordered_map<std::string, RecordingDetails> m_recordingDetails;
+
+  std::mutex m_recordingsCacheMutex;
+  bool m_recordingsCacheValid = false;
+  std::vector<kodi::addon::PVRRecording> m_cachedRecordings;
+  std::vector<kodi::addon::PVRTimer> m_cachedTimers;
+  size_t m_recordings_fingerprint = 0;
+  size_t m_recordingsContent = 0;
+  size_t m_timersFingerprint = 0;
+  time_t m_lastRecordingsRefresh = 0;
+  time_t m_lastRecordingsFullRefresh = 0;
+  std::unordered_map<std::string, RecordingPosition> m_positions;
+  std::set<std::string> m_pendingPositions;
+
+  std::thread m_positionTaskThread;
+  SynchronizedQueue<std::string> m_queue_position_tasks;
 
   std::string GetChannelStreamURL(int uniqueId,
                                   const std::string& protocol,
